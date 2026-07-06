@@ -1,0 +1,58 @@
+# Production stack for the Linode app node: Caddy (auto-TLS) + web + Valkey.
+# Postgres is managed (Linode Managed Database) — not in this file.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml --profile tools run --rm migrate
+#
+# Secrets come from .env (untracked). See .env.production.example.
+
+services:
+  web:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # web talks to Valkey by service name over the internal network
+      REDIS_URL: redis://:${VALKEY_PASSWORD}@valkey:6379
+    depends_on:
+      - valkey
+    expose:
+      - '3000' # internal only — Caddy proxies to it; never published to the host
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    command: ['valkey-server', '--requirepass', '${VALKEY_PASSWORD}', '--save', '', '--appendonly', 'no']
+    # no `ports:` — reachable only inside the compose network
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+  # One-off tools (migrations / seed). Not started by `up`; run explicitly:
+  #   docker compose -f docker-compose.prod.yml --profile tools run --rm migrate
+  #   docker compose -f docker-compose.prod.yml --profile tools run --rm migrate npm run seed
+  migrate:
+    build:
+      context: .
+      target: build
+    profiles: ['tools']
+    env_file: .env
+    command: ['npm', 'run', 'db:migrate']
+
+volumes:
+  caddy_data:
+  caddy_config:

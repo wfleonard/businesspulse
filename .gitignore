@@ -33,6 +33,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+!.env.production.example
 
 # personal / non-app docs (kept out of the shared repo)
 docs/VOICE_PROFILE_Bill_Leonard.md

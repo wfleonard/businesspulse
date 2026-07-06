@@ -1,0 +1,12 @@
+# Automatic HTTPS (Let's Encrypt) + reverse proxy to the Next.js app.
+# Point businesspulse.app's DNS A/AAAA records at this node first.
+
+businesspulse.app {
+	encode zstd gzip
+	reverse_proxy web:3000
+}
+
+# Redirect the www host to the apex.
+www.businesspulse.app {
+	redir https://businesspulse.app{uri}
+}
