@@ -6,6 +6,7 @@ import { requireSession } from '@/lib/session'
 
 export type CurrentOrg = {
   userId: string
+  userEmail: string
   orgId: string
   orgName: string
   role: string
@@ -35,5 +36,11 @@ export async function requireOrg(): Promise<CurrentOrg> {
     throw new Error(`User ${user.id} has no organization membership`)
   }
 
-  return { userId: user.id, orgId: org.orgId, orgName: org.orgName, role: org.role }
+  return {
+    userId: user.id,
+    userEmail: user.email,
+    orgId: org.orgId,
+    orgName: org.orgName,
+    role: org.role,
+  }
 }

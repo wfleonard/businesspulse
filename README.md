@@ -54,6 +54,7 @@ npm run dev                   # http://localhost:3000
 | `npm run sample` | Load sample metrics (dev) |
 | `npm run dev:add-source` | Register an API source pointing at the built-in mock endpoint (dev) |
 | `npm run dev:ask -- "your question"` | Run one grounded Ask against the real model using live DB data (needs `ANTHROPIC_API_KEY`) |
+| `npm run dev:add-rules` | Seed demo alert rules for the first org (dev) |
 
 ## Project layout
 
@@ -97,7 +98,12 @@ scripts/seed.ts        first-user provisioning
   (`claude-sonnet-5` by default), structured grounded answers (drivers, suggested
   actions, source-metric links, confidence), rate-limited, logged to `ai_query`. The
   model never sees raw rows. Needs `ANTHROPIC_API_KEY`; degrades gracefully without it.
-- **Stages 4–6:** Business Watch + digest → Actions → SaaS-ization.
+- **Stage 4 (done):** Business Watch — alert rules (pct drop/rise, below/above
+  target or threshold) with severity, deterministic material-change detection,
+  AI-written grounded explanations (insights), and a "Good morning — N things
+  changed" digest via Mailtrap (graceful no-op when unconfigured).
+  `CRON_SECRET`-guarded `/api/cron/watch`; Alerts UI + dashboard banner.
+- **Stages 5–6:** Actions → SaaS-ization.
 
 ### Connector config (Stage 2)
 
