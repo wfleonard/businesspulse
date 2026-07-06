@@ -53,6 +53,7 @@ npm run dev                   # http://localhost:3000
 | `npm run seed` | Provision the first user + org |
 | `npm run sample` | Load sample metrics (dev) |
 | `npm run dev:add-source` | Register an API source pointing at the built-in mock endpoint (dev) |
+| `npm run dev:ask -- "your question"` | Run one grounded Ask against the real model using live DB data (needs `ANTHROPIC_API_KEY`) |
 
 ## Project layout
 
@@ -92,7 +93,11 @@ scripts/seed.ts        first-user provisioning
 - **Stage 2 (done):** per-customer API connector — Zod-validated config (encrypted
   at rest), field-mapping normalize engine, windowed idempotent sync, `Sync now` +
   a `CRON_SECRET`-guarded `/api/cron/sync` trigger, Data Sources UI, dev mock endpoint.
-- **Stages 3–6:** Ask layer → Business Watch + digest → Actions → SaaS-ization.
+- **Stage 3 (done):** Ask layer — server-computed metric summaries passed to Claude
+  (`claude-sonnet-5` by default), structured grounded answers (drivers, suggested
+  actions, source-metric links, confidence), rate-limited, logged to `ai_query`. The
+  model never sees raw rows. Needs `ANTHROPIC_API_KEY`; degrades gracefully without it.
+- **Stages 4–6:** Business Watch + digest → Actions → SaaS-ization.
 
 ### Connector config (Stage 2)
 

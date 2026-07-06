@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Sparkles } from 'lucide-react'
 import { requireOrg } from '@/lib/org'
 import { buildDashboardSummary } from '@/lib/metrics/queries'
 import { MetricCard } from '@/components/metrics/MetricCard'
@@ -22,6 +23,16 @@ export default async function DashboardPage() {
           <Button variant="secondary">Manage metrics</Button>
         </Link>
       </div>
+
+      <Link href="/dashboard/ask" className="block">
+        <Card className="flex items-center justify-between border-primary/30 bg-primary/5 transition-shadow hover:shadow-md">
+          <span className="flex items-center gap-2 text-sm text-dark">
+            <Sparkles size={16} className="text-primary" />
+            Ask anything about your business — grounded in these numbers.
+          </span>
+          <span className="text-sm font-medium text-primary">Ask →</span>
+        </Card>
+      </Link>
 
       {summary.length === 0 ? (
         <Card>

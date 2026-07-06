@@ -15,9 +15,11 @@
     "db:push": "drizzle-kit push",
     "seed": "tsx scripts/seed.ts",
     "sample": "tsx scripts/sample-data.ts",
-    "dev:add-source": "tsx scripts/dev-add-source.ts"
+    "dev:add-source": "tsx scripts/dev-add-source.ts",
+    "dev:ask": "tsx scripts/dev-ask.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@node-rs/argon2": "^2.0.2",
     "better-auth": "^1.6.23",
     "clsx": "^2.1.1",
