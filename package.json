@@ -14,7 +14,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "seed": "tsx scripts/seed.ts",
-    "sample": "tsx scripts/sample-data.ts"
+    "sample": "tsx scripts/sample-data.ts",
+    "dev:add-source": "tsx scripts/dev-add-source.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",

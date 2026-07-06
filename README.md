@@ -51,6 +51,8 @@ npm run dev                   # http://localhost:3000
 | `npm run db:generate` | Generate a SQL migration from the Drizzle schema |
 | `npm run db:migrate` / `db:push` | Apply migrations / push schema to the DB |
 | `npm run seed` | Provision the first user + org |
+| `npm run sample` | Load sample metrics (dev) |
+| `npm run dev:add-source` | Register an API source pointing at the built-in mock endpoint (dev) |
 
 ## Project layout
 
@@ -84,6 +86,35 @@ scripts/seed.ts        first-user provisioning
 
 ## Build stages
 
-Stage 0 (done): scaffold + security baseline + schema + auth + protected shell.
-Stages 1–6: metrics + dashboard → API connector → Ask layer → Business Watch +
-digest → Actions → SaaS-ization. See the plan for detail.
+- **Stage 0 (done):** scaffold + security baseline + schema + auth + protected shell.
+- **Stage 1 (done):** metrics core — manual entry + CSV import, Business Pulse KPI
+  dashboard, metric detail with Recharts.
+- **Stage 2 (done):** per-customer API connector — Zod-validated config (encrypted
+  at rest), field-mapping normalize engine, windowed idempotent sync, `Sync now` +
+  a `CRON_SECRET`-guarded `/api/cron/sync` trigger, Data Sources UI, dev mock endpoint.
+- **Stages 3–6:** Ask layer → Business Watch + digest → Actions → SaaS-ization.
+
+### Connector config (Stage 2)
+
+An API source is configured with JSON like:
+
+```jsonc
+{
+  "baseUrl": "https://api.example.com",
+  "auth": { "type": "bearer", "token": "…" },   // none | apiKey | bearer | basic
+  "endpoints": [
+    {
+      "path": "/v1/metrics",
+      "rowsPath": "data",                          // path to the array of rows
+      "mappings": [
+        { "metricKey": "website_leads", "valuePath": "leads",
+          "periodStartPath": "month_start", "periodEndPath": "month_end" }
+      ]
+    }
+  ]
+}
+```
+
+Secrets in the config are encrypted at rest (AES-256-GCM). Sync replaces this
+source's rows within the fetched period window (idempotent) and never touches
+manual/other-source data. New metric keys get an auto-created definition.
