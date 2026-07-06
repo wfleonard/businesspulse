@@ -48,6 +48,18 @@ CREATE DATABASE businesspulse OWNER bp_app;
 \q
 ```
 
+## 3b. Place the DB CA certificate (cert-pinned TLS)
+
+Download the **CA certificate** from the Managed Database page, then on the node:
+```bash
+mkdir -p certs
+# copy the file to certs/db-ca.crt (scp from your machine, or paste with nano)
+```
+Compose mounts `./certs` read-only into the containers; the app reads it via
+`DATABASE_CA_CERT_FILE=/app/certs/db-ca.crt` and connects **verify-full**
+(encrypted + certificate-pinned). Keep `DATABASE_URL` on the **hostname** (not IP)
+so the cert's name matches.
+
 ## 4. Configure env
 
 ```bash
@@ -60,9 +72,10 @@ openssl rand -hex 24      # CRON_SECRET
 nano .env                 # fill everything in, incl. the bp_app DATABASE_URL
 ```
 
-`DATABASE_URL` for the app:
+`DATABASE_URL` for the app (hostname + `sslmode=no-verify`; the app upgrades to
+verify-full via the CA cert from step 3b):
 ```
-postgres://bp_app:<app-password>@a492716-akamai-prod-1220048-default.g2a.akamaidb.net:23200/businesspulse?sslmode=require
+postgres://bp_app:<app-password>@a492716-akamai-prod-1220048-default.g2a.akamaidb.net:23200/businesspulse?sslmode=no-verify
 ```
 
 ## 5. Migrate + seed (from the node, in Docker)
@@ -109,6 +122,5 @@ docker compose -f docker-compose.prod.yml up -d --build
 ## Post-launch hardening
 
 - **Rotate the `akmadmin` DB password** (it was shared in chat) in the Linode console.
-- Switch `DATABASE_URL` to `sslmode=verify-full` with the downloaded CA cert once
-  real customer data is flowing (encrypted + cert-pinned).
+- TLS is already cert-pinned (verify-full) via `DATABASE_CA_CERT_FILE` + step 3b.
 - Move Redis to Upstash when you add a second app node behind a NodeBalancer.

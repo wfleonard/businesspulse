@@ -38,6 +38,9 @@ yarn-error.log*
 # personal / non-app docs (kept out of the shared repo)
 docs/VOICE_PROFILE_Bill_Leonard.md
 
+# DB CA certificate (kept out of the repo; lives on the node)
+/certs/
+
 # vercel
 .vercel
 

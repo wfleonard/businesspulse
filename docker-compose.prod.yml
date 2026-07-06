@@ -18,6 +18,8 @@ services:
     environment:
       # web talks to Valkey by service name over the internal network
       REDIS_URL: redis://:${VALKEY_PASSWORD}@valkey:6379
+    volumes:
+      - ./certs:/app/certs:ro # DB CA cert for verify-full (see .env DATABASE_CA_CERT_FILE)
     depends_on:
       - valkey
     expose:
@@ -51,6 +53,8 @@ services:
       target: build
     profiles: ['tools']
     env_file: .env
+    volumes:
+      - ./certs:/app/certs:ro # so `npm run seed` (uses the app DB layer) can verify-full
     command: ['npm', 'run', 'db:migrate']
 
 volumes:
