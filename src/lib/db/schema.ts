@@ -251,6 +251,40 @@ export const alert = pgTable(
 )
 
 /* ------------------------------------------------------------------ */
+/* Recommendations — AI-suggested next actions the owner can act on.   */
+/* ------------------------------------------------------------------ */
+
+export const recommendationPriorityEnum = pgEnum('recommendation_priority', [
+  'high',
+  'medium',
+  'low',
+])
+export const recommendationStatusEnum = pgEnum('recommendation_status', [
+  'suggested',
+  'accepted',
+  'dismissed',
+  'done',
+])
+
+export const recommendation = pgTable(
+  'recommendation',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    rationale: text('rationale').notNull(),
+    priority: recommendationPriorityEnum('priority').notNull().default('medium'),
+    metricRefs: jsonb('metric_refs').$type<string[]>().default([]),
+    status: recommendationStatusEnum('status').notNull().default('suggested'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('recommendation_org_status_idx').on(t.orgId, t.status)]
+)
+
+/* ------------------------------------------------------------------ */
 /* Audit & AI query logs — references only, never raw values/secrets.  */
 /* ------------------------------------------------------------------ */
 
@@ -300,6 +334,7 @@ export const schema = {
   insight,
   alertRule,
   alert,
+  recommendation,
   aiQuery,
   auditLog,
 }

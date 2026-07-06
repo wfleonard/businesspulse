@@ -46,6 +46,23 @@ describe('composeDigest', () => {
     expect(d.text).toContain('Fewer jobs closed.')
   })
 
+  it('includes recommendations when provided', () => {
+    const d = composeDigest({
+      ...base,
+      changes: [
+        { key: 'x', label: 'Leads', pctChange: -12, current: 178, previous: 202, sentiment: 'bad' },
+      ],
+      recommendations: [
+        { title: 'Follow up on estimates', priority: 'high' },
+        { title: 'Chase overdue invoices', priority: 'medium' },
+      ],
+    })
+    expect(d.html).toContain('Do next')
+    expect(d.html).toContain('Follow up on estimates')
+    expect(d.text).toContain('DO NEXT')
+    expect(d.text).toContain('[high] Follow up on estimates')
+  })
+
   it('escapes HTML in user-supplied content', () => {
     const d = composeDigest({
       ...base,

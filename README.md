@@ -103,7 +103,11 @@ scripts/seed.ts        first-user provisioning
   AI-written grounded explanations (insights), and a "Good morning — N things
   changed" digest via Mailtrap (graceful no-op when unconfigured).
   `CRON_SECRET`-guarded `/api/cron/watch`; Alerts UI + dashboard banner.
-- **Stages 5–6:** Actions → SaaS-ization.
+- **Stage 5 (done):** Actions — AI generates grounded, prioritized recommended
+  next steps (title, rationale, priority, source-metric links); accept / dismiss /
+  mark-done tracking; regenerate replaces open suggestions; also folded into the
+  nightly watch + digest ("Do next").
+- **Stage 6:** SaaS-ization (multi-tenant orgs, billing, RLS, onboarding).
 
 ### Connector config (Stage 2)
 

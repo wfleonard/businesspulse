@@ -4,12 +4,15 @@ import type { AlertSeverity, MaterialChange, TriggeredAlert } from './rules'
 /** AI (or deterministic) explanation of a change, for the digest + insights. */
 export type InsightLite = { metricKey: string | null; summary: string }
 
+export type RecLite = { title: string; priority: string }
+
 export type DigestInput = {
   orgName: string
   appUrl: string
   alerts: Pick<TriggeredAlert, 'severity' | 'message'>[]
   changes: MaterialChange[]
   insights: InsightLite[]
+  recommendations?: RecLite[]
   intro?: string
 }
 
@@ -33,6 +36,7 @@ const dotColor: Record<AlertSeverity, string> = {
 /** Compose the "Good morning — N things changed" digest. Pure & testable. */
 export function composeDigest(input: DigestInput): Digest {
   const { orgName, appUrl, alerts, changes, insights, intro } = input
+  const recommendations = input.recommendations ?? []
   const itemCount = alerts.length + changes.length
 
   const noun = itemCount === 1 ? 'thing' : 'things'
@@ -57,6 +61,11 @@ export function composeDigest(input: DigestInput): Digest {
   if (insights.length) {
     textLines.push('WHY')
     for (const i of insights) textLines.push(`- ${i.summary}`)
+    textLines.push('')
+  }
+  if (recommendations.length) {
+    textLines.push('DO NEXT')
+    for (const r of recommendations) textLines.push(`- [${r.priority}] ${r.title}`)
     textLines.push('')
   }
   textLines.push(`Open BusinessPulse: ${appUrl}/dashboard`)
@@ -89,6 +98,13 @@ export function composeDigest(input: DigestInput): Digest {
     )
     .join('')
 
+  const recsHtml = recommendations
+    .map(
+      (r) =>
+        `<div style="margin:6px 0;font:14px/1.5 system-ui,sans-serif;color:#0f172a"><strong>${escapeHtml(r.priority)}</strong> · ${escapeHtml(r.title)}</div>`
+    )
+    .join('')
+
   const html = `<div style="max-width:560px;margin:0 auto;padding:24px">
   <div style="font:700 18px/1.3 system-ui,sans-serif;color:#0f172a">BusinessPulse</div>
   <div style="margin-top:4px;font:14px/1.5 system-ui,sans-serif;color:#64748b">${escapeHtml(orgName)}</div>
@@ -97,6 +113,7 @@ export function composeDigest(input: DigestInput): Digest {
   ${section('Alerts', alertsHtml)}
   ${section('What moved', changesHtml)}
   ${section('Why', insightsHtml)}
+  ${section('Do next', recsHtml)}
   <a href="${appUrl}/dashboard" style="display:inline-block;margin-top:20px;background:#2563eb;color:#fff;text-decoration:none;font:600 14px system-ui,sans-serif;padding:10px 16px;border-radius:8px">Open your dashboard</a>
 </div>`
 

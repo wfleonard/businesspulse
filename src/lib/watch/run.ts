@@ -3,6 +3,7 @@ import { buildOrgSummary } from '@/lib/ai/summary'
 import { explainChanges } from '@/lib/ai/watch'
 import { evaluateRules, detectMaterialChanges } from './rules'
 import { composeDigest } from './digest'
+import { generateAndStore } from '@/lib/actions/run'
 import { sendEmail } from '@/lib/email/provider'
 import {
   listRules,
@@ -20,6 +21,7 @@ export type WatchResult = {
   newAlerts: number
   changes: number
   insights: number
+  recommendations: number
   emailed: boolean
   emailSkipped?: string
   emailError?: string
@@ -67,13 +69,17 @@ export async function runWatch(
     })
   }
 
-  // 3. Compose + send the digest (only if there's something to report).
+  // 3. Regenerate grounded recommendations (uses the fresh alerts + insights).
+  const recs = await generateAndStore(orgId, orgName)
+
+  // 4. Compose + send the digest (only if there's something to report).
   const digest = composeDigest({
     orgName,
     appUrl: APP_URL,
     alerts: digestAlerts,
     changes,
     insights: insightItems,
+    recommendations: recs.map((r) => ({ title: r.title, priority: r.priority })),
     intro: explained?.intro,
   })
 
@@ -93,6 +99,7 @@ export async function runWatch(
     newAlerts,
     changes: changes.length,
     insights: insightItems.length,
+    recommendations: recs.length,
     emailed,
     emailSkipped,
     emailError,
