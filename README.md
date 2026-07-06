@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BusinessPulse
 
-## Getting Started
+Dashboards, alerts, and AI insights for everyday business decisions — a
+business-monitoring SaaS for small/mid-sized businesses.
 
-First, run the development server:
+> Connect your business data. Ask questions. Get alerts. Understand what
+> changed. Know what to do next.
+
+See the product strategy in [`docs/analytics_saas_strategy.md`](docs/analytics_saas_strategy.md).
+
+## Stack
+
+- **Next.js 16** (App Router, Turbopack), **React 19**, **TypeScript**, **Tailwind 4**
+- **Postgres** via **Drizzle ORM** (managed: Linode Managed DB or Neon)
+- **better-auth** — email+password, Argon2id hashing, secure session cookies
+- **Redis/Valkey** (TCP) — BullMQ queue + cache + rate-limit
+- **Anthropic Claude** for the Ask / Insights layers (Stage 3+)
+- **Mailtrap** for transactional/alert email (Stage 4)
+
+Hosting target: **Linode + Docker Compose**, app box kept stateless, with
+managed Postgres and Redis off-box (scales horizontally behind a NodeBalancer).
+
+## Local setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # fill in DATABASE_URL, REDIS_URL, secrets
+
+# Generate secrets:
+#   openssl rand -base64 48   # BETTER_AUTH_SECRET
+#   openssl rand -base64 32   # CONNECTOR_ENC_KEY
+
+# Apply the schema to your Postgres:
+npm run db:push               # or: npm run db:migrate (uses drizzle/ migrations)
+
+# Provision the first user + organization (single-user MVP):
+BP_SEED_EMAIL=you@example.com BP_SEED_PASSWORD='a-strong-passphrase' \
+  BP_SEED_ORG='My Business' npm run seed
+
+npm run dev                   # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Script | Purpose |
+|---|---|
+| `npm run dev` / `build` / `start` | Next.js dev / production build / serve |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm test` | Jest unit tests |
+| `npm run lint` | ESLint |
+| `npm run db:generate` | Generate a SQL migration from the Drizzle schema |
+| `npm run db:migrate` / `db:push` | Apply migrations / push schema to the DB |
+| `npm run seed` | Provision the first user + org |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project layout
 
-## Learn More
+```
+src/
+  app/                 routes (/, /login, /dashboard, /api/auth/[...all])
+  components/          ui primitives + auth controls
+  lib/
+    auth.ts            better-auth server (Argon2id, secure cookies)
+    auth-client.ts     better-auth React client
+    session.ts         getSession / requireSession server guards
+    db/                Drizzle client (lazy pool) + schema
+    crypto.ts          AES-256-GCM for connector secrets at rest
+    rate-limit.ts      Redis fixed-window limiter
+    redis.ts           lazy ioredis client
+    audit.ts           audit-log helper
+  proxy.ts             security headers (HSTS/CSP/…) + optimistic auth gate
+drizzle/               generated SQL migrations
+scripts/seed.ts        first-user provisioning
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Security baseline (Stage 0)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Argon2id password hashing; httpOnly + `Secure` (prod) + SameSite=Lax session cookies.
+- Security headers via `src/proxy.ts`: HSTS (prod), nonce-based CSP (prod) /
+  relaxed CSP (dev), `X-Frame-Options: DENY`, `nosniff`, referrer + permissions policy.
+- Connector credentials encrypted at rest (AES-256-GCM, `CONNECTOR_ENC_KEY`).
+- Every business-data table carries `org_id` for tenant isolation (RLS at the
+  multi-tenant stage).
+- The AI layer will see only pre-computed summaries — never raw rows or the DB.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Build stages
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Stage 0 (done): scaffold + security baseline + schema + auth + protected shell.
+Stages 1–6: metrics + dashboard → API connector → Ask layer → Business Watch +
+digest → Actions → SaaS-ization. See the plan for detail.

@@ -1,0 +1,32 @@
+# Local development dependencies (Postgres + Valkey) for the Mac mini.
+# Not for deployment — the production Compose/Caddy setup is added at the deploy step.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml down        # keeps data
+#   docker compose -f docker-compose.dev.yml down -v      # wipes data
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: bp
+      POSTGRES_PASSWORD: bp
+      POSTGRES_DB: businesspulse
+    ports:
+      - '5432:5432'
+    volumes:
+      - bp_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U bp -d businesspulse']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    ports:
+      - '6379:6379'
+    command: ['valkey-server', '--save', '', '--appendonly', 'no']
+
+volumes:
+  bp_pg:
