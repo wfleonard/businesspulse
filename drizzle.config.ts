@@ -11,6 +11,9 @@ export default {
   dialect: 'postgresql',
   dbCredentials: {
     url: process.env.DATABASE_URL ?? 'postgres://localhost:5432/businesspulse',
+    // TLS on by default (managed Postgres requires it); DATABASE_SSL=disable for
+    // a local non-TLS Postgres. rejectUnauthorized:false = encrypted, CA not pinned.
+    ssl: process.env.DATABASE_SSL === 'disable' ? false : { rejectUnauthorized: false },
   },
   strict: true,
   verbose: true,
