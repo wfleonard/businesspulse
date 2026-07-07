@@ -3,8 +3,11 @@ import { NextResponse, type NextRequest } from 'next/server'
 /**
  * Security proxy (Next.js 16 proxy convention, formerly middleware):
  *  - Sets hardening headers on every response (HSTS, CSP, frame/mime/referrer).
- *  - Nonce-based CSP in production; a relaxed policy in dev so Turbopack HMR
- *    (eval + websockets) keeps working.
+ *  - Static-friendly CSP: script-src 'self' 'unsafe-inline'. A per-request nonce
+ *    can't work here because static-generated pages bake their HTML (and script
+ *    tags) at build time, so a runtime nonce never matches — it blocks Next's
+ *    own scripts and the page renders blank. Sources are still restricted to
+ *    'self' (no third-party script/style hosts); dev also allows eval + ws.
  *  - Optimistic auth gate: redirects unauthenticated requests for /dashboard to
  *    /login based on session-cookie presence. Real enforcement is server-side
  *    via requireSession(); this is only a fast redirect.
@@ -19,35 +22,24 @@ function hasSessionCookie(req: NextRequest): boolean {
   return SESSION_COOKIE_NAMES.some((name) => Boolean(req.cookies.get(name)?.value))
 }
 
-function buildCsp(nonce: string, isProd: boolean): string {
-  if (!isProd) {
-    // Dev: allow eval + ws for HMR.
-    return [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
-      "font-src 'self' data:",
-      "connect-src 'self' ws: wss:",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "frame-ancestors 'none'",
-    ].join('; ')
-  }
-  return [
+function buildCsp(isProd: boolean): string {
+  const directives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    // Dev needs 'unsafe-eval' for Turbopack HMR; prod does not.
+    isProd
+      ? "script-src 'self' 'unsafe-inline'"
+      : "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    "connect-src 'self'",
+    isProd ? "connect-src 'self'" : "connect-src 'self' ws: wss:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    'upgrade-insecure-requests',
-  ].join('; ')
+  ]
+  if (isProd) directives.push('upgrade-insecure-requests')
+  return directives.join('; ')
 }
 
 export default function proxy(req: NextRequest) {
@@ -62,14 +54,8 @@ export default function proxy(req: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-  const csp = buildCsp(nonce, isProd)
-
-  const requestHeaders = new Headers(req.headers)
-  requestHeaders.set('x-nonce', nonce)
-  requestHeaders.set('content-security-policy', csp)
-
-  const res = NextResponse.next({ request: { headers: requestHeaders } })
+  const csp = buildCsp(isProd)
+  const res = NextResponse.next()
 
   res.headers.set('content-security-policy', csp)
   res.headers.set('x-content-type-options', 'nosniff')
