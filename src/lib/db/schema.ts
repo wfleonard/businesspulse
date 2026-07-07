@@ -10,6 +10,7 @@ import {
   index,
   uniqueIndex,
   pgEnum,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core'
 
 /* ------------------------------------------------------------------ */
@@ -191,6 +192,67 @@ export const metricValue = pgTable(
 )
 
 /* ------------------------------------------------------------------ */
+/* General ledger — chart of accounts + transactions. Reports derive   */
+/* from these, adapting to each customer's own accounts.               */
+/* ------------------------------------------------------------------ */
+
+export const accountTypeEnum = pgEnum('account_type', [
+  'asset',
+  'liability',
+  'equity',
+  'income',
+  'expense',
+])
+
+export const ledgerAccount = pgTable(
+  'ledger_account',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    code: text('code'),
+    name: text('name').notNull(),
+    type: accountTypeEnum('type').notNull(),
+    /** free-form classifier: bank, accounts_receivable, cogs, payroll, … */
+    subtype: text('subtype'),
+    parentId: uuid('parent_id').references((): AnyPgColumn => ledgerAccount.id, {
+      onDelete: 'set null',
+    }),
+    currency: text('currency').notNull().default('USD'),
+    isActive: boolean('is_active').notNull().default(true),
+    externalId: text('external_id'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('ledger_account_org_name_idx').on(t.orgId, t.name)]
+)
+
+export const ledgerEntry = pgTable(
+  'ledger_entry',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => ledgerAccount.id, { onDelete: 'cascade' }),
+    date: timestamp('date').notNull(),
+    /** Signed amount in the account's NATURAL direction: positive increases the
+     * account's normal balance (income +revenue, expense +cost, asset +value). */
+    amount: numeric('amount').notNull(),
+    description: text('description'),
+    party: text('party'), // vendor / customer / employee
+    category: text('category'),
+    sourceId: uuid('source_id').references(() => dataSource.id, { onDelete: 'set null' }),
+    externalId: text('external_id'),
+    dimensions: jsonb('dimensions').$type<Record<string, string>>().default({}),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('ledger_entry_org_account_date_idx').on(t.orgId, t.accountId, t.date)]
+)
+
+/* ------------------------------------------------------------------ */
 /* Insights, alerts, alert rules.                                      */
 /* ------------------------------------------------------------------ */
 
@@ -331,6 +393,8 @@ export const schema = {
   dataSource,
   metricDefinition,
   metricValue,
+  ledgerAccount,
+  ledgerEntry,
   insight,
   alertRule,
   alert,

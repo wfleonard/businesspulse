@@ -15,6 +15,13 @@
       "when": 1783371661033,
       "tag": "0001_normal_glorian",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783450361269,
+      "tag": "0002_slow_maggott",
+      "breakpoints": true
     }
   ]
 }

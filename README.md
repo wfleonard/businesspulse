@@ -55,6 +55,7 @@ npm run dev                   # http://localhost:3000
 | `npm run dev:add-source` | Register an API source pointing at the built-in mock endpoint (dev) |
 | `npm run dev:ask -- "your question"` | Run one grounded Ask against the real model using live DB data (needs `ANTHROPIC_API_KEY`) |
 | `npm run dev:add-rules` | Seed demo alert rules for the first org (dev) |
+| `npm run dev:ledger` | Load a sample chart of accounts + transactions (dev) |
 
 ## Project layout
 
@@ -107,6 +108,12 @@ scripts/seed.ts        first-user provisioning
   next steps (title, rationale, priority, source-metric links); accept / dismiss /
   mark-done tracking; regenerate replaces open suggestions; also folded into the
   nightly watch + digest ("Do next").
+- **Financial Reports (done):** a general ledger (chart of accounts + transactions)
+  with generic CSV import (maps QuickBooks/Wave exports; natural-direction amounts).
+  A self-designing report engine derives **Profit & Loss** (month/quarter/year),
+  **Balance Sheet**, **Cash movement**, and **Payroll** from the customer's own
+  accounts. A bridge derives headline KPIs (revenue, expenses, net profit, cash,
+  payroll) into `metric_value` so Ask/Watch/Actions run on real financials.
 - **Stage 6:** SaaS-ization (multi-tenant orgs, billing, RLS, onboarding).
 
 ### Connector config (Stage 2)
