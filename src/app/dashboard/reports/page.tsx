@@ -26,9 +26,10 @@ const GRANS: Granularity[] = ['month', 'quarter', 'year']
 
 type SP = { report?: string; g?: string }
 
-function tab(href: string, active: boolean, label: string) {
+function tab(key: string, href: string, active: boolean, label: string) {
   return (
     <Link
+      key={key}
       href={href}
       className={cn(
         'rounded-md px-3 py-1.5 text-sm',
@@ -57,12 +58,15 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {REPORTS.map((r) => tab(`/dashboard/reports?report=${r.id}&g=${g}`, report === r.id, r.label))}
+        {REPORTS.map((r) =>
+          tab(`r-${r.id}`, `/dashboard/reports?report=${r.id}&g=${g}`, report === r.id, r.label)
+        )}
         {report !== 'balance' && (
           <>
             <span className="mx-2 text-border">|</span>
             {GRANS.map((gran) =>
               tab(
+                `g-${gran}`,
                 `/dashboard/reports?report=${report}&g=${gran}`,
                 g === gran,
                 gran[0].toUpperCase() + gran.slice(1)
