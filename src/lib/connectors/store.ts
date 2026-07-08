@@ -1,7 +1,7 @@
 import 'server-only'
 import { and, eq, desc } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { dataSource } from '@/lib/db/schema'
+import { dataSource, metricValue } from '@/lib/db/schema'
 import { encryptSecret, decryptSecret } from '@/lib/crypto'
 import { apiConnectorConfigSchema, type ApiConnectorConfig } from './config'
 
@@ -123,5 +123,8 @@ export async function updateSyncResult(
 }
 
 export async function deleteSource(orgId: string, id: string): Promise<void> {
+  // metric_value.source_id is ON DELETE SET NULL, which would orphan the rows
+  // this source pulled. Delete them first so removing a source is a clean wipe.
+  await db.delete(metricValue).where(and(eq(metricValue.orgId, orgId), eq(metricValue.sourceId, id)))
   await db.delete(dataSource).where(and(eq(dataSource.orgId, orgId), eq(dataSource.id, id)))
 }

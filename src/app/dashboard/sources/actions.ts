@@ -132,5 +132,7 @@ export async function deleteSourceAction(
   await deleteSource(orgId, id)
   await recordAudit({ orgId, userId, action: 'source.delete', target: id })
   revalidatePath('/dashboard/sources')
-  return { ok: true, message: 'Source deleted.' }
+  revalidatePath('/dashboard/metrics')
+  revalidatePath('/dashboard')
+  return { ok: true, message: 'Source deleted, along with the data it pulled.' }
 }

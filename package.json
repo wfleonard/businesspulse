@@ -18,7 +18,8 @@
     "dev:add-source": "tsx scripts/dev-add-source.ts",
     "dev:ask": "tsx scripts/dev-ask.ts",
     "dev:add-rules": "tsx scripts/dev-add-rules.ts",
-    "dev:ledger": "tsx scripts/dev-ledger.ts"
+    "dev:ledger": "tsx scripts/dev-ledger.ts",
+    "clear:api-data": "tsx scripts/clear-api-data.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
