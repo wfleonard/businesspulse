@@ -1,0 +1,14 @@
+code,name,type,subtype
+1000,Business Checking,Bank,bank
+1100,Accounts Receivable,Accounts Receivable,accounts_receivable
+1500,Office Equipment,Fixed Asset,fixed_asset
+2000,Accounts Payable,Accounts Payable,accounts_payable
+2100,Business Credit Card,Credit Card,credit_card
+3000,Owner's Equity,Equity,
+4000,Sales Revenue,Sales,
+4100,Consulting Income,Income,
+5000,Cost of Goods Sold,Cost of Goods Sold,cogs
+6000,Payroll,Payroll,payroll
+6100,Rent,Expense,
+6200,Software Subscriptions,Expense,
+6300,Marketing,Expense,
