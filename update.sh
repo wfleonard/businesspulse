@@ -14,6 +14,9 @@ echo "==> Pulling latest code"
 git pull --ff-only
 
 echo "==> Applying any new database migrations"
+# Rebuild the migrate image first — it's profile-gated, so `up --build` skips it,
+# and a stale image ships old migration files (silently applies nothing).
+$COMPOSE build migrate
 $COMPOSE --profile tools run --rm migrate
 
 echo "==> Rebuilding and restarting the stack"

@@ -32,6 +32,7 @@ if grep -q '^DATABASE_CA_CERT_FILE=' .env && [ ! -f certs/db-ca.crt ]; then
 fi
 
 echo "==> Applying database migrations"
+$COMPOSE build migrate # profile-gated service isn't rebuilt by `up --build`
 $COMPOSE --profile tools run --rm migrate
 
 if [ -n "${BP_SEED_EMAIL:-}" ] && [ -n "${BP_SEED_PASSWORD:-}" ]; then
