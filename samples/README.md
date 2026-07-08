@@ -1,7 +1,7 @@
 # Sample accounting import files
 
 Two ready-to-import CSVs for the **Accounting** page (a fictional small business,
-Jan–Jun 2026, fully balanced double-entry).
+full-year 2026 Jan–Dec, fully balanced double-entry).
 
 Import **accounts first, then transactions** (transactions reference accounts by name).
 
@@ -22,9 +22,11 @@ Columns: `date`, `account`, `amount`, `description`, `party`.
   all reconcile.
 
 ## Expected results after import
-- Total revenue **$155,000**, total expenses **$100,450**, **net profit $54,550**
-- Balance sheet balances: assets **$107,550** = liabilities **$3,000** +
-  equity **$50,000** + retained earnings **$54,550**
+- Total revenue **$361,500**, total expenses **$222,400**, **net profit $139,100**
+- Balance sheet balances: assets **$195,100** = liabilities **$6,000** +
+  equity **$50,000** + retained earnings **$139,100**
+- 12 monthly periods with growing revenue, a mid-year rent + payroll increase
+  (July), and two equipment purchases (Jan, Oct) — so trends are visible.
 - The KPI bridge derives `net_profit`, `total_revenue`, `total_expenses`,
   `cash_balance`, and `payroll_expense` onto the dashboard.
 

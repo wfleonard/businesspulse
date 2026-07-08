@@ -3,6 +3,8 @@ date,account,amount,description,party
 2026-01-01,Business Checking,50000,Opening owner investment,Owner
 2026-01-08,Office Equipment,4500,Laptops & monitors,TechStore
 2026-01-08,Business Checking,-4500,Laptops & monitors,TechStore
+2026-10-14,Office Equipment,3000,Server & networking gear,TechStore
+2026-10-14,Business Checking,-3000,Server & networking gear,TechStore
 2026-01-15,Sales Revenue,18000,Product sales,Various customers
 2026-01-15,Business Checking,18000,Product sales deposit,Various customers
 2026-01-25,Consulting Income,4000,Consulting engagement,Acme Corp
@@ -87,3 +89,87 @@ date,account,amount,description,party
 2026-06-20,Business Checking,-2500,Ad spend,Google Ads
 2026-06-05,Software Subscriptions,500,SaaS subscriptions,Various
 2026-06-05,Business Credit Card,500,SaaS subscriptions,Various
+2026-07-15,Sales Revenue,24000,Product sales,Various customers
+2026-07-15,Business Checking,24000,Product sales deposit,Various customers
+2026-07-25,Consulting Income,5000,Consulting engagement,Acme Corp
+2026-07-25,Business Checking,5000,Consulting deposit,Acme Corp
+2026-07-10,Cost of Goods Sold,7200,Inventory purchase,Supplier Co
+2026-07-10,Business Checking,-7200,Inventory purchase,Supplier Co
+2026-07-01,Rent,2200,Office rent,Downtown Properties
+2026-07-01,Business Checking,-2200,Office rent,Downtown Properties
+2026-07-31,Payroll,6500,Monthly payroll,Staff
+2026-07-31,Business Checking,-6500,Monthly payroll,Staff
+2026-07-20,Marketing,2400,Ad spend,Google Ads
+2026-07-20,Business Checking,-2400,Ad spend,Google Ads
+2026-07-05,Software Subscriptions,500,SaaS subscriptions,Various
+2026-07-05,Business Credit Card,500,SaaS subscriptions,Various
+2026-08-15,Sales Revenue,26000,Product sales,Various customers
+2026-08-15,Business Checking,26000,Product sales deposit,Various customers
+2026-08-25,Consulting Income,6500,Consulting engagement,Acme Corp
+2026-08-25,Business Checking,6500,Consulting deposit,Acme Corp
+2026-08-10,Cost of Goods Sold,7800,Inventory purchase,Supplier Co
+2026-08-10,Business Checking,-7800,Inventory purchase,Supplier Co
+2026-08-01,Rent,2200,Office rent,Downtown Properties
+2026-08-01,Business Checking,-2200,Office rent,Downtown Properties
+2026-08-31,Payroll,6500,Monthly payroll,Staff
+2026-08-31,Business Checking,-6500,Monthly payroll,Staff
+2026-08-20,Marketing,2600,Ad spend,Google Ads
+2026-08-20,Business Checking,-2600,Ad spend,Google Ads
+2026-08-05,Software Subscriptions,500,SaaS subscriptions,Various
+2026-08-05,Business Credit Card,500,SaaS subscriptions,Various
+2026-09-15,Sales Revenue,27500,Product sales,Various customers
+2026-09-15,Business Checking,27500,Product sales deposit,Various customers
+2026-09-25,Consulting Income,7000,Consulting engagement,Acme Corp
+2026-09-25,Business Checking,7000,Consulting deposit,Acme Corp
+2026-09-10,Cost of Goods Sold,8250,Inventory purchase,Supplier Co
+2026-09-10,Business Checking,-8250,Inventory purchase,Supplier Co
+2026-09-01,Rent,2200,Office rent,Downtown Properties
+2026-09-01,Business Checking,-2200,Office rent,Downtown Properties
+2026-09-30,Payroll,6500,Monthly payroll,Staff
+2026-09-30,Business Checking,-6500,Monthly payroll,Staff
+2026-09-20,Marketing,2500,Ad spend,Google Ads
+2026-09-20,Business Checking,-2500,Ad spend,Google Ads
+2026-09-05,Software Subscriptions,500,SaaS subscriptions,Various
+2026-09-05,Business Credit Card,500,SaaS subscriptions,Various
+2026-10-15,Sales Revenue,29000,Product sales,Various customers
+2026-10-15,Business Checking,29000,Product sales deposit,Various customers
+2026-10-25,Consulting Income,6000,Consulting engagement,Acme Corp
+2026-10-25,Business Checking,6000,Consulting deposit,Acme Corp
+2026-10-10,Cost of Goods Sold,8700,Inventory purchase,Supplier Co
+2026-10-10,Business Checking,-8700,Inventory purchase,Supplier Co
+2026-10-01,Rent,2200,Office rent,Downtown Properties
+2026-10-01,Business Checking,-2200,Office rent,Downtown Properties
+2026-10-31,Payroll,6500,Monthly payroll,Staff
+2026-10-31,Business Checking,-6500,Monthly payroll,Staff
+2026-10-20,Marketing,3000,Ad spend,Google Ads
+2026-10-20,Business Checking,-3000,Ad spend,Google Ads
+2026-10-05,Software Subscriptions,500,SaaS subscriptions,Various
+2026-10-05,Business Credit Card,500,SaaS subscriptions,Various
+2026-11-15,Sales Revenue,28000,Product sales,Various customers
+2026-11-15,Business Checking,28000,Product sales deposit,Various customers
+2026-11-25,Consulting Income,7500,Consulting engagement,Acme Corp
+2026-11-25,Business Checking,7500,Consulting deposit,Acme Corp
+2026-11-10,Cost of Goods Sold,8400,Inventory purchase,Supplier Co
+2026-11-10,Business Checking,-8400,Inventory purchase,Supplier Co
+2026-11-01,Rent,2200,Office rent,Downtown Properties
+2026-11-01,Business Checking,-2200,Office rent,Downtown Properties
+2026-11-30,Payroll,6500,Monthly payroll,Staff
+2026-11-30,Business Checking,-6500,Monthly payroll,Staff
+2026-11-20,Marketing,2800,Ad spend,Google Ads
+2026-11-20,Business Checking,-2800,Ad spend,Google Ads
+2026-11-05,Software Subscriptions,500,SaaS subscriptions,Various
+2026-11-05,Business Credit Card,500,SaaS subscriptions,Various
+2026-12-15,Sales Revenue,32000,Product sales,Various customers
+2026-12-15,Business Checking,32000,Product sales deposit,Various customers
+2026-12-25,Consulting Income,8000,Consulting engagement,Acme Corp
+2026-12-25,Business Checking,8000,Consulting deposit,Acme Corp
+2026-12-10,Cost of Goods Sold,9600,Inventory purchase,Supplier Co
+2026-12-10,Business Checking,-9600,Inventory purchase,Supplier Co
+2026-12-01,Rent,2200,Office rent,Downtown Properties
+2026-12-01,Business Checking,-2200,Office rent,Downtown Properties
+2026-12-31,Payroll,6500,Monthly payroll,Staff
+2026-12-31,Business Checking,-6500,Monthly payroll,Staff
+2026-12-20,Marketing,3500,Ad spend,Google Ads
+2026-12-20,Business Checking,-3500,Ad spend,Google Ads
+2026-12-05,Software Subscriptions,500,SaaS subscriptions,Various
+2026-12-05,Business Credit Card,500,SaaS subscriptions,Various
