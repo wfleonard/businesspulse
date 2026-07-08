@@ -7,8 +7,18 @@ import { recordAudit } from '@/lib/audit'
 import { parseApiConfig } from '@/lib/connectors/config'
 import { createApiSource, deleteSource } from '@/lib/connectors/store'
 import { syncSourceById } from '@/lib/connectors/sync'
+import { fetchEndpoint } from '@/lib/connectors/http'
+import { previewConfigSchema, describeResponse, type ResponseShape } from '@/lib/connectors/preview'
+import { rateLimit } from '@/lib/rate-limit'
 
 export type SourceFormState = { ok: boolean; message?: string; errors?: string[] }
+
+export type PreviewState = {
+  ok: boolean
+  errors?: string[]
+  shape?: ResponseShape
+  endpointPath?: string
+}
 
 const nameSchema = z.string().trim().min(1, 'Name is required').max(120)
 
@@ -38,6 +48,48 @@ export async function createSourceAction(
 
   revalidatePath('/dashboard/sources')
   return { ok: true, message: `Created source “${name.data}”. Run a sync to pull data.` }
+}
+
+/**
+ * Fetch the FIRST endpoint of a config and describe its response shape, so the
+ * user can discover field names/paths before writing mappings. Mappings are
+ * optional here. Rate-limited per org (outbound fetch of a user-supplied URL).
+ */
+export async function previewSourceAction(
+  _prev: PreviewState,
+  formData: FormData
+): Promise<PreviewState> {
+  const { orgId } = await requireOrg()
+
+  const rl = await rateLimit(`preview:${orgId}`, 20, 60)
+  if (!rl.success) {
+    return { ok: false, errors: [`Too many previews — try again in ${rl.resetSeconds}s.`] }
+  }
+
+  let json: unknown
+  try {
+    json = JSON.parse(String(formData.get('config') ?? ''))
+  } catch {
+    return { ok: false, errors: ['Config is not valid JSON'] }
+  }
+
+  const parsed = previewConfigSchema.safeParse(json)
+  if (!parsed.success) {
+    return {
+      ok: false,
+      errors: parsed.error.issues.map((i) => `${i.path.join('.') || 'config'}: ${i.message}`),
+    }
+  }
+
+  const { baseUrl, auth, endpoints } = parsed.data
+  const endpoint = endpoints[0]
+  try {
+    const response = await fetchEndpoint(baseUrl, auth, endpoint, 20_000)
+    const shape = describeResponse(response, endpoint.rowsPath)
+    return { ok: true, shape, endpointPath: endpoint.path }
+  } catch (err) {
+    return { ok: false, errors: [err instanceof Error ? err.message : 'Fetch failed'] }
+  }
 }
 
 export async function syncSourceAction(
