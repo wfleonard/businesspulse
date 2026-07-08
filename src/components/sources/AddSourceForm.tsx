@@ -6,28 +6,30 @@ import { createSourceAction, type SourceFormState } from '@/app/dashboard/source
 
 const initial: SourceFormState = { ok: false }
 
-const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3400'
-
+// A neutral, production-safe example template showing per-row + aggregate
+// (count/sum) mappings and a row filter. Replace with your real API.
 const EXAMPLE = JSON.stringify(
   {
-    baseUrl: base,
-    auth: { type: 'none' },
+    baseUrl: 'https://api.example.com',
+    auth: { type: 'bearer', token: 'YOUR_TOKEN' },
     endpoints: [
       {
-        path: '/api/dev/mock-metrics',
-        rowsPath: 'data',
+        path: '/v1/orders',
+        query: { limit: '1000' },
+        filter: [{ path: 'status', equals: 'completed' }],
         mappings: [
           {
-            metricKey: 'website_leads',
-            valuePath: 'leads',
-            periodStartPath: 'month_start',
-            periodEndPath: 'month_end',
+            metricKey: 'orders_count',
+            aggregate: 'count',
+            periodStartPath: 'created_at',
+            periodGranularity: 'month',
           },
           {
-            metricKey: 'ad_spend',
-            valuePath: 'ad_spend',
-            periodStartPath: 'month_start',
-            periodEndPath: 'month_end',
+            metricKey: 'order_revenue',
+            aggregate: 'sum',
+            valuePath: 'total',
+            periodStartPath: 'created_at',
+            periodGranularity: 'month',
           },
         ],
       },
@@ -61,9 +63,11 @@ export function AddSourceForm() {
       </label>
       <p className="text-xs text-text-secondary">
         <code>auth.type</code>: <code>none</code> · <code>apiKey</code> (header, key) ·{' '}
-        <code>bearer</code> (token) · <code>basic</code> (username, password). Each mapping
-        pulls one metric from each row via <code>valuePath</code> /{' '}
-        <code>periodStartPath</code>. Secrets are encrypted at rest.
+        <code>bearer</code> (token) · <code>basic</code> (username, password). A mapping either
+        reads one value per row (<code>valuePath</code>) or aggregates rows into periods
+        (<code>aggregate</code>: <code>count</code>/<code>sum</code> +{' '}
+        <code>periodGranularity</code>). Optional <code>filter</code> keeps only matching rows.
+        Add multiple <code>endpoints</code> for one API. Secrets are encrypted at rest.
       </p>
       {state.errors && state.errors.length > 0 && (
         <ul className="list-inside list-disc text-sm text-danger">
