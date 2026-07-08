@@ -87,6 +87,80 @@ describe('normalizeEndpoint', () => {
     expect(errors).toHaveLength(2)
   })
 
+  it('aggregate:count buckets rows into periods (e.g. campaigns/month)', () => {
+    const endpoint = ep({
+      path: '/campaigns',
+      mappings: [
+        {
+          metricKey: 'campaigns_sent',
+          aggregate: 'count',
+          periodStartPath: 'sentDate',
+          periodGranularity: 'month',
+        },
+      ],
+    })
+    const resp = [
+      { id: 1, sentDate: '2026-06-02T10:00:00Z' },
+      { id: 2, sentDate: '2026-06-20T10:00:00Z' },
+      { id: 3, sentDate: '2026-07-05T10:00:00Z' },
+      { id: 4, sentDate: null }, // unsent draft — skipped
+    ]
+    const { values, errors } = normalizeEndpoint(resp, endpoint)
+    const byMonth = Object.fromEntries(
+      values.map((v) => [v.periodStart.toISOString().slice(0, 7), v.value])
+    )
+    expect(byMonth['2026-06']).toBe(2)
+    expect(byMonth['2026-07']).toBe(1)
+    expect(errors).toHaveLength(1) // the null date
+    // period end is end-of-month
+    const june = values.find((v) => v.periodStart.toISOString().startsWith('2026-06'))!
+    expect(june.periodEnd.getUTCDate()).toBe(30)
+  })
+
+  it('filter keeps only matching rows before mapping', () => {
+    const endpoint = ep({
+      path: '/campaigns',
+      filter: [{ path: 'status', equals: 'Sent' }],
+      mappings: [
+        { metricKey: 'campaigns_sent', aggregate: 'count', periodStartPath: 'sentDate', periodGranularity: 'month' },
+      ],
+    })
+    const resp = [
+      { status: 'Sent', sentDate: '2026-06-01' },
+      { status: 'Sent', sentDate: '2026-06-10' },
+      { status: 'Draft', sentDate: '0001-01-01' },
+    ]
+    const { values } = normalizeEndpoint(resp, endpoint)
+    expect(values).toHaveLength(1)
+    expect(values[0].value).toBe(2)
+  })
+
+  it('aggregate:sum totals valuePath per period', () => {
+    const endpoint = ep({
+      path: '/orders',
+      mappings: [
+        {
+          metricKey: 'order_revenue',
+          aggregate: 'sum',
+          valuePath: 'total',
+          periodStartPath: 'date',
+          periodGranularity: 'month',
+        },
+      ],
+    })
+    const resp = [
+      { total: 100, date: '2026-06-01' },
+      { total: 250, date: '2026-06-15' },
+      { total: 50, date: '2026-07-01' },
+    ]
+    const { values } = normalizeEndpoint(resp, endpoint)
+    const byMonth = Object.fromEntries(
+      values.map((v) => [v.periodStart.toISOString().slice(0, 7), v.value])
+    )
+    expect(byMonth['2026-06']).toBe(350)
+    expect(byMonth['2026-07']).toBe(50)
+  })
+
   it('reports empty responses', () => {
     const endpoint = ep({
       path: '/m',

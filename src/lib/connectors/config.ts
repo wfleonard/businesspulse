@@ -23,14 +23,27 @@ export const authConfigSchema = z.discriminatedUnion('type', [
 ])
 export type AuthConfig = z.infer<typeof authConfigSchema>
 
-/** One field mapping: how to pull a metric value (and its period) from a row. */
-export const mappingSchema = z.object({
-  metricKey: metricKeySchema,
-  valuePath: z.string().min(1),
-  periodStartPath: z.string().min(1),
-  periodEndPath: z.string().optional(),
-  dimensions: z.record(z.string(), z.string()).optional(),
-})
+/**
+ * One field mapping. Two modes:
+ *  - per-row (default): each row → one metric value at valuePath, dated by periodStartPath.
+ *  - aggregate ('count' | 'sum'): group rows into period buckets (by periodGranularity,
+ *    dated by periodStartPath) and emit one value per bucket — count of rows, or the
+ *    sum of valuePath. Use this to turn a record list into a time series.
+ */
+export const mappingSchema = z
+  .object({
+    metricKey: metricKeySchema,
+    valuePath: z.string().min(1).optional(),
+    periodStartPath: z.string().min(1),
+    periodEndPath: z.string().optional(),
+    aggregate: z.enum(['count', 'sum']).optional(),
+    periodGranularity: z.enum(['day', 'month', 'quarter', 'year']).optional(),
+    dimensions: z.record(z.string(), z.string()).optional(),
+  })
+  .refine((m) => m.aggregate === 'count' || !!m.valuePath, {
+    message: 'valuePath is required unless aggregate is "count"',
+    path: ['valuePath'],
+  })
 export type Mapping = z.infer<typeof mappingSchema>
 
 export const endpointSchema = z.object({
@@ -39,6 +52,8 @@ export const endpointSchema = z.object({
   query: z.record(z.string(), z.string()).optional(),
   /** Path to the array of rows in the response; omit if the body is the array. */
   rowsPath: z.string().optional(),
+  /** Keep only rows where every condition matches (case-insensitive). */
+  filter: z.array(z.object({ path: z.string().min(1), equals: z.string() })).optional(),
   mappings: z.array(mappingSchema).min(1),
 })
 export type EndpointConfig = z.infer<typeof endpointSchema>
