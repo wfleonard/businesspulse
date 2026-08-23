@@ -13,9 +13,11 @@ See the product strategy in [`docs/analytics_saas_strategy.md`](docs/analytics_s
 - **Next.js 16** (App Router, Turbopack), **React 19**, **TypeScript**, **Tailwind 4**
 - **Postgres** via **Drizzle ORM** (managed: Linode Managed DB or Neon)
 - **better-auth** — email+password, Argon2id hashing, secure session cookies
-- **Redis/Valkey** (TCP) — BullMQ queue + cache + rate-limit
+- **Redis/Valkey** (TCP) via **ioredis** — cache + rate-limit
 - **Anthropic Claude** for the Ask / Insights layers (Stage 3+)
 - **Mailtrap** for transactional/alert email (Stage 4)
+
+Background work runs through `CRON_SECRET`-guarded endpoints (`/api/cron/sync`, `/api/cron/watch`) — there is no queue or worker process.
 
 Hosting target: **Linode + Docker Compose**, app box kept stateless, with
 managed Postgres and Redis off-box (scales horizontally behind a NodeBalancer).
@@ -56,12 +58,14 @@ npm run dev                   # http://localhost:3000
 | `npm run dev:ask -- "your question"` | Run one grounded Ask against the real model using live DB data (needs `ANTHROPIC_API_KEY`) |
 | `npm run dev:add-rules` | Seed demo alert rules for the first org (dev) |
 | `npm run dev:ledger` | Load a sample chart of accounts + transactions (dev) |
+| `npm run test:watch` | Jest in watch mode |
+| `npm run clear:api-data` | Remove rows synced from API sources (dev) |
 
 ## Project layout
 
 ```
 src/
-  app/                 routes (/, /login, /dashboard, /api/auth/[...all])
+  app/                 routes, incl. /api/cron/sync and /api/cron/watch
   components/          ui primitives + auth controls
   lib/
     auth.ts            better-auth server (Argon2id, secure cookies)
@@ -72,6 +76,18 @@ src/
     rate-limit.ts      Redis fixed-window limiter
     redis.ts           lazy ioredis client
     audit.ts           audit-log helper
+    env.ts             centralized environment access
+    org.ts / utils.ts  small shared helpers
+    metrics/           metric queries, mutations, CSV import   (Stage 1)
+    connectors/        API connector config, normalize, sync   (Stage 2)
+    ai/                Ask + Actions — prompt, schema, model,
+                       summarize, refs, recommend              (Stage 3, 5)
+    watch/             alert rules, run, digest                (Stage 4)
+    actions/           recommended-action run + store          (Stage 5)
+    ledger/            chart of accounts, CSV import, metrics
+                       bridge                                  (Financial Reports)
+    reports/           P&L / balance sheet / cash / payroll     (Financial Reports)
+    email/             Mailtrap provider
   proxy.ts             security headers (HSTS/CSP/…) + optimistic auth gate
 drizzle/               generated SQL migrations
 scripts/seed.ts        first-user provisioning
