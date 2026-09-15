@@ -36,6 +36,31 @@ describe('rateLimit', () => {
     const r = await rateLimit('k', 5, 60)
     expect(r.success).toBe(true)
   })
+
+  it('fails closed when Redis throws and failClosed is set', async () => {
+    mockedGetRedis.mockImplementation(() => {
+      throw new Error('down')
+    })
+    const r = await rateLimit('k', 5, 60, { failClosed: true })
+    expect(r.success).toBe(false)
+    expect(r.remaining).toBe(0)
+    expect(r.unavailable).toBe(true)
+  })
+
+  it('treats a Redis that never answers as down instead of hanging', async () => {
+    jest.useFakeTimers()
+    try {
+      mockedGetRedis.mockReturnValue({
+        incr: jest.fn(() => new Promise<number>(() => {})),
+        expire: jest.fn(),
+      } as unknown as ReturnType<typeof getRedis>)
+      const pending = rateLimit('k', 5, 60, { failClosed: true })
+      await jest.advanceTimersByTimeAsync(2000)
+      await expect(pending).resolves.toMatchObject({ success: false })
+    } finally {
+      jest.useRealTimers()
+    }
+  })
 })
 
 describe('clientIp', () => {

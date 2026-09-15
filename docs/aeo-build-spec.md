@@ -69,7 +69,7 @@ analytics modules and their database tables untouched in v1 to avoid migration c
 delete them in a later cleanup.
 
 **SaxonAEO keeps client work only** — business plan, client deliverables, client profiles,
-and local audit data (ECU, iCA). `panel/` here is the only copy of the engine;
+and local audit data. `panel/` here is the only copy of the engine;
 `SaxonAEO/visibility-panel/panel` is a wrapper that runs it against SaxonAEO's own data
 (decided 2026-09-15, Section 16).
 
@@ -403,10 +403,16 @@ In order, stopping at the first failure:
 ### 8.3 Verify — `GET /check/verify?token=…`
 
 1. Hash the token; find an unexpired, unverified request. Mark verified.
-2. **Reuse check:** if a `done` snapshot run for this domain exists from the last 30
-   days, point the request at it and email that report link. No new spend.
+2. **Reuse check:** if a snapshot run for this domain is `queued`, `running`, or `done`
+   within the last 30 days, point the request at it; if it's done, email that report
+   link. No new spend. A per-domain advisory lock stops two simultaneous verifications
+   from both creating a run.
 3. Otherwise create an `aeo_run` (`queued`) and link it.
 4. Show a "your report is being prepared" page — typically a few minutes.
+
+Opening the link again shows the same page for the same run and changes nothing. Email
+security scanners often open links before the person does, so a second visit must not
+read as an error or start another run.
 
 ### 8.4 Report — `/report/{publicId}`
 
@@ -521,7 +527,8 @@ PERPLEXITY_API_KEY=CHANGE_ME
 # OPENAI_API_KEY=CHANGE_ME      # full-audit tier, later
 
 # --- Cloudflare Turnstile ---
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=CHANGE_ME
+# Server-read at request time and passed to the form, so no rebuild to change it
+TURNSTILE_SITE_KEY=CHANGE_ME
 TURNSTILE_SECRET_KEY=CHANGE_ME
 
 # --- AEO controls ---

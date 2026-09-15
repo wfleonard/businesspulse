@@ -43,3 +43,13 @@ export function stateInfo(code: string): StateInfo | undefined {
     permitAgency: PERMIT_AGENCIES[key] ?? `${name} Department of Transportation`,
   }
 }
+
+/** Every accepted state code. */
+export const STATE_CODES: readonly string[] = Object.keys(NAMES)
+
+/** States sorted by name, for the request form. */
+export function stateOptions(): { code: string; name: string }[] {
+  return STATE_CODES.map((code) => ({ code, name: NAMES[code] })).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )
+}

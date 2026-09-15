@@ -22,17 +22,22 @@ function hasSessionCookie(req: NextRequest): boolean {
   return SESSION_COOKIE_NAMES.some((name) => Boolean(req.cookies.get(name)?.value))
 }
 
+// Cloudflare Turnstile: the bot check on the public snapshot form loads a script
+// and renders its challenge in an iframe from this origin.
+const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
+
 function buildCsp(isProd: boolean): string {
   const directives = [
     "default-src 'self'",
     // Dev needs 'unsafe-eval' for Turbopack HMR; prod does not.
     isProd
-      ? "script-src 'self' 'unsafe-inline'"
-      : "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      ? `script-src 'self' 'unsafe-inline' ${TURNSTILE_ORIGIN}`
+      : `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${TURNSTILE_ORIGIN}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    isProd ? "connect-src 'self'" : "connect-src 'self' ws: wss:",
+    isProd ? `connect-src 'self' ${TURNSTILE_ORIGIN}` : `connect-src 'self' ws: wss: ${TURNSTILE_ORIGIN}`,
+    `frame-src ${TURNSTILE_ORIGIN}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
