@@ -18,29 +18,8 @@ export default async function DashboardLayout({
               BusinessPulse
             </Link>
             <nav className="flex items-center gap-4 text-sm text-text-secondary">
-              <Link href="/dashboard" className="hover:text-dark">
-                Pulse
-              </Link>
-              <Link href="/dashboard/ask" className="hover:text-dark">
-                Ask
-              </Link>
-              <Link href="/dashboard/alerts" className="hover:text-dark">
-                Alerts
-              </Link>
-              <Link href="/dashboard/actions" className="hover:text-dark">
-                Actions
-              </Link>
-              <Link href="/dashboard/reports" className="hover:text-dark">
-                Reports
-              </Link>
-              <Link href="/dashboard/accounting" className="hover:text-dark">
-                Accounting
-              </Link>
-              <Link href="/dashboard/metrics" className="hover:text-dark">
-                Metrics
-              </Link>
-              <Link href="/dashboard/sources" className="hover:text-dark">
-                Sources
+              <Link href="/dashboard/aeo" className="hover:text-dark">
+                Leads
               </Link>
             </nav>
           </div>
