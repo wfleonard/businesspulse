@@ -36,6 +36,17 @@ const ROOT = __DIR__;
 define(__NAMESPACE__ . '\PANEL_HOME', rtrim((string) (getenv('PANEL_HOME') ?: ROOT), '/'));
 define(__NAMESPACE__ . '\DB_PATH', PANEL_HOME . '/data/panel.sqlite');
 
+/**
+ * Tries per query, including the first. Perplexity's rate limit outlasts a short
+ * backoff: at 3 tries (retries after 6s and 12s) a live 20-question snapshot
+ * lost 13 answers to HTTP 429.
+ *
+ * Top-level constants exist only once their line has run, so this must stay
+ * above the command dispatch below; defined next to runPanel() it was undefined
+ * when `job` retried and crashed the panel.
+ */
+const MAX_ATTEMPTS = 5;
+
 // ---------------------------------------------------------------- arg parsing
 
 $argvCopy = $argv;
@@ -479,8 +490,9 @@ default:
 
 /**
  * Drives the panel with curl_multi so a 116-query run takes minutes, not an hour.
- * Retries genuinely transient 429/5xx twice with backoff — over a full panel you
- * will hit both — while failing fast on permanent errors (see above).
+ * Retries genuinely transient 429/5xx up to four times with growing backoff —
+ * over a full panel you will hit both — while failing fast on permanent errors
+ * (see above).
  *
  * Every finished query — answered or failed — is handed to $onResult as one
  * normalized row. The runner owns no storage: `run` and `retry` save rows to
@@ -540,13 +552,14 @@ function runPanel(
             if (!$ctx) { continue; }
             $item = $ctx['item'];
 
-            // Transient failure -> back off and requeue (max 3 attempts).
+            // Transient failure -> back off and requeue (up to MAX_ATTEMPTS tries).
             // But a 429 can mean two very different things: "slow down" (retry)
             // or "you are out of credits" (retrying just wastes 20 minutes).
             $transient = ($curlNo !== CURLE_OK || $http === 429 || $http >= 500)
                        && !Retry::isPermanentFailure($body);
-            if ($transient && $ctx['attempt'] < 3) {
-                $wait = 2 ** $ctx['attempt'] * 3;   // 6s, 12s
+            if ($transient && $ctx['attempt'] < MAX_ATTEMPTS) {
+                // 6s, 12s, 24s, 48s, plus jitter so throttled requests don't all return at once.
+                $wait = 2 ** $ctx['attempt'] * 3 + random_int(0, 3);
                 $pending[] = [time() + $wait, $item, $ctx['attempt'] + 1];
                 printf("  [retry %ds] %s\n", $wait, mb_strimwidth($item['q'], 0, 50, '…'));
                 continue;

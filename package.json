@@ -15,6 +15,7 @@
     "db:push": "drizzle-kit push",
     "seed": "tsx scripts/seed.ts",
     "worker": "node --env-file-if-exists=.env.local --import tsx src/worker/index.ts",
+    "aeo:panels": "tsx scripts/aeo-panels.ts",
     "sample": "tsx scripts/sample-data.ts",
     "dev:add-source": "tsx scripts/dev-add-source.ts",
     "dev:ask": "tsx scripts/dev-ask.ts",

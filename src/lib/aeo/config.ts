@@ -18,6 +18,8 @@ export type WorkerConfig = {
   maxAttempts: number
   snapshotQuestions: number
   concurrency: number
+  /** Claude model that writes generated panels. */
+  panelModel: string
   phpBin: string
   panelScript: string
   workDir: string
@@ -50,7 +52,9 @@ export function workerConfig(env: Env = process.env, cwd: string = process.cwd()
     jobTimeoutSeconds: wholePositive(env, 'AEO_JOB_TIMEOUT_SECONDS', 600),
     maxAttempts: wholePositive(env, 'AEO_MAX_ATTEMPTS', 3),
     snapshotQuestions: wholePositive(env, 'AEO_SNAPSHOT_QUESTIONS', 20),
-    concurrency: Math.min(10, wholePositive(env, 'AEO_PANEL_CONCURRENCY', 3)),
+    // Perplexity rate-limits readily; 3 at once lost 13 of 20 answers in a live snapshot.
+    concurrency: Math.min(10, wholePositive(env, 'AEO_PANEL_CONCURRENCY', 2)),
+    panelModel: env.AEO_PANEL_MODEL?.trim() || 'claude-sonnet-5',
     phpBin: env.AEO_PHP_BIN?.trim() || 'php',
     panelScript: env.AEO_PANEL_SCRIPT?.trim() || path.join(cwd, 'panel', 'panel.php'),
     workDir: env.AEO_WORK_DIR?.trim() || path.join(os.tmpdir(), 'aeo-worker'),

@@ -43,6 +43,13 @@
       "when": 1789498920552,
       "tag": "0005_organic_baron_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789500080972,
+      "tag": "0006_lethal_susan_delgado",
+      "breakpoints": true
     }
   ]
 }

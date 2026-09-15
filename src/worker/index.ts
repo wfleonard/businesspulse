@@ -22,17 +22,21 @@ import { closeDb } from '@/lib/db'
 import { workerConfig, type WorkerConfig } from '@/lib/aeo/config'
 import { buildJob, PanelAbortedError, PanelExitError, runPanelJob } from '@/lib/aeo/job'
 import { notifyRunFailed, sendPendingReportEmails } from '@/lib/aeo/notify'
+import { decideOutcome } from '@/lib/aeo/outcome'
 import { PermanentRunError, planRun } from '@/lib/aeo/plan'
 import {
+  answeredQueries,
   claimNextRun,
   completeRun,
   failAttempt,
   heartbeat,
   LeaseLostError,
   releaseRun,
+  saveProgress,
   spentTodayUsd,
   sweepAbandoned,
   type ClaimedRun,
+  type PanelResultRow,
 } from '@/lib/aeo/queue'
 
 const SPEND_CAP_WAIT_MS = 10 * 60 * 1000
@@ -94,49 +98,70 @@ async function processRun(run: ClaimedRun, config: WorkerConfig, shutdown: Abort
   try {
     const questionCount =
       run.tier === 'full' ? Number.POSITIVE_INFINITY : config.snapshotQuestions
-    const plan = await planRun(run, questionCount)
+    const plan = await planRun(run, questionCount, { panelModel: config.panelModel })
+
+    // A retried run asks only the questions earlier attempts didn't get answers for.
+    const planQueries = plan.questions.map((q) => q.q)
+    const alreadyAnswered = await answeredQueries(run.id)
+    const toAsk = plan.questions.filter((q) => !alreadyAnswered.has(q.q))
 
     log('run_started', {
       run: run.id,
       attempt: run.attempts,
       domain: run.domain,
       questions: plan.questions.length,
+      asking: toAsk.length,
       engines: run.engines,
     })
 
-    const result = await runPanelJob({
-      job: buildJob(plan, run.engines, config.concurrency),
-      runId: run.id,
-      phpBin: config.phpBin,
-      panelScript: config.panelScript,
-      workDir: config.workDir,
-      timeoutMs: config.jobTimeoutSeconds * 1000,
-      signal: job.signal,
-    })
-    cost = result.totals.cost_usd
-
-    // A run with no answers at all (e.g. a provider outage) is retried, not reported.
-    if (result.totals.answers === 0) {
-      const firstError = result.results.find((row) => row.error)?.error ?? 'no answers'
-      const message = `every question failed: ${firstError}`
-      const status = await failAttempt(run, message, {
-        costUsd: cost,
-        maxAttempts: config.maxAttempts,
+    let rows: PanelResultRow[] = []
+    if (toAsk.length > 0) {
+      const result = await runPanelJob({
+        job: buildJob({ ...plan, questions: toAsk }, run.engines, config.concurrency),
+        runId: run.id,
+        phpBin: config.phpBin,
+        panelScript: config.panelScript,
+        workDir: config.workDir,
+        timeoutMs: config.jobTimeoutSeconds * 1000,
+        signal: job.signal,
       })
-      log('run_attempt_failed', { run: run.id, status, reason: 'no answers', cost })
-      if (status === 'failed') await alertRunFailed(run.id, message)
+      rows = result.results
+      cost = result.totals.cost_usd
+    }
+
+    const answered = new Set(planQueries.filter((q) => alreadyAnswered.has(q)))
+    for (const row of rows) if (!row.error) answered.add(row.query)
+    const outcome = decideOutcome({
+      total: plan.questions.length,
+      answered: answered.size,
+      attempt: run.attempts,
+      maxAttempts: config.maxAttempts,
+    })
+
+    if (outcome === 'complete') {
+      const totals = await completeRun(run, rows, cost, { panelVersion: plan.panelVersion, planQueries })
+      log('run_done', {
+        run: run.id,
+        questions: plan.questions.length,
+        answered: totals.questionCount,
+        cited: totals.citedCount,
+        cost,
+      })
       return
     }
 
-    await completeRun(run, result, plan.panelVersion)
-    log('run_done', {
-      run: run.id,
-      questions: result.totals.questions,
-      answers: result.totals.answers,
-      errors: result.totals.errors,
-      cited: result.totals.cited_questions,
-      cost,
+    // Keep what was answered, so the next attempt only asks what's missing.
+    await saveProgress(run, rows, cost, planQueries)
+    cost = 0
+    const missing = plan.questions.length - answered.size
+    const firstError = rows.find((row) => row.error)?.error ?? 'no answer'
+    const message = `${missing} of ${plan.questions.length} questions unanswered: ${firstError}`
+    const status = await failAttempt(run, message, {
+      permanent: outcome === 'fail',
+      maxAttempts: config.maxAttempts,
     })
+    log('run_attempt_failed', { run: run.id, status, answered: answered.size, missing, error: firstError })
+    if (status === 'failed') await alertRunFailed(run.id, message)
   } catch (err) {
     if (err instanceof PanelAbortedError && shutdown.aborted) {
       await releaseRun(run)

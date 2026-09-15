@@ -132,65 +132,120 @@ export async function sweepAbandoned(options: {
   return (result.rows as Row[]).map((row) => String(row.id))
 }
 
+export type PanelResultRow = PanelResult['results'][number]
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+async function lockRun(tx: Tx, run: ClaimedRun): Promise<void> {
+  const locked = await tx.execute(sql`
+    select id from aeo_run
+    where id = ${run.id} and lease_token = ${run.leaseToken} and status = 'running'
+    for update
+  `)
+  if (locked.rows.length === 0) throw new LeaseLostError(run.id)
+}
+
 /**
- * Store results and mark the run done, atomically.
+ * Replace a run's errored rows, and rows for questions no longer in its plan,
+ * with this attempt's rows. Answers saved by earlier attempts stay.
+ */
+async function replaceRows(tx: Tx, runId: string, rows: PanelResultRow[], planQueries: string[]): Promise<void> {
+  const inPlan = planQueries.length
+    ? sql`query in (${sql.join(planQueries.map((q) => sql`${q}`), sql`, `)})`
+    : sql`false`
+  await tx.execute(sql`delete from aeo_result where run_id = ${runId} and (error is not null or not ${inPlan})`)
+
+  if (rows.length === 0) return
+  await tx.insert(aeoResult).values(
+    rows.map((row) => ({
+      runId,
+      category: row.category,
+      query: row.query,
+      engine: row.engine,
+      model: row.model,
+      ownCited: row.own_cited,
+      nameMentioned: row.name_mentioned,
+      directoryOnly: row.directory_only,
+      ownRank: row.own_rank,
+      rivals: row.rivals,
+      sources: row.sources,
+      answer: row.answer,
+      inputTokens: row.input_tokens,
+      outputTokens: row.output_tokens,
+      searches: row.searches,
+      costUsd: String(row.cost_usd),
+      error: row.error,
+    }))
+  )
+}
+
+/** Questions this run already has answers for, from earlier attempts. */
+export async function answeredQueries(runId: string): Promise<Set<string>> {
+  const result = await db.execute(sql`
+    select distinct query from aeo_result where run_id = ${runId} and error is null
+  `)
+  return new Set((result.rows as Row[]).map((row) => String(row.query)))
+}
+
+/**
+ * Keep this attempt's answers (and its cost) before the run goes back to the
+ * queue, so the next attempt only asks the questions still missing.
+ */
+export async function saveProgress(
+  run: ClaimedRun,
+  rows: PanelResultRow[],
+  costUsd: number,
+  planQueries: string[]
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    await lockRun(tx, run)
+    await replaceRows(tx, run.id, rows.filter((row) => !row.error), planQueries)
+    await tx.execute(sql`update aeo_run set cost_usd = cost_usd + ${costUsd}::numeric where id = ${run.id}`)
+  })
+}
+
+/**
+ * Store this attempt's rows and mark the run done, atomically.
  *
- * Existing results are deleted first, so a run completed on a later attempt never
- * holds two copies of a question. Cost is added, not replaced: money spent on
- * earlier failed attempts was really spent.
+ * Answers from earlier attempts are kept; errored rows are replaced. Totals are
+ * counted from what's stored, so they cover every attempt, and count only
+ * answered questions: a question AI search never answered isn't a miss. Cost is
+ * added, not replaced, because earlier attempts' spend was real.
  */
 export async function completeRun(
   run: ClaimedRun,
-  result: PanelResult,
-  panelVersion: number | null
-): Promise<void> {
-  await db.transaction(async (tx) => {
-    const locked = await tx.execute(sql`
-      select id from aeo_run
-      where id = ${run.id} and lease_token = ${run.leaseToken} and status = 'running'
-      for update
+  rows: PanelResultRow[],
+  costUsd: number,
+  options: { panelVersion: number | null; planQueries: string[] }
+): Promise<{ questionCount: number; citedCount: number }> {
+  return db.transaction(async (tx) => {
+    await lockRun(tx, run)
+    await replaceRows(tx, run.id, rows, options.planQueries)
+
+    const counted = await tx.execute(sql`
+      select count(distinct query) filter (where error is null)::int as answered,
+             count(distinct query) filter (where error is null and own_cited)::int as cited
+      from aeo_result where run_id = ${run.id}
     `)
-    if (locked.rows.length === 0) throw new LeaseLostError(run.id)
-
-    await tx.execute(sql`delete from aeo_result where run_id = ${run.id}`)
-
-    if (result.results.length > 0) {
-      await tx.insert(aeoResult).values(
-        result.results.map((row) => ({
-          runId: run.id,
-          category: row.category,
-          query: row.query,
-          engine: row.engine,
-          model: row.model,
-          ownCited: row.own_cited,
-          nameMentioned: row.name_mentioned,
-          directoryOnly: row.directory_only,
-          ownRank: row.own_rank,
-          rivals: row.rivals,
-          sources: row.sources,
-          answer: row.answer,
-          inputTokens: row.input_tokens,
-          outputTokens: row.output_tokens,
-          searches: row.searches,
-          costUsd: String(row.cost_usd),
-          error: row.error,
-        }))
-      )
-    }
+    const totals = counted.rows[0] as Row
+    const questionCount = Number(totals.answered)
+    const citedCount = Number(totals.cited)
 
     await tx.execute(sql`
       update aeo_run
       set status = 'done',
-          question_count = ${result.totals.questions}::int,
-          cited_count = ${result.totals.cited_questions}::int,
-          cost_usd = cost_usd + ${result.totals.cost_usd}::numeric,
-          panel_version = ${panelVersion}::int,
+          question_count = ${questionCount}::int,
+          cited_count = ${citedCount}::int,
+          cost_usd = cost_usd + ${costUsd}::numeric,
+          panel_version = ${options.panelVersion}::int,
           error = null,
           lease_token = null,
           locked_at = null,
           finished_at = now()
       where id = ${run.id}
     `)
+
+    return { questionCount, citedCount }
   })
 }
 

@@ -392,6 +392,17 @@ export const auditLog = pgTable(
 export type AeoSource = { url: string; title: string; cited: boolean }
 export type AeoRival = { host: string; title: string; cited: boolean }
 
+/** Questions generated for one run when no canned panel fits the business. */
+export type AeoGeneratedPanel = {
+  questions: { c: string; q: string }[]
+  referenceDomains: string[]
+  model: string
+  /** False when the homepage couldn't be read and questions came from the form alone. */
+  siteRead: boolean
+  costUsd: number
+  generatedAt: string
+}
+
 export const aeoLeadStatusEnum = pgEnum('aeo_lead_status', [
   'new',
   'contacted',
@@ -434,6 +445,8 @@ export const aeoRun = pgTable(
     panelSource: aeoPanelSourceEnum('panel_source').notNull(),
     panelSlug: text('panel_slug'),
     panelVersion: integer('panel_version'),
+    /** Generated runs only. Stored so a retry asks the same questions without paying to generate them again. */
+    generatedPanel: jsonb('generated_panel').$type<AeoGeneratedPanel>(),
     status: aeoRunStatusEnum('status').notNull().default('queued'),
     attempts: integer('attempts').notNull().default(0),
     /**

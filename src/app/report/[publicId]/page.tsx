@@ -62,7 +62,9 @@ function callToAction(): string | null {
 function Report({ report, summary }: { report: LoadedReport; summary: ReportSummary }) {
   const engineNames = report.engines.map((e) => ENGINE_NAMES[e.engine] ?? e.engine)
   const assistants = engineNames.length ? engineNames.join(', ') : 'AI search'
-  const remaining = Math.max(0, summary.questionCount - summary.examples.length)
+  // Scores count only answered questions: one AI search never answered isn't a miss.
+  const remaining = Math.max(0, summary.answeredCount - summary.examples.length)
+  const unanswered = summary.questionCount - summary.answeredCount
   const cta = callToAction()
 
   return (
@@ -77,12 +79,19 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
       <Card className="mt-8">
         <p className="text-sm font-medium text-text-secondary">Your website was cited on</p>
         <p className="mt-1 text-4xl font-bold text-dark">
-          {summary.citedCount} <span className="text-2xl font-semibold text-text-secondary">of {summary.questionCount} questions</span>
+          {summary.citedCount} <span className="text-2xl font-semibold text-text-secondary">of {summary.answeredCount} questions</span>
         </p>
         <p className="mt-3 text-sm text-dark">{scoreLine(summary, report.domain)}</p>
         {summary.namedCount > 0 && (
           <p className="mt-1 text-sm text-text-secondary">
-            On {summary.namedCount} more, the answer named your business but didn&apos;t link to your site.
+            {`On ${summary.namedCount} more, the answer named your business but didn't link to your site.`}
+          </p>
+        )}
+        {unanswered > 0 && (
+          <p className="mt-1 text-sm text-text-secondary">
+            {unanswered === 1
+              ? "1 more question couldn't be checked because AI search didn't answer it, so it isn't counted."
+              : `${unanswered} more questions couldn't be checked because AI search didn't answer them, so they aren't counted.`}
           </p>
         )}
       </Card>

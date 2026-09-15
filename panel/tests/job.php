@@ -157,6 +157,31 @@ exec("$php $panel job --in=" . escapeshellarg("$tmpDir/invalid-job.json")
 $check('invalid job file exits 2 before any API call', $code2, 2);
 $check('invalid job file writes no result', is_file("$tmpDir/r.json"), false);
 
+// The retry path must not crash. A constant defined after the command dispatch
+// was undefined when `job` hit its first transient failure, killing the panel
+// with a fatal error. Point Perplexity at a closed local port so the first
+// request fails instantly and the runner goes straight to its retry check; a
+// healthy panel is then waiting out its backoff, not dead.
+file_put_contents("$tmpDir/retry-job.json", json_encode($valid));
+$proc = proc_open(
+    [PHP_BINARY, "$root/panel.php", 'job', "--in=$tmpDir/retry-job.json", "--out=$tmpDir/retry-result.json"],
+    [1 => ['file', "$tmpDir/retry.out", 'w'], 2 => ['file', "$tmpDir/retry.err", 'w']],
+    $pipes,
+    null,
+    ['PERPLEXITY_API_KEY' => 'test-key-not-real', 'PANEL_PERPLEXITY_ENDPOINT' => 'http://127.0.0.1:9/', 'PATH' => getenv('PATH') ?: '']
+);
+$alive = true;
+$exitCode = null;
+for ($i = 0; $i < 20; $i++) {
+    usleep(100_000);
+    $status = proc_get_status($proc);
+    if (!$status['running']) { $alive = false; $exitCode = $status['exitcode']; break; }
+}
+if ($alive) { proc_terminate($proc); }
+proc_close($proc);
+$stderr = (string) @file_get_contents("$tmpDir/retry.err");
+$check('first transient failure does not crash the runner', $alive || ($exitCode !== 255 && !str_contains($stderr, 'Fatal error')), true);
+
 // ---------------------------------------------------------------------------
 $it = new \RecursiveIteratorIterator(
     new \RecursiveDirectoryIterator($tmpDir, \FilesystemIterator::SKIP_DOTS),

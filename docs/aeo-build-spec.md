@@ -378,6 +378,24 @@ For "Something else":
 
 The report labels generated panels as lower confidence.
 
+As built (`src/lib/aeo/generate.ts`, `plan.ts`):
+
+- The panel is stored on `aeo_run.generated_panel` with its cost, so a retry asks the same
+  questions without paying to generate them again. Generation cost is added to the run
+  immediately, including for a failed generation, so it counts toward the daily cap.
+- A site that can't be read (down, blocked by the guard, not HTML) doesn't fail the run:
+  questions are generated from the form fields alone and `siteRead` is false.
+- Output is schema-constrained, then filtered in code: questions naming the business, its
+  domain, or a URL are dropped, as are duplicates. Fewer than 12 usable questions is an
+  error, retried like any other attempt.
+- Generated runs score against a common directory list (Yelp, BBB, Angi, …) plus the
+  model's reference domains and a common reference list.
+- Model: `AEO_PANEL_MODEL`, default `claude-sonnet-5`.
+
+Canned panels live in `src/lib/aeo/panels/` and are written to `aeo_panel` by
+`npm run aeo:panels`, which bumps `version` whenever a panel's content changes. Production:
+`docker compose -f docker-compose.prod.yml --profile tools run --rm migrate npm run aeo:panels`.
+
 Admin view shows a count of generated runs per stated service, so a vertical with ~10
 submissions can be promoted to a canned panel.
 
@@ -490,6 +508,12 @@ request forgery:
   (e.g. `10/8`, `172.16/12`, `192.168/16`, `127/8`, `169.254/16`, `::1`, `fc00::/7`)
 - Re-check on every redirect; maximum 3 redirects
 - 10-second timeout, 2 MB response cap, `text/html` only
+
+As built (`src/lib/aeo/site.ts`): addresses are checked inside the connection's DNS lookup,
+so an answer that changes between check and connect (DNS rebinding) can't get through; a
+host resolving to any blocked address is refused even if it also has public ones. IP-literal
+hosts, credentials in URLs, and non-standard ports are refused too, and IPv4-mapped, NAT64,
+6to4, and Teredo IPv6 ranges are blocked because they can wrap a private IPv4 address.
 
 ### 9.5 Tokens and IDs
 

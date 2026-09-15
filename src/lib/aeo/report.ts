@@ -1,6 +1,7 @@
 import { asc, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { aeoPanel, aeoRequest, aeoResult, aeoRun, type AeoRival, type AeoSource } from '@/lib/db/schema'
+import { COMMON_DIRECTORY_DOMAINS } from './panels/common'
 
 /**
  * The public snapshot report: what a visitor sees at /report/{publicId}.
@@ -57,6 +58,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   'service-geo': 'Hiring near you',
   cost: 'Cost',
   permits: 'Permits',
+  comparison: 'Comparing options',
+  technical: 'How it works',
+  application: 'Specific jobs',
+  'vendor-selection': 'Choosing a provider',
+  problem: 'Problems and fixes',
+  'buyer-role': 'Who is buying',
 }
 
 /** Categories with a fixed position; everything else follows alphabetically. */
@@ -280,5 +287,8 @@ export async function loadReport(publicId: string): Promise<LoadedReport | null>
 
   const engines = [...new Map(results.map((r) => [`${r.engine}|${r.model}`, { engine: r.engine, model: r.model }])).values()]
 
-  return { ...base, engines, summary: buildReport(results, panels[0]?.directoryDomains ?? []) }
+  // Generated runs have no panel row; they were scored against the common lists.
+  const directoryDomains =
+    run.panelSource === 'generated' ? COMMON_DIRECTORY_DOMAINS : (panels[0]?.directoryDomains ?? [])
+  return { ...base, engines, summary: buildReport(results, directoryDomains) }
 }
