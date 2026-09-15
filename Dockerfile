@@ -37,3 +37,19 @@ COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]
+
+# --- worker: AEO snapshot worker (Node + the PHP Visibility Panel) ---
+# Based on `build` for its dependencies and tsx. Both PHP test suites run here:
+# Debian ships PHP 8.2 and the panel was developed on 8.5, so an incompatibility
+# fails the image build instead of the first real run. php-sqlite3 is only for
+# the smoke suite; job mode never touches SQLite.
+FROM build AS worker
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends php-cli php-curl php-mbstring php-sqlite3 \
+  && rm -rf /var/lib/apt/lists/*
+RUN php panel/tests/smoke.php && php panel/tests/job.php
+ENV NODE_ENV=production
+RUN groupadd --system --gid 1002 aeo \
+  && useradd --system --uid 1002 --gid aeo aeo
+USER aeo
+CMD ["node", "--import", "tsx", "src/worker/index.ts"]

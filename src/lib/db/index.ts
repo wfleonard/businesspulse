@@ -69,6 +69,17 @@ export function getDb() {
 }
 
 /**
+ * Close the pool. Only long-lived standalone processes need this — the AEO
+ * worker calls it on shutdown so the process can exit. Request handlers never do.
+ */
+export async function closeDb(): Promise<void> {
+  const current = pool
+  pool = undefined
+  dbInstance = undefined
+  await current?.end()
+}
+
+/**
  * Proxy so callers can `import { db } from '@/lib/db'` and use it like a normal
  * Drizzle instance while the underlying pool is still created lazily.
  */

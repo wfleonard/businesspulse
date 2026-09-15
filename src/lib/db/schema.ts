@@ -436,7 +436,14 @@ export const aeoRun = pgTable(
     panelVersion: integer('panel_version'),
     status: aeoRunStatusEnum('status').notNull().default('queued'),
     attempts: integer('attempts').notNull().default(0),
+    /**
+     * Running: last heartbeat; the run is reclaimable once this is older than the
+     * lease. Queued after a failed attempt: when that attempt ended, which gates
+     * the retry delay.
+     */
     lockedAt: timestamp('locked_at'),
+    /** Set on claim. Every write back to the run requires it, so a worker that lost its lease can't clobber the one that took over. */
+    leaseToken: uuid('lease_token'),
     questionCount: integer('question_count').notNull().default(0),
     /** Questions where the business's own site was cited by at least one engine. */
     citedCount: integer('cited_count').notNull().default(0),

@@ -25,6 +25,19 @@ services:
     expose:
       - '3000' # internal only — Caddy proxies to it; never published to the host
 
+  # AEO snapshot worker: claims queued runs from Postgres and runs the PHP
+  # Visibility Panel. Talks only to Postgres and the AI APIs — no ports, no Valkey.
+  worker:
+    build:
+      context: .
+      target: worker
+    restart: unless-stopped
+    init: true # reaps PHP child processes and forwards SIGTERM for a clean release
+    stop_grace_period: 30s
+    env_file: .env
+    volumes:
+      - ./certs:/app/certs:ro # DB CA cert for verify-full
+
   valkey:
     image: valkey/valkey:8-alpine
     restart: unless-stopped

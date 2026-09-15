@@ -1,0 +1,1 @@
+ALTER TABLE "aeo_run" ADD COLUMN "lease_token" uuid;

@@ -25,8 +25,16 @@ spl_autoload_register(static function (string $class): void {
     if (is_file($file)) { require $file; }
 });
 
-const ROOT   = __DIR__;
-const DB_PATH = ROOT . '/data/panel.sqlite';
+const ROOT = __DIR__;
+
+/**
+ * Where client profiles (clients/), runs (data/) and reports (out/) live.
+ * Defaults to this folder. SaxonAEO's ./panel wrapper points it at
+ * SaxonAEO/visibility-panel, so local audits keep their own data while the
+ * engine code lives only here.
+ */
+define(__NAMESPACE__ . '\PANEL_HOME', rtrim((string) (getenv('PANEL_HOME') ?: ROOT), '/'));
+define(__NAMESPACE__ . '\DB_PATH', PANEL_HOME . '/data/panel.sqlite');
 
 // ---------------------------------------------------------------- arg parsing
 
@@ -71,7 +79,7 @@ function makeEngine(string $engine, array $opts): Engine
 
 function loadClient(string $slug): array
 {
-    $path = ROOT . '/clients/' . basename($slug) . '.json';
+    $path = PANEL_HOME . '/clients/' . basename($slug) . '.json';
     if (!is_file($path)) {
         fwrite(STDERR, "No client profile at $path\n");
         exit(1);
@@ -284,8 +292,8 @@ case 'report': {
 
     if (isset($opts['html'])) {
         $path = $opts['html'] === true
-            ? ROOT . "/out/{$client['slug']}-" . date('Y-m-d') . '.html'
-            : (str_starts_with((string) $opts['html'], '/') ? $opts['html'] : ROOT . '/' . $opts['html']);
+            ? PANEL_HOME . "/out/{$client['slug']}-" . date('Y-m-d') . '.html'
+            : (str_starts_with((string) $opts['html'], '/') ? $opts['html'] : PANEL_HOME . '/' . $opts['html']);
         if (!is_dir(dirname($path))) { mkdir(dirname($path), 0775, true); }
         file_put_contents($path, $report->html());
         printf("  HTML audit written to %s\n", $path);

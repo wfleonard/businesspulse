@@ -4,9 +4,9 @@ Asks AI assistants the questions a business's buyers ask, and records whether th
 business was cited, named, reached only through a directory, or absent — and who was
 cited instead.
 
-Copied from `/Users/saxon/SaxonAEO/visibility-panel` on 2026-09-15 for the
-BusinessPulse AEO build. That copy still runs local client audits; see Open
-Decision 1 in `docs/aeo-build-spec.md` for which copy is canonical.
+**This is the only copy of the engine.** Fix bugs and add engines here.
+`SaxonAEO/visibility-panel` holds client profiles and audit data only, and runs this
+code through its `./panel` wrapper.
 
 ## For the BusinessPulse worker: `job`
 
@@ -29,9 +29,16 @@ Keys come from the environment: `PERPLEXITY_API_KEY`, `ANTHROPIC_API_KEY`,
 
 ## Local audits
 
-`run`, `retry`, `report`, `reclassify`, `runs`, and `queries` work as in the SaxonAEO
-copy. They read client profiles from `clients/` and store runs in `data/` — both
-absent here and ignored by git.
+`run`, `retry`, `report`, `reclassify`, `runs`, and `queries` read client profiles
+from `$PANEL_HOME/clients/`, store runs in `$PANEL_HOME/data/`, and write reports to
+`$PANEL_HOME/out/`. `PANEL_HOME` defaults to this folder, where all three are absent
+and ignored by git. Local audits run from SaxonAEO:
+
+```bash
+/Users/saxon/SaxonAEO/visibility-panel/panel runs
+```
+
+Full usage, measured costs, and engine notes: `SaxonAEO/visibility-panel/README.md`.
 
 ## Tests
 

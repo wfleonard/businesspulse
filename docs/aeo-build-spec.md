@@ -68,8 +68,10 @@ dashboard pages, and the `/api/cron/sync` and `/api/cron/watch` routes. Leave `s
 analytics modules and their database tables untouched in v1 to avoid migration churn;
 delete them in a later cleanup.
 
-**SaxonAEO stays as it is** — business plan, client deliverables, and local CLI audits
-(ECU, iCA). See Open Decision 1 for the panel engine's long-term home.
+**SaxonAEO keeps client work only** — business plan, client deliverables, client profiles,
+and local audit data (ECU, iCA). `panel/` here is the only copy of the engine;
+`SaxonAEO/visibility-panel/panel` is a wrapper that runs it against SaxonAEO's own data
+(decided 2026-09-15, Section 16).
 
 ---
 
@@ -112,15 +114,18 @@ Same Linode server, same Docker Compose file. **One new service: `worker`.** No 
 `docker-compose.prod.yml` runs Valkey with `--save '' --appendonly no` — no persistence.
 A Redis-backed queue would silently lose every queued job on a restart or deploy.
 
-Runs live in `aeo_run` and the worker claims them with `FOR UPDATE SKIP LOCKED`:
+Runs live in `aeo_run` and the worker claims them with `FOR UPDATE SKIP LOCKED` (full
+query in `src/lib/aeo/queue.ts`):
 
 ```sql
 UPDATE aeo_run
-SET status = 'running', locked_at = now(), attempts = attempts + 1
+SET status = 'running', attempts = attempts + 1,
+    locked_at = now(), lease_token = gen_random_uuid()
 WHERE id = (
   SELECT id FROM aeo_run
-  WHERE status = 'queued'
-     OR (status = 'running' AND locked_at < now() - interval '15 minutes')
+  WHERE attempts < 3
+    AND ((status = 'queued' AND <past its retry delay>)
+      OR (status = 'running' AND locked_at < now() - <lease>))
   ORDER BY created_at
   FOR UPDATE SKIP LOCKED
   LIMIT 1
@@ -128,8 +133,19 @@ WHERE id = (
 RETURNING *;
 ```
 
-A run that reaches 3 attempts is marked `failed`. Stale `running` rows (a crashed worker)
-are reclaimed after 15 minutes. Valkey stays for rate limiting only.
+**A heartbeat lease, not a fixed timeout.** While the panel runs, the worker refreshes
+`locked_at` five times per lease (`AEO_LEASE_SECONDS`, default 300). A crashed worker's
+run is reclaimed once the lease lapses — a fixed 15-minute cutoff would both delay
+recovery and steal a long full-tier run that was still healthy. Every write back to a run
+requires its `lease_token`, so a worker that lost its lease can't overwrite the one that
+took over; its heartbeat notices and it stops the panel.
+
+A failed attempt returns to `queued` after `attempts × AEO_RETRY_DELAY_SECONDS`. The
+third failure, or a permanent error (unknown panel, invalid job file), marks it `failed`,
+as does a worker dying on the final attempt. Results and totals are stored in one
+transaction that first deletes earlier rows, so a retried run never holds duplicates;
+cost accumulates across attempts because it was really spent. A graceful shutdown
+(deploy) releases the run and refunds the attempt. Valkey stays for rate limiting only.
 
 ### 4.2 Worker runs the existing PHP panel
 
@@ -287,7 +303,8 @@ Indexes: `domain`, `email`, `created_at`.
 | panel_slug, panel_version | text, integer null | |
 | status | enum | `queued`, `running`, `done`, `failed` |
 | attempts | integer | default 0 |
-| locked_at | timestamp null | |
+| locked_at | timestamp null | running: last heartbeat; queued: when the failed attempt ended |
+| lease_token | uuid null | set on claim; every write back to the run requires it |
 | question_count | integer | |
 | cited_count | integer | own site cited by ≥ 1 engine |
 | cost_usd | numeric | |
@@ -574,9 +591,9 @@ for the `job` command using a recorded Perplexity response (no network).
 
 ## 16. Open Decisions
 
-1. **Panel engine's long-term home.** v1 copies it into `panel/` here. Recommendation:
-   make this copy canonical for engine code, and keep only client profiles and local
-   audit data in `SaxonAEO/visibility-panel`, so the two don't drift.
+1. **Panel engine's long-term home.** *Decided 2026-09-15:* `panel/` here is canonical.
+   `SaxonAEO/visibility-panel` keeps client profiles, run history, and reports, and runs
+   this engine through its `./panel` wrapper, which sets `PANEL_HOME`.
 2. **Brand.** An unrelated, actively publishing magazine uses "Business Pulse" at
    businesspulse.com. Check the trademark before spending on the brand.
 3. **Report detail in the free tier.** Three example questions is a starting point;

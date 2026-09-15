@@ -13,3 +13,6 @@ coverage
 docs
 .claude
 scratchpad
+panel/clients
+panel/data
+panel/out

@@ -1,0 +1,196 @@
+/**
+ * AEO snapshot worker.
+ *
+ * Claims queued runs from Postgres, runs the PHP Visibility Panel on each, and
+ * stores the results. One run at a time; request concurrency lives inside the
+ * panel.
+ *
+ *   npm run worker                            # local; reads .env.local
+ *   AEO_EXIT_WHEN_IDLE=true npm run worker    # drain the queue, then exit
+ *
+ * Crash safety: a claimed run carries a lease token and a heartbeat. If this
+ * process dies, the heartbeat stops, and once the lease expires another worker
+ * reclaims the run. Every write back to a run checks the token, so a worker
+ * that lost its lease can never overwrite the one that took over.
+ *
+ * Emails (report ready, run failed) are added in M4.
+ */
+import { closeDb } from '@/lib/db'
+import { workerConfig, type WorkerConfig } from '@/lib/aeo/config'
+import { buildJob, PanelAbortedError, PanelExitError, runPanelJob } from '@/lib/aeo/job'
+import { PermanentRunError, planRun } from '@/lib/aeo/plan'
+import {
+  claimNextRun,
+  completeRun,
+  failAttempt,
+  heartbeat,
+  LeaseLostError,
+  releaseRun,
+  spentTodayUsd,
+  sweepAbandoned,
+  type ClaimedRun,
+} from '@/lib/aeo/queue'
+
+const SPEND_CAP_WAIT_MS = 10 * 60 * 1000
+
+function log(event: string, fields: Record<string, unknown> = {}): void {
+  console.log(JSON.stringify({ at: new Date().toISOString(), event, ...fields }))
+}
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
+}
+
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal.aborted) return resolve()
+    const done = () => {
+      clearTimeout(timer)
+      signal.removeEventListener('abort', done)
+      resolve()
+    }
+    const timer = setTimeout(done, ms)
+    signal.addEventListener('abort', done, { once: true })
+  })
+}
+
+async function processRun(run: ClaimedRun, config: WorkerConfig, shutdown: AbortSignal): Promise<void> {
+  const job = new AbortController()
+  const onShutdown = () => job.abort()
+  shutdown.addEventListener('abort', onShutdown, { once: true })
+
+  const beat = setInterval(() => {
+    heartbeat(run)
+      .then((held) => {
+        if (!held) job.abort()
+      })
+      .catch((err) => log('heartbeat_error', { run: run.id, error: errorMessage(err) }))
+  }, config.heartbeatMs)
+
+  let cost = 0
+  try {
+    const questionCount =
+      run.tier === 'full' ? Number.POSITIVE_INFINITY : config.snapshotQuestions
+    const plan = await planRun(run, questionCount)
+
+    log('run_started', {
+      run: run.id,
+      attempt: run.attempts,
+      domain: run.domain,
+      questions: plan.questions.length,
+      engines: run.engines,
+    })
+
+    const result = await runPanelJob({
+      job: buildJob(plan, run.engines, config.concurrency),
+      runId: run.id,
+      phpBin: config.phpBin,
+      panelScript: config.panelScript,
+      workDir: config.workDir,
+      timeoutMs: config.jobTimeoutSeconds * 1000,
+      signal: job.signal,
+    })
+    cost = result.totals.cost_usd
+
+    // A run with no answers at all (e.g. a provider outage) is retried, not reported.
+    if (result.totals.answers === 0) {
+      const firstError = result.results.find((row) => row.error)?.error ?? 'no answers'
+      const status = await failAttempt(run, `every question failed: ${firstError}`, {
+        costUsd: cost,
+        maxAttempts: config.maxAttempts,
+      })
+      log('run_attempt_failed', { run: run.id, status, reason: 'no answers', cost })
+      return
+    }
+
+    await completeRun(run, result, plan.panelVersion)
+    log('run_done', {
+      run: run.id,
+      questions: result.totals.questions,
+      answers: result.totals.answers,
+      errors: result.totals.errors,
+      cited: result.totals.cited_questions,
+      cost,
+    })
+  } catch (err) {
+    if (err instanceof PanelAbortedError && shutdown.aborted) {
+      await releaseRun(run)
+      log('run_released', { run: run.id })
+      return
+    }
+    if (err instanceof LeaseLostError || (err instanceof PanelAbortedError && job.signal.aborted)) {
+      log('lease_lost', { run: run.id })
+      return
+    }
+
+    // Exit 2 from the panel means an invalid job file — a bug, not a flaky provider.
+    const permanent =
+      err instanceof PermanentRunError || (err instanceof PanelExitError && err.code === 2)
+    const status = await failAttempt(run, errorMessage(err), {
+      permanent,
+      costUsd: cost,
+      maxAttempts: config.maxAttempts,
+    })
+    log('run_attempt_failed', { run: run.id, status, permanent, error: errorMessage(err) })
+  } finally {
+    clearInterval(beat)
+    shutdown.removeEventListener('abort', onShutdown)
+  }
+}
+
+/** One pass: sweep, check spend, claim and process at most one run. */
+async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worked' | 'idle'> {
+  for (const id of await sweepAbandoned(config)) {
+    log('run_abandoned', { run: id })
+  }
+
+  const spent = await spentTodayUsd()
+  if (spent >= config.dailySpendCapUsd) {
+    log('spend_cap_reached', { spent, cap: config.dailySpendCapUsd })
+    if (config.exitWhenIdle) return 'idle'
+    await sleep(SPEND_CAP_WAIT_MS, shutdown)
+    return 'worked'
+  }
+
+  const run = await claimNextRun(config)
+  if (!run) return 'idle'
+
+  await processRun(run, config, shutdown)
+  return 'worked'
+}
+
+async function main(): Promise<void> {
+  const config = workerConfig()
+  const shutdown = new AbortController()
+
+  for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+    process.once(signal, () => {
+      log('shutdown_requested', { signal })
+      shutdown.abort()
+    })
+  }
+
+  log('worker_started', { ...config })
+
+  while (!shutdown.signal.aborted) {
+    try {
+      const outcome = await tick(config, shutdown.signal)
+      if (outcome === 'idle') {
+        if (config.exitWhenIdle) break
+        await sleep(config.pollMs, shutdown.signal)
+      }
+    } catch (err) {
+      // Usually the database is unreachable. Back off and keep going.
+      log('worker_error', { error: errorMessage(err) })
+      await sleep(Math.max(config.pollMs, 5000), shutdown.signal)
+    }
+  }
+
+  await closeDb()
+  log('worker_stopped')
+}
+
+main().catch((err) => {
+  log('worker_crashed', { error: errorMessage(err) })
+  process.exit(1)
+})
