@@ -22,6 +22,13 @@
       "when": 1783450361269,
       "tag": "0002_slow_maggott",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789494447133,
+      "tag": "0003_colorful_maddog",
+      "breakpoints": true
     }
   ]
 }

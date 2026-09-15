@@ -47,3 +47,8 @@ docs/VOICE_PROFILE_Bill_Leonard.md
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Visibility Panel local state (client profiles, SQLite runs, generated reports)
+/panel/clients/
+/panel/data/
+/panel/out/

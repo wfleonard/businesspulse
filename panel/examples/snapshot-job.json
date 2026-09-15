@@ -1,0 +1,19 @@
+{
+  "client": {
+    "name": "East Coast Utility, LLC",
+    "domain": "eastcoastutility.com",
+    "aliases": ["East Coast Utility"],
+    "directory_domains": ["yelp.com", "bbb.org", "angi.com", "homeguide.com", "thebluebook.com"],
+    "reference_domains": [
+      "wikipedia.org", "law.cornell.edu", "nj.gov", "state.nj.us",
+      "trenchlesstechnology.com", "trenchlesspedia.com", "ditchwitch.com", "vermeer.com"
+    ]
+  },
+  "questions": [
+    { "c": "service-geo", "q": "horizontal directional drilling contractor in New Jersey" },
+    { "c": "cost", "q": "how much does horizontal directional drilling cost per foot" },
+    { "c": "permits", "q": "NJDOT road opening permit for utility work" }
+  ],
+  "engines": ["perplexity"],
+  "concurrency": 3
+}

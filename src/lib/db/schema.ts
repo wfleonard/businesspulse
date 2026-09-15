@@ -383,6 +383,135 @@ export const auditLog = pgTable(
   (t) => [index('audit_log_org_idx').on(t.orgId)]
 )
 
+/* ------------------------------------------------------------------ */
+/* AEO snapshots — public, pre-account submissions. Deliberately NOT   */
+/* org-scoped: these are Saxon's operational data, visible only to the */
+/* admin. See docs/aeo-build-spec.md, Section 6.                       */
+/* ------------------------------------------------------------------ */
+
+export type AeoSource = { url: string; title: string; cited: boolean }
+export type AeoRival = { host: string; title: string; cited: boolean }
+
+export const aeoLeadStatusEnum = pgEnum('aeo_lead_status', [
+  'new',
+  'contacted',
+  'won',
+  'ignored',
+])
+export const aeoRunTierEnum = pgEnum('aeo_run_tier', ['snapshot', 'full'])
+export const aeoPanelSourceEnum = pgEnum('aeo_panel_source', ['canned', 'generated'])
+export const aeoRunStatusEnum = pgEnum('aeo_run_status', ['queued', 'running', 'done', 'failed'])
+
+/** Canned vertical question panels. Questions carry slots like {service} and {state}. */
+export const aeoPanel = pgTable('aeo_panel', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: text('slug').notNull().unique(),
+  name: text('name').notNull(),
+  questions: jsonb('questions').$type<{ c: string; q: string }[]>().notNull(),
+  directoryDomains: jsonb('directory_domains').$type<string[]>().notNull().default([]),
+  /** Non-competitors for this vertical: regulators, trade press, manufacturers. */
+  referenceDomains: jsonb('reference_domains').$type<string[]>().notNull().default([]),
+  version: integer('version').notNull().default(1),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+/**
+ * One visibility run: both the job the worker claims and the report it produces.
+ * Postgres is the queue (FOR UPDATE SKIP LOCKED) because Valkey runs without
+ * persistence and would lose queued jobs on restart.
+ */
+export const aeoRun = pgTable(
+  'aeo_run',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** Unguessable report URL segment — 18 random bytes, base64url. */
+    publicId: text('public_id').notNull().unique(),
+    domain: text('domain').notNull(),
+    tier: aeoRunTierEnum('tier').notNull().default('snapshot'),
+    engines: jsonb('engines').$type<string[]>().notNull().default(['perplexity']),
+    panelSource: aeoPanelSourceEnum('panel_source').notNull(),
+    panelSlug: text('panel_slug'),
+    panelVersion: integer('panel_version'),
+    status: aeoRunStatusEnum('status').notNull().default('queued'),
+    attempts: integer('attempts').notNull().default(0),
+    lockedAt: timestamp('locked_at'),
+    questionCount: integer('question_count').notNull().default(0),
+    /** Questions where the business's own site was cited by at least one engine. */
+    citedCount: integer('cited_count').notNull().default(0),
+    costUsd: numeric('cost_usd').notNull().default('0'),
+    error: text('error'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    startedAt: timestamp('started_at'),
+    finishedAt: timestamp('finished_at'),
+  },
+  (t) => [
+    index('aeo_run_status_created_idx').on(t.status, t.createdAt),
+    index('aeo_run_domain_idx').on(t.domain),
+  ]
+)
+
+/** One public form submission. Several requests may share one run (30-day reuse). */
+export const aeoRequest = pgTable(
+  'aeo_request',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: text('email').notNull(),
+    businessName: text('business_name').notNull(),
+    /** Normalized: lowercase, no scheme, no path, no leading "www.". */
+    domain: text('domain').notNull(),
+    service: text('service').notNull(),
+    city: text('city').notNull(),
+    state: text('state').notNull(),
+    /** Chosen vertical, or null for a generated panel. */
+    panelSlug: text('panel_slug'),
+    contactConsent: boolean('contact_consent').notNull().default(false),
+    /** sha256 of the emailed token; the token itself is never stored. */
+    verifyTokenHash: text('verify_token_hash').notNull().unique(),
+    verifyExpiresAt: timestamp('verify_expires_at').notNull(),
+    verifiedAt: timestamp('verified_at'),
+    ipAddress: text('ip_address'),
+    leadStatus: aeoLeadStatusEnum('lead_status').notNull().default('new'),
+    runId: uuid('run_id').references(() => aeoRun.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('aeo_request_domain_idx').on(t.domain),
+    index('aeo_request_email_idx').on(t.email),
+    index('aeo_request_created_idx').on(t.createdAt),
+  ]
+)
+
+/** One row per question × engine, as written by `panel.php job`. */
+export const aeoResult = pgTable(
+  'aeo_result',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    runId: uuid('run_id')
+      .notNull()
+      .references(() => aeoRun.id, { onDelete: 'cascade' }),
+    category: text('category').notNull(),
+    query: text('query').notNull(),
+    engine: text('engine').notNull(),
+    model: text('model'),
+    ownCited: boolean('own_cited').notNull().default(false),
+    nameMentioned: boolean('name_mentioned').notNull().default(false),
+    directoryOnly: boolean('directory_only').notNull().default(false),
+    ownRank: integer('own_rank'),
+    rivals: jsonb('rivals').$type<AeoRival[]>().notNull().default([]),
+    sources: jsonb('sources').$type<AeoSource[]>().notNull().default([]),
+    answer: text('answer'),
+    inputTokens: integer('input_tokens').notNull().default(0),
+    outputTokens: integer('output_tokens').notNull().default(0),
+    searches: integer('searches').notNull().default(0),
+    costUsd: numeric('cost_usd').notNull().default('0'),
+    error: text('error'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('aeo_result_run_idx').on(t.runId)]
+)
+
 export const schema = {
   user,
   session,
@@ -401,4 +530,8 @@ export const schema = {
   recommendation,
   aiQuery,
   auditLog,
+  aeoPanel,
+  aeoRun,
+  aeoRequest,
+  aeoResult,
 }
