@@ -50,6 +50,13 @@
       "when": 1789500080972,
       "tag": "0006_lethal_susan_delgado",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789502052530,
+      "tag": "0007_exotic_hemingway",
+      "breakpoints": true
     }
   ]
 }

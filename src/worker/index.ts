@@ -199,15 +199,17 @@ async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worke
   }
 
   const spent = await spentTodayUsd()
-  if (spent >= config.dailySpendCapUsd) {
+  const overCap = spent >= config.dailySpendCapUsd
+
+  // Over the cap, only admin re-runs (which bypass it) are claimed; everything else waits.
+  const run = await claimNextRun({ ...config, onlyBypassSpendCap: overCap })
+  if (!run) {
+    if (!overCap) return 'idle'
     log('spend_cap_reached', { spent, cap: config.dailySpendCapUsd })
     if (config.exitWhenIdle) return 'idle'
     await sleep(SPEND_CAP_WAIT_MS, shutdown)
     return 'worked'
   }
-
-  const run = await claimNextRun(config)
-  if (!run) return 'idle'
 
   await processRun(run, config, shutdown)
   return 'worked'

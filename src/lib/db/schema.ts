@@ -447,6 +447,8 @@ export const aeoRun = pgTable(
     panelVersion: integer('panel_version'),
     /** Generated runs only. Stored so a retry asks the same questions without paying to generate them again. */
     generatedPanel: jsonb('generated_panel').$type<AeoGeneratedPanel>(),
+    /** Admin re-runs: claimed even when today's spend is over the cap. */
+    bypassSpendCap: boolean('bypass_spend_cap').notNull().default(false),
     status: aeoRunStatusEnum('status').notNull().default('queued'),
     attempts: integer('attempts').notNull().default(0),
     /**

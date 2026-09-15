@@ -1,6 +1,7 @@
 # Deploying BusinessPulse to the Linode app node
 
-Stack on the node: **Caddy (auto-HTTPS) + web (Next.js) + Valkey**, in Docker Compose.
+Stack on the node: **Caddy (auto-HTTPS) + web (Next.js) + worker (AEO snapshots:
+Node + the PHP Visibility Panel) + Valkey**, in Docker Compose.
 **Postgres is the managed Linode Database** (not on the node).
 
 ## 0. Prerequisites
@@ -90,6 +91,11 @@ docker compose -f docker-compose.prod.yml --profile tools run --rm \
   migrate npm run seed
 ```
 
+Load the canned AEO question panels (safe to re-run; only changed panels get a new version):
+```bash
+docker compose -f docker-compose.prod.yml --profile tools run --rm migrate npm run aeo:panels
+```
+
 ## 6. Launch
 
 ```bash
@@ -98,29 +104,64 @@ docker compose -f docker-compose.prod.yml logs -f caddy   # watch it get the cer
 ```
 Visit **https://businesspulse.app** and log in.
 
-## 7. Schedule sync + Business Watch (host cron)
+## 7. No host cron
 
-The cron routes are guarded by `CRON_SECRET`; call them through Caddy:
-
-```bash
-crontab -e
-```
-```cron
-CRON=<your CRON_SECRET>
-*/30 * * * * curl -fsS -X POST https://businesspulse.app/api/cron/sync  -H "Authorization: Bearer $CRON" >/dev/null
-0 7   * * *  curl -fsS -X POST https://businesspulse.app/api/cron/watch -H "Authorization: Bearer $CRON" >/dev/null
-```
+The analytics product's `/api/cron/sync` and `/api/cron/watch` routes were removed
+for the AEO build (the analytics code is tagged `analytics-saas-v0`). If the node's
+crontab still calls them, delete those two lines with `crontab -e`: they now just
+return 404. The AEO worker needs no cron; it polls Postgres itself.
 
 ## Updating
 
+From `~/businesspulse` on the node, after pushing to `main`:
+
 ```bash
-git pull
-docker compose -f docker-compose.prod.yml --profile tools run --rm migrate   # if schema changed
-docker compose -f docker-compose.prod.yml up -d --build
+./update.sh
 ```
+
+It pulls, rebuilds the migrate image and applies new migrations, then rebuilds and
+restarts every service, including the worker. The worker image runs the PHP
+panel's test suites while building, so a PHP incompatibility fails the build rather
+than the first real snapshot.
+
+If `src/lib/aeo/panels/` changed, reload the panels afterwards:
+
+```bash
+docker compose -f docker-compose.prod.yml --profile tools run --rm migrate npm run aeo:panels
+```
+
+Worker logs are one JSON line per event:
+
+```bash
+docker compose -f docker-compose.prod.yml logs -f worker
+```
+
+## AEO launch checklist
+
+Do these in order; the form spends money once it's open.
+
+1. **Rotate secrets first.** Rotate the `akmadmin` DB password in the Linode console,
+   and use freshly rotated Perplexity and Anthropic API keys in `.env`.
+2. **Fill in the new `.env` values** (see `.env.production.example`):
+   `PERPLEXITY_API_KEY`, `ANTHROPIC_API_KEY`, the `AEO_*` settings (start with
+   `AEO_DAILY_SPEND_CAP_USD=10`), `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`
+   (a Turnstile widget for `businesspulse.app` in the Cloudflare dashboard),
+   `AEO_CONTACT_EMAIL`, `AEO_ADMIN_EMAIL`, `AEO_BOOKING_URL`, and
+   `MAILTRAP_API_TOKEN` / `MAILTRAP_SENDER` on a sending domain verified in Mailtrap.
+3. **Merge `aeo` into `main`** and push.
+4. **Deploy:** `./update.sh`, then load the panels (command above).
+5. **Check the stack:** `docker compose -f docker-compose.prod.yml ps` shows `worker`
+   running, and its logs show `worker_started`.
+6. **Live check with a small snapshot:** temporarily set `AEO_SNAPSHOT_QUESTIONS=5`,
+   restart the worker (`docker compose -f docker-compose.prod.yml up -d worker`),
+   submit one request through the public form, and confirm the verification email,
+   the report page, the "report ready" email, and the lead in `/dashboard/aeo`.
+   Then set it back to 20 and restart the worker again.
+7. **Remove the old cron lines** (section 7).
 
 ## Post-launch hardening
 
-- **Rotate the `akmadmin` DB password** (it was shared in chat) in the Linode console.
+- **Rotate the `akmadmin` DB password** (it was shared in chat) in the Linode console,
+  before opening the AEO form (launch checklist, step 1).
 - TLS is already cert-pinned (verify-full) via `DATABASE_CA_CERT_FILE` + step 3b.
 - Move Redis to Upstash when you add a second app node behind a NodeBalancer.

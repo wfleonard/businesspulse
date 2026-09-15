@@ -58,8 +58,11 @@ export async function claimNextRun(options: {
   leaseSeconds: number
   retryDelaySeconds: number
   maxAttempts: number
+  /** Over the daily spend cap: claim only admin re-runs, which bypass it. */
+  onlyBypassSpendCap?: boolean
 }): Promise<ClaimedRun | null> {
   const { leaseSeconds, retryDelaySeconds, maxAttempts } = options
+  const onlyBypass = options.onlyBypassSpendCap ?? false
   const result = await db.execute(sql`
     update aeo_run
     set status = 'running',
@@ -70,6 +73,7 @@ export async function claimNextRun(options: {
     where id = (
       select id from aeo_run
       where attempts < ${maxAttempts}::int
+        and (${onlyBypass}::boolean = false or bypass_spend_cap)
         and (
           (status = 'queued'
             and (locked_at is null

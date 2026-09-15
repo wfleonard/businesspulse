@@ -544,6 +544,22 @@ public report link. Lead status control. "Re-run" button (admin-only, bypasses t
 
 Nav: replace the analytics items with **Leads**.
 
+As built (`src/lib/aeo/admin.ts`, `src/app/dashboard/aeo/`):
+
+- **Re-run** creates a new run with `bypass_spend_cap = true` and moves the old run's
+  requests onto it, so their report links show the new results. The worker claims such
+  runs even when today's spend is over the cap. Requests already emailed aren't emailed
+  again, and generated questions are written fresh.
+- **Delete** removes a request, and its run with all results when no other request still
+  uses it: the privacy-policy deletion path.
+- Every admin action re-checks the session (a server action is a public endpoint) and
+  writes an `audit_log` entry with IDs only, never the deleted person's details.
+- The CSV export uses the list's filters and prefixes cells that start with `=`, `+`, `-`,
+  or `@`, so a business name typed into the public form can't run as a spreadsheet formula.
+- Links to answer sources are rendered only for `http`/`https` URLs, since they come from
+  third-party API responses.
+- The list shows the newest 500 matching requests.
+
 ---
 
 ## 11. Configuration

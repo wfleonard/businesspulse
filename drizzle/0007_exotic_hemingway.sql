@@ -1,0 +1,1 @@
+ALTER TABLE "aeo_run" ADD COLUMN "bypass_spend_cap" boolean DEFAULT false NOT NULL;
