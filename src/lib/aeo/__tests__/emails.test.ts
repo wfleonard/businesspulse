@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { appUrl, escapeHtml, reportReadyEmail, verificationEmail } from '../emails'
+import { adminRunFailedEmail, appUrl, escapeHtml, reportReadyEmail, verificationEmail } from '../emails'
 
 describe('escapeHtml', () => {
   it('escapes markup characters', () => {
@@ -61,5 +61,36 @@ describe('reportReadyEmail', () => {
     })
     expect(withoutScore.text).not.toContain('of 20')
     expect(`${withoutScore.html}${withoutScore.text}`).not.toContain('—')
+  })
+})
+
+describe('adminRunFailedEmail', () => {
+  const email = adminRunFailedEmail({
+    runId: 'run-1',
+    publicId: 'pub-1',
+    domain: 'acme.com',
+    attempts: 3,
+    panel: 'hdd-trenchless',
+    error: 'panel exited with 1: <boom>',
+    requests: [
+      { businessName: 'Acme <LLC>', email: 'a@acme.com', service: 'drilling', location: 'Fair Haven, NJ', contactConsent: true },
+    ],
+  })
+
+  it('names the domain and carries the error and waiting requests', () => {
+    expect(email.subject).toBe('[BusinessPulse] Snapshot failed for acme.com')
+    expect(email.text).toContain('Error: panel exited with 1: <boom>')
+    expect(email.text).toContain('Acme <LLC> <a@acme.com>: drilling, Fair Haven, NJ (consented to contact)')
+  })
+
+  it('escapes everything in the HTML part', () => {
+    expect(email.html).not.toContain('<boom>')
+    expect(email.html).toContain('&lt;boom&gt;')
+    expect(email.html).toContain('Acme &lt;LLC&gt;')
+  })
+
+  it('says so when no request is waiting', () => {
+    const none = adminRunFailedEmail({ runId: 'r', publicId: 'p', domain: 'x.com', attempts: 1, panel: '(generated)', error: 'e', requests: [] })
+    expect(none.text).toContain('(none)')
   })
 })

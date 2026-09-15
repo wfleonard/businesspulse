@@ -99,3 +99,60 @@ export function reportReadyEmail(args: {
     ].join('\n'),
   }
 }
+
+export function adminRunFailedEmail(args: {
+  runId: string
+  publicId: string
+  domain: string
+  attempts: number
+  panel: string
+  error: string
+  requests: {
+    businessName: string
+    email: string
+    service: string
+    location: string
+    contactConsent: boolean
+  }[]
+}): EmailContent {
+  const requestLines = args.requests.map(
+    (r) =>
+      `${r.businessName} <${r.email}>: ${r.service}, ${r.location}${r.contactConsent ? ' (consented to contact)' : ''}`
+  )
+  const facts: [string, string][] = [
+    ['Domain', args.domain],
+    ['Run', args.runId],
+    ['Report ID', args.publicId],
+    ['Panel', args.panel],
+    ['Attempts', String(args.attempts)],
+    ['Error', args.error],
+  ]
+
+  const rows = facts
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding:4px 12px 4px 0;color:#64748b;vertical-align:top">${label}</td><td style="padding:4px 0;color:#0f172a;word-break:break-word">${escapeHtml(value)}</td></tr>`
+    )
+    .join('')
+  const requests = requestLines.length
+    ? `<ul style="margin:8px 0 0;padding-left:20px">${requestLines.map((l) => `<li>${escapeHtml(l)}</li>`).join('')}</ul>`
+    : '<p style="margin:8px 0 0">No linked requests.</p>'
+
+  return {
+    subject: `[BusinessPulse] Snapshot failed for ${args.domain}`,
+    html: `<!doctype html><html><body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a">
+<p style="margin:0 0 16px">A snapshot run failed and will not be retried.</p>
+<table style="border-collapse:collapse">${rows}</table>
+<p style="margin:16px 0 0;font-weight:bold">Requests waiting on it</p>
+${requests}
+</body></html>`,
+    text: [
+      'A snapshot run failed and will not be retried.',
+      '',
+      ...facts.map(([label, value]) => `${label}: ${value}`),
+      '',
+      'Requests waiting on it:',
+      ...(requestLines.length ? requestLines.map((l) => `- ${l}`) : ['(none)']),
+    ].join('\n'),
+  }
+}

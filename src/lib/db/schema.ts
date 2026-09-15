@@ -481,6 +481,10 @@ export const aeoRequest = pgTable(
     ipAddress: text('ip_address'),
     leadStatus: aeoLeadStatusEnum('lead_status').notNull().default('new'),
     runId: uuid('run_id').references(() => aeoRun.id, { onDelete: 'set null' }),
+    /** When the "report ready" email went out. Null until then; the worker sweeps for these. */
+    reportEmailedAt: timestamp('report_emailed_at'),
+    reportEmailAttempts: integer('report_email_attempts').notNull().default(0),
+    reportEmailAttemptedAt: timestamp('report_email_attempted_at'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
   (t) => [

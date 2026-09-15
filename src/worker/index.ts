@@ -13,11 +13,15 @@
  * reclaims the run. Every write back to a run checks the token, so a worker
  * that lost its lease can never overwrite the one that took over.
  *
- * Emails (report ready, run failed) are added in M4.
+ * Emails: every pass first sweeps for verified requests on finished runs that
+ * haven't been emailed, so a crash after storing results never loses one. A
+ * run that fails for good (including a dead worker's last attempt) emails
+ * AEO_ADMIN_EMAIL.
  */
 import { closeDb } from '@/lib/db'
 import { workerConfig, type WorkerConfig } from '@/lib/aeo/config'
 import { buildJob, PanelAbortedError, PanelExitError, runPanelJob } from '@/lib/aeo/job'
+import { notifyRunFailed, sendPendingReportEmails } from '@/lib/aeo/notify'
 import { PermanentRunError, planRun } from '@/lib/aeo/plan'
 import {
   claimNextRun,
@@ -39,6 +43,25 @@ function log(event: string, fields: Record<string, unknown> = {}): void {
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
+}
+
+/** Email problems are logged, never allowed to stop the worker or change a run. */
+async function alertRunFailed(runId: string, error: string): Promise<void> {
+  try {
+    const result = await notifyRunFailed(runId, error)
+    log('admin_alert', { run: runId, sent: result.sent, skipped: result.skipped, error: result.error })
+  } catch (err) {
+    log('admin_alert_error', { run: runId, error: errorMessage(err) })
+  }
+}
+
+async function sweepReportEmails(): Promise<void> {
+  try {
+    const result = await sendPendingReportEmails()
+    if (result.sent || result.failed) log('report_emails', result)
+  } catch (err) {
+    log('report_email_error', { error: errorMessage(err) })
+  }
 }
 
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
@@ -95,11 +118,13 @@ async function processRun(run: ClaimedRun, config: WorkerConfig, shutdown: Abort
     // A run with no answers at all (e.g. a provider outage) is retried, not reported.
     if (result.totals.answers === 0) {
       const firstError = result.results.find((row) => row.error)?.error ?? 'no answers'
-      const status = await failAttempt(run, `every question failed: ${firstError}`, {
+      const message = `every question failed: ${firstError}`
+      const status = await failAttempt(run, message, {
         costUsd: cost,
         maxAttempts: config.maxAttempts,
       })
       log('run_attempt_failed', { run: run.id, status, reason: 'no answers', cost })
+      if (status === 'failed') await alertRunFailed(run.id, message)
       return
     }
 
@@ -132,6 +157,7 @@ async function processRun(run: ClaimedRun, config: WorkerConfig, shutdown: Abort
       maxAttempts: config.maxAttempts,
     })
     log('run_attempt_failed', { run: run.id, status, permanent, error: errorMessage(err) })
+    if (status === 'failed') await alertRunFailed(run.id, errorMessage(err))
   } finally {
     clearInterval(beat)
     shutdown.removeEventListener('abort', onShutdown)
@@ -140,8 +166,11 @@ async function processRun(run: ClaimedRun, config: WorkerConfig, shutdown: Abort
 
 /** One pass: sweep, check spend, claim and process at most one run. */
 async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worked' | 'idle'> {
+  await sweepReportEmails()
+
   for (const id of await sweepAbandoned(config)) {
     log('run_abandoned', { run: id })
+    await alertRunFailed(id, 'worker stopped responding on its final attempt')
   }
 
   const spent = await spentTodayUsd()

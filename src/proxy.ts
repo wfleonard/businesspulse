@@ -15,6 +15,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const PROTECTED_PREFIXES = ['/dashboard']
 
+// Private-by-link pages: reports and email verification stay out of search.
+const NOINDEX_PREFIXES = ['/report/', '/check/']
+
 // Cookie names better-auth may set (prefix "bp"; __Secure- prefix in prod).
 const SESSION_COOKIE_NAMES = ['bp.session_token', '__Secure-bp.session_token']
 
@@ -70,6 +73,9 @@ export default function proxy(req: NextRequest) {
     'permissions-policy',
     'camera=(), microphone=(), geolocation=(), browsing-topics=()'
   )
+  if (NOINDEX_PREFIXES.some((p) => pathname.startsWith(p))) {
+    res.headers.set('x-robots-tag', 'noindex, nofollow')
+  }
   if (isProd) {
     res.headers.set(
       'strict-transport-security',

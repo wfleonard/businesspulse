@@ -3,10 +3,8 @@ import { headers } from 'next/headers'
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { workerConfig } from '@/lib/aeo/config'
-import { appUrl, reportReadyEmail } from '@/lib/aeo/emails'
 import { verifyRequest } from '@/lib/aeo/requests'
 import { looksLikeToken } from '@/lib/aeo/tokens'
-import { sendEmail } from '@/lib/email/provider'
 import { clientIp, rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -97,23 +95,14 @@ export default async function VerifyPage({ searchParams }: Props) {
 
   const reportPath = `/report/${outcome.run.publicId}`
 
+  // The worker's email sweep sends the report link for this request, including
+  // when it was pointed at a run that had already finished.
   if (outcome.run.status === 'done') {
-    if (outcome.firstVisit) {
-      const sent = await sendEmail({
-        to: outcome.email,
-        ...reportReadyEmail({
-          businessName: outcome.businessName,
-          domain: outcome.domain,
-          reportUrl: appUrl(reportPath),
-        }),
-      })
-      if (!sent.sent) console.warn('aeo verify: report link email not sent:', sent.error ?? sent.skipped)
-    }
     return (
       <Message title="Your report is ready" action={{ href: reportPath, label: 'View my report' }}>
         <p>
           We checked {outcome.domain} recently, so your snapshot is already done.
-          {outcome.firstVisit && ' We also emailed you the link.'}
+          {outcome.firstVisit && ' We’ll also email you the link.'}
         </p>
       </Message>
     )
@@ -128,7 +117,7 @@ export default async function VerifyPage({ searchParams }: Props) {
   }
 
   return (
-    <Message title="Email confirmed">
+    <Message title="Email confirmed" action={{ href: reportPath, label: 'See progress' }}>
       <p>
         We&apos;re asking AI search {workerConfig().snapshotQuestions} questions that buyers ask about
         businesses like {outcome.businessName}.

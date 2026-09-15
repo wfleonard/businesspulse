@@ -243,8 +243,13 @@ The worker kills the PHP process after 10 minutes and marks the attempt failed.
    run back to `queued` and sleep 10 minutes.
 3. Resolve the panel (Section 7) and build the job file.
 4. Run PHP, parse the result, insert `aeo_result` rows, update run totals and cost.
-5. Send the "report ready" email. Mark `done`.
-6. On error: record it, leave for retry until 3 attempts, then `failed` and email the admin.
+5. Mark `done`. "Report ready" emails go out from a sweep at the start of every poll:
+   each verified request on a `done` run that hasn't been emailed is claimed and sent, up
+   to 5 attempts with a minute's backoff per attempt (`aeo_request.report_emailed_at`,
+   `report_email_attempts`). A crash between storing results and sending, or a request
+   pointed at an already-finished run, still gets its email.
+6. On error: record it, leave for retry until 3 attempts, then `failed` and email the admin
+   (also when a dead worker's final attempt is swept).
 
 One run at a time in v1. Concurrency is inside the panel.
 
@@ -605,4 +610,5 @@ for the `job` command using a recorded Perplexity response (no network).
    businesspulse.com. Check the trademark before spending on the brand.
 3. **Report detail in the free tier.** Three example questions is a starting point;
    adjust after seeing which reports convert to calls.
-4. **Booking link.** Calendly or equivalent for the call to action — to choose.
+4. **Booking link.** Calendly or equivalent for the call to action — to choose. Set it as
+   `AEO_BOOKING_URL`; until then the report's button emails `AEO_CONTACT_EMAIL`.
