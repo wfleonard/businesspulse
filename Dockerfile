@@ -43,10 +43,16 @@ CMD ["node", "server.js"]
 # Debian ships PHP 8.2 and the panel was developed on 8.5, so an incompatibility
 # fails the image build instead of the first real run. php-sqlite3 is only for
 # the smoke suite; job mode never touches SQLite.
+#
+# ca-certificates is required: --no-install-recommends skips it, Node carries its
+# own certificates but PHP's curl uses the system bundle, and without it every
+# HTTPS call to the AI APIs fails with curl error 77. The offline test suites
+# can't catch that, so the build checks for the bundle directly.
 FROM build AS worker
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends php-cli php-curl php-mbstring php-sqlite3 \
+  && apt-get install -y --no-install-recommends ca-certificates php-cli php-curl php-mbstring php-sqlite3 \
   && rm -rf /var/lib/apt/lists/*
+RUN test -s /etc/ssl/certs/ca-certificates.crt
 RUN php panel/tests/smoke.php && php panel/tests/job.php
 ENV NODE_ENV=production
 RUN groupadd --system --gid 1002 aeo \
