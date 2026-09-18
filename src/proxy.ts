@@ -29,17 +29,24 @@ function hasSessionCookie(req: NextRequest): boolean {
 // and renders its challenge in an iframe from this origin.
 const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
 
+// Google Analytics (GA4) on public pages; hosts per Google's CSP guidance for GA4.
+const GA_SCRIPT = 'https://*.googletagmanager.com'
+const GA_CONNECT = 'https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
+const GA_IMG = 'https://*.google-analytics.com https://*.googletagmanager.com'
+
 function buildCsp(isProd: boolean): string {
   const directives = [
     "default-src 'self'",
     // Dev needs 'unsafe-eval' for Turbopack HMR; prod does not.
     isProd
-      ? `script-src 'self' 'unsafe-inline' ${TURNSTILE_ORIGIN}`
-      : `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${TURNSTILE_ORIGIN}`,
+      ? `script-src 'self' 'unsafe-inline' ${TURNSTILE_ORIGIN} ${GA_SCRIPT}`
+      : `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${TURNSTILE_ORIGIN} ${GA_SCRIPT}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob: ${GA_IMG}`,
     "font-src 'self' data:",
-    isProd ? `connect-src 'self' ${TURNSTILE_ORIGIN}` : `connect-src 'self' ws: wss: ${TURNSTILE_ORIGIN}`,
+    isProd
+      ? `connect-src 'self' ${TURNSTILE_ORIGIN} ${GA_CONNECT}`
+      : `connect-src 'self' ws: wss: ${TURNSTILE_ORIGIN} ${GA_CONNECT}`,
     `frame-src ${TURNSTILE_ORIGIN}`,
     "object-src 'none'",
     "base-uri 'self'",

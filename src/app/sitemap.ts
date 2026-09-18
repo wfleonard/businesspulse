@@ -11,6 +11,6 @@ export const dynamic = 'force-dynamic'
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: appUrl('/'), changeFrequency: 'weekly', priority: 1 },
-    { url: appUrl('/privacy'), lastModified: new Date('2026-09-15'), changeFrequency: 'yearly', priority: 0.3 },
+    { url: appUrl('/privacy'), lastModified: new Date('2026-09-18'), changeFrequency: 'yearly', priority: 0.3 },
   ]
 }

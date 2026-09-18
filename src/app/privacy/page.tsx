@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 
 // The contact address comes from the environment at request time.
 export const dynamic = 'force-dynamic'
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Privacy | BusinessPulse',
 }
 
-const LAST_UPDATED = 'September 15, 2026'
+const LAST_UPDATED = 'September 18, 2026'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -54,6 +55,11 @@ export default function PrivacyPage() {
           runs the bot check on the request form.
         </p>
         <p>
+          Our home page and this page use Google Analytics, which sets cookies, to count visits and see how
+          people find us. It doesn&apos;t run on report pages, confirmation links, or anything you enter in
+          the form.
+        </p>
+        <p>
           Your report has a private, unguessable link. It isn&apos;t listed or indexed, but anyone you
           share the link with can view it.
         </p>
@@ -77,6 +83,7 @@ export default function PrivacyPage() {
           )}
         </p>
       </Section>
+      <GoogleAnalytics />
     </main>
   )
 }

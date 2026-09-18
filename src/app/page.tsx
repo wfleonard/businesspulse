@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 import { SnapshotForm } from '@/components/aeo/SnapshotForm'
 import { workerConfig } from '@/lib/aeo/config'
 import { activePanels } from '@/lib/aeo/requests'
@@ -61,6 +62,7 @@ export default async function Home() {
           Sign in
         </Link>
       </footer>
+      <GoogleAnalytics />
     </main>
   )
 }
