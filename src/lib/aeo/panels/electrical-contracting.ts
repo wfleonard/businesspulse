@@ -91,6 +91,7 @@ export const electricalContracting: CannedPanelDefinition = {
     'houzz.com', 'yellowpages.com', 'nextdoor.com', 'porch.com', 'bark.com', 'networx.com',
     'buildzoom.com', 'homeguide.com', 'fixr.com', 'thebluebook.com', 'facebook.com', 'instagram.com',
     'linkedin.com', 'mapquest.com', 'manta.com', 'chamberofcommerce.com', 'superpages.com',
+    'energysage.com', 'checkatrade.com',
   ],
 
   referenceDomains: [
@@ -100,6 +101,7 @@ export const electricalContracting: CannedPanelDefinition = {
     'ecmweb.com', 'ecmag.com', 'mikeholt.com',
     'generac.com', 'cummins.com', 'chargepoint.com', 'tesla.com', 'enphase.com', 'eaton.com',
     'se.com', 'siemens.com', 'leviton.com',
-    'thisoldhouse.com', 'familyhandyman.com', 'bobvila.com',
+    'thisoldhouse.com', 'familyhandyman.com', 'bobvila.com', 'ankersolix.com',
+    'patch.com', 'einpresswire.com', 'prnewswire.com', 'businesswire.com', 'globenewswire.com',
   ],
 }

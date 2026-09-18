@@ -103,5 +103,8 @@ export const hvacPlumbing: CannedPanelDefinition = {
     'carrier.com', 'trane.com', 'lennox.com', 'daikincomfort.com', 'rheem.com', 'goodmanmfg.com',
     'mitsubishicomfort.com', 'aosmith.com', 'rinnai.us', 'navieninc.com', 'kohler.com', 'moen.com',
     'thisoldhouse.com', 'familyhandyman.com', 'bobvila.com',
+    // Filter retailer and HVAC content sites that answers cite but don't compete for jobs.
+    'filterbuy.com', 'hvacbase.org', 'oxmaint.com',
+    'patch.com', 'einpresswire.com', 'prnewswire.com', 'businesswire.com', 'globenewswire.com',
   ],
 }

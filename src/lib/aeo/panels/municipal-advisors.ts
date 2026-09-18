@@ -100,5 +100,8 @@ export const municipalAdvisors: CannedPanelDefinition = {
     'municipaladvisors.org', 'gfoa.org', 'nfma.org', 'sifma.org', 'nabl.org',
     'moodys.com', 'spglobal.com', 'fitchratings.com', 'kbra.com',
     'bondbuyer.com', 'bloomberg.com', 'reuters.com',
+    // Research and association-hosted documents, not advisory firms.
+    'brookings.edu', 'ymaws.com',
+    'patch.com', 'einpresswire.com', 'prnewswire.com', 'businesswire.com', 'globenewswire.com',
   ],
 }

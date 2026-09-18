@@ -105,5 +105,6 @@ export const poolsHotTubs: CannedPanelDefinition = {
     'hayward.com', 'pentair.com', 'jandy.com', 'fluidra.com', 'lathampool.com',
     'hotspring.com', 'jacuzzi.com', 'sundancespas.com', 'calspas.com', 'bullfrogspas.com',
     'thisoldhouse.com', 'bobvila.com',
+    'patch.com', 'einpresswire.com', 'prnewswire.com', 'businesswire.com', 'globenewswire.com',
   ],
 }

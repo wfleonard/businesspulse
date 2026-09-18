@@ -102,5 +102,6 @@ export const commercialRoofing: CannedPanelDefinition = {
     'rooferscoffeeshop.com', 'roofingcalc.com',
     'gaf.com', 'carlislesyntec.com', 'jm.com', 'holcimelevate.com', 'owenscorning.com', 'sika.com',
     'versico.com', 'duro-last.com',
+    'patch.com', 'einpresswire.com', 'prnewswire.com', 'businesswire.com', 'globenewswire.com',
   ],
 }

@@ -100,6 +100,7 @@ export const landscaping: CannedPanelDefinition = {
     'landscapeprofessionals.org', 'lawnandlandscape.com', 'landscapemanagement.net',
     'totallandscapecare.com', 'arborday.org', 'isa-arbor.com',
     'toro.com', 'deere.com', 'stihlusa.com', 'rainbird.com', 'hunterindustries.com', 'scotts.com',
-    'thisoldhouse.com', 'bhg.com', 'thespruce.com',
+    'thisoldhouse.com', 'bhg.com', 'thespruce.com', 'bobvila.com', 'familyhandyman.com',
+    'patch.com', 'einpresswire.com', 'prnewswire.com', 'businesswire.com', 'globenewswire.com',
   ],
 }
