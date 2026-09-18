@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { SnapshotForm } from '@/components/aeo/SnapshotForm'
 import { workerConfig } from '@/lib/aeo/config'
@@ -16,10 +17,15 @@ export default async function Home() {
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-12 sm:py-20">
       <div className="grid gap-10 lg:grid-cols-[1fr_26rem] lg:items-start">
         <section>
-          <span className="rounded bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-            BusinessPulse
-          </span>
-          <h1 className="mt-5 text-4xl font-bold tracking-tight text-dark sm:text-5xl">
+          <Image
+            src="/business-pulse-logo.webp"
+            alt="BusinessPulse: AI website optimization"
+            width={1135}
+            height={853}
+            priority
+            className="h-auto w-56 sm:w-72"
+          />
+          <h1 className="mt-6 text-4xl font-bold tracking-tight text-dark sm:text-5xl">
             When buyers ask AI who to hire, does it name you?
           </h1>
           <p className="mt-5 text-lg text-text-secondary">
