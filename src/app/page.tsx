@@ -55,6 +55,9 @@ export default async function Home() {
         />
       </div>
       <footer className="mt-auto flex gap-4 pt-16 text-xs text-text-secondary">
+        <Link href="/resources" className="hover:text-dark">
+          Resources
+        </Link>
         <Link href="/privacy" className="hover:text-dark">
           Privacy
         </Link>

@@ -45,6 +45,11 @@ export default function PrivacyPage() {
           <li>To build the report, by asking AI search questions about your service and area.</li>
           <li>To prevent abuse, using your IP address and a Cloudflare Turnstile bot check.</li>
           <li>To follow up about your results, only if you ticked the contact box.</li>
+          <li>
+            To publish anonymized statistics by industry, such as how often businesses&apos; own websites are cited.
+            They never name a business, and an industry is published only once at least 10 businesses in it have been
+            measured.
+          </li>
         </ul>
       </Section>
 

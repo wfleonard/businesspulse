@@ -76,7 +76,8 @@ export function categoryLabel(category: string): string {
   return words ? words[0].toUpperCase() + words.slice(1) : 'Other'
 }
 
-function compareCategories(a: string, b: string): number {
+/** Report order for question categories; the Resource Hub's benchmarks use it too. */
+export function compareCategories(a: string, b: string): number {
   const ia = CATEGORY_ORDER.indexOf(a)
   const ib = CATEGORY_ORDER.indexOf(b)
   if (ia !== -1 || ib !== -1) return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib)

@@ -1,7 +1,18 @@
 /** @jest-environment node */
 import robots, { AI_RETRIEVAL_BOTS, PRIVATE_PATHS } from '@/app/robots'
 import sitemap from '@/app/sitemap'
+import { benchmarkAvailability } from '@/lib/resources/benchmarks'
 import { bookingUrl } from '../booking'
+
+jest.mock('@/lib/resources/benchmarks', () => ({ benchmarkAvailability: jest.fn() }))
+const mockedAvailability = benchmarkAvailability as jest.MockedFunction<typeof benchmarkAvailability>
+
+beforeEach(() => {
+  mockedAvailability.mockResolvedValue([
+    { slug: 'commercial-roofing', name: 'Commercial roofing', businesses: 12, available: true, lastMeasured: new Date('2026-09-18') },
+    { slug: 'landscaping', name: 'Landscaping & lawn care', businesses: 3, available: false, lastMeasured: new Date('2026-09-18') },
+  ])
+})
 
 describe('bookingUrl', () => {
   it('accepts an https booking page', () => {
@@ -46,12 +57,36 @@ describe('robots and sitemap', () => {
     expect(robots().sitemap).toBe('https://businesspulse.app/sitemap.xml')
   })
 
-  it('lists only public pages, on the configured domain', () => {
-    const urls = sitemap().map((entry) => entry.url)
-    expect(urls).toEqual(['https://businesspulse.app/', 'https://businesspulse.app/privacy'])
-    for (const url of urls) {
-      const path = new URL(url).pathname
-      expect(PRIVATE_PATHS.some((p) => path.startsWith(p))).toBe(false)
+  const paths = async () =>
+    (await sitemap()).map((entry) => {
+      expect(entry.url.startsWith('https://businesspulse.app/')).toBe(true)
+      return new URL(entry.url).pathname
+    })
+
+  it('lists public pages, published articles, and only benchmarks with enough data', async () => {
+    const urls = await paths()
+    expect(urls).toEqual(
+      expect.arrayContaining([
+        '/',
+        '/resources',
+        '/privacy',
+        '/resources/what-is-aeo',
+        '/resources/benchmarks/commercial-roofing',
+      ])
+    )
+    expect(urls).not.toContain('/resources/benchmarks/landscaping')
+    for (const path of urls) expect(PRIVATE_PATHS.some((p) => path.startsWith(p))).toBe(false)
+  })
+
+  it('still lists the fixed pages when the database is down', async () => {
+    const quiet = jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockedAvailability.mockRejectedValueOnce(new Error('database down'))
+    try {
+      const urls = await paths()
+      expect(urls).toContain('/resources')
+      expect(urls.some((p) => p.startsWith('/resources/benchmarks/'))).toBe(false)
+    } finally {
+      quiet.mockRestore()
     }
   })
 })
