@@ -45,6 +45,8 @@ export async function listLeads(filters: LeadFilters) {
       citedCount: aeoRun.citedCount,
       costUsd: aeoRun.costUsd,
       bookingClicks: sql<number>`(select count(*) from aeo_booking_click c where c.run_id = ${aeoRun.id})::int`,
+      reportViews: aeoRun.reportViewCount,
+      reportFirstViewedAt: aeoRun.reportFirstViewedAt,
     })
     .from(aeoRequest)
     .leftJoin(aeoRun, eq(aeoRequest.runId, aeoRun.id))
@@ -71,6 +73,48 @@ export async function dashboardStats() {
     dailyCapUsd: workerConfig().dailySpendCapUsd,
     queued: Number(row?.queued ?? 0),
     running: Number(row?.running ?? 0),
+  }
+}
+
+export type FunnelStats = {
+  days: number
+  requested: number
+  verified: number
+  ready: number
+  viewed: number
+  clickedBook: number
+  contacted: number
+  won: number
+}
+
+/**
+ * The lead funnel for requests made in the last `days` days. Stages come from
+ * each request's run, so requests sharing a reused run share its report views
+ * and booking clicks.
+ */
+export async function funnelStats(days = 30): Promise<FunnelStats> {
+  const result = await db.execute(sql`
+    select count(*)::int as requested,
+           count(*) filter (where q.verified_at is not null)::int as verified,
+           count(*) filter (where r.status = 'done')::int as ready,
+           count(*) filter (where r.report_first_viewed_at is not null)::int as viewed,
+           count(*) filter (where exists (select 1 from aeo_booking_click c where c.run_id = r.id))::int as clicked,
+           count(*) filter (where q.lead_status in ('contacted', 'won'))::int as contacted,
+           count(*) filter (where q.lead_status = 'won')::int as won
+    from aeo_request q
+    left join aeo_run r on r.id = q.run_id
+    where q.created_at > now() - ${days}::int * interval '1 day'
+  `)
+  const row = result.rows[0] as Record<string, unknown>
+  return {
+    days,
+    requested: Number(row.requested),
+    verified: Number(row.verified),
+    ready: Number(row.ready),
+    viewed: Number(row.viewed),
+    clickedBook: Number(row.clicked),
+    contacted: Number(row.contacted),
+    won: Number(row.won),
   }
 }
 

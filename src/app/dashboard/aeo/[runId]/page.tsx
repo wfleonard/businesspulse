@@ -121,6 +121,15 @@ export default async function RunDetailPage({ params }: Props) {
                 : 'Generated (not yet)'}
           </Fact>
           <Fact label="Attempts">{run.attempts}</Fact>
+          <Fact label="Report views">
+            {run.reportViewCount}
+            {run.reportFirstViewedAt && (
+              <span className="ml-1 text-xs text-text-secondary">
+                (first {formatDateTime(run.reportFirstViewedAt)}
+                {run.reportLastViewedAt && run.reportViewCount > 1 && `, last ${formatDateTime(run.reportLastViewedAt)}`})
+              </span>
+            )}
+          </Fact>
           <Fact label="Book a call clicks">
             {bookingClicks.count}
             {bookingClicks.last && (

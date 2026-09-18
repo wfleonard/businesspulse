@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AutoRefresh } from '@/components/aeo/AutoRefresh'
+import { ReportViewBeacon } from '@/components/aeo/ReportViewBeacon'
 import { bookingUrl } from '@/lib/aeo/booking'
 import { Card } from '@/components/ui/Card'
 import { loadReport, type LoadedReport, type ReportSummary, type Verdict } from '@/lib/aeo/report'
@@ -78,6 +79,7 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
 
   return (
     <Shell>
+      <ReportViewBeacon publicId={report.publicId} />
       <h1 className="mt-5 text-3xl font-bold tracking-tight text-dark sm:text-4xl">
         AI visibility snapshot for {report.businessName}
       </h1>

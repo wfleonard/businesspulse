@@ -449,6 +449,10 @@ export const aeoRun = pgTable(
     generatedPanel: jsonb('generated_panel').$type<AeoGeneratedPanel>(),
     /** Admin re-runs: claimed even when today's spend is over the cap. */
     bypassSpendCap: boolean('bypass_spend_cap').notNull().default(false),
+    /** Views of the finished report by visitors (not bots or signed-in admins), recorded by the report page. */
+    reportViewCount: integer('report_view_count').notNull().default(0),
+    reportFirstViewedAt: timestamp('report_first_viewed_at'),
+    reportLastViewedAt: timestamp('report_last_viewed_at'),
     status: aeoRunStatusEnum('status').notNull().default('queued'),
     attempts: integer('attempts').notNull().default(0),
     /**

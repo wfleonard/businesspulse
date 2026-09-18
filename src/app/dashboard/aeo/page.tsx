@@ -1,6 +1,14 @@
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
-import { dashboardStats, generatedServiceCounts, listLeads, panelOptions, type LeadRow } from '@/lib/aeo/admin'
+import {
+  dashboardStats,
+  funnelStats,
+  generatedServiceCounts,
+  listLeads,
+  panelOptions,
+  type FunnelStats,
+  type LeadRow,
+} from '@/lib/aeo/admin'
 import { filtersToQuery, LEAD_STATUSES, parseLeadFilters } from '@/lib/aeo/lead-filters'
 import { requireSession } from '@/lib/session'
 
@@ -40,16 +48,50 @@ function Score({ lead }: { lead: LeadRow }) {
   return <span className={lead.runStatus === 'failed' ? 'text-danger' : 'text-text-secondary'}>{lead.runStatus}</span>
 }
 
+function Funnel({ funnel }: { funnel: FunnelStats }) {
+  const steps = [
+    { label: 'Requested', value: funnel.requested },
+    { label: 'Verified', value: funnel.verified },
+    { label: 'Report ready', value: funnel.ready },
+    { label: 'Report viewed', value: funnel.viewed },
+    { label: 'Clicked Book a call', value: funnel.clickedBook },
+    { label: 'Contacted', value: funnel.contacted },
+    { label: 'Won', value: funnel.won },
+  ]
+  return (
+    <Card className="p-4">
+      <p className="text-xs text-text-secondary">Funnel for requests from the last {funnel.days} days</p>
+      <ol className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7">
+        {steps.map((step, index) => {
+          const previous = index > 0 ? steps[index - 1].value : null
+          return (
+            <li key={step.label}>
+              <p className="text-xl font-semibold text-dark">{step.value}</p>
+              <p className="text-xs text-dark">{step.label}</p>
+              {previous !== null && (
+                <p className="text-xs text-text-secondary">
+                  {previous > 0 ? `${Math.round((step.value / previous) * 100)}% of previous` : '-'}
+                </p>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+    </Card>
+  )
+}
+
 export default async function LeadsPage({ searchParams }: Props) {
   // The layout's check isn't enough: layouts and pages render in parallel, so a
   // page that only relied on it could stream lead data before the redirect.
   await requireSession()
   const filters = parseLeadFilters(await searchParams)
-  const [leads, stats, panels, generated] = await Promise.all([
+  const [leads, stats, panels, generated, funnel] = await Promise.all([
     listLeads(filters),
     dashboardStats(),
     panelOptions(),
     generatedServiceCounts(),
+    funnelStats(30),
   ])
   const overCap = stats.spentTodayUsd >= stats.dailyCapUsd
   const query = filtersToQuery(filters)
@@ -95,6 +137,8 @@ export default async function LeadsPage({ searchParams }: Props) {
           )}
         </Card>
       </div>
+
+      <Funnel funnel={funnel} />
 
       <form method="get" className="flex flex-wrap items-end gap-3 text-sm">
         <label className="flex flex-col gap-1">
@@ -196,6 +240,11 @@ export default async function LeadsPage({ searchParams }: Props) {
                   <td className="px-3 py-2 text-text-secondary">{lead.verifiedAt ? 'Yes' : 'No'}</td>
                   <td className="whitespace-nowrap px-3 py-2">
                     <Score lead={lead} />
+                    {(lead.reportViews ?? 0) > 0 && (
+                      <div className="text-xs text-text-secondary">
+                        Viewed {lead.reportViews === 1 ? 'once' : `${lead.reportViews} times`}
+                      </div>
+                    )}
                     {lead.bookingClicks > 0 && <div className="text-xs text-success">Clicked Book a call</div>}
                   </td>
                   <td className="px-3 py-2 text-text-secondary">{lead.leadStatus}</td>

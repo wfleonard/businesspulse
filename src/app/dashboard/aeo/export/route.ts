@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     [
       'created_at', 'business_name', 'domain', 'service', 'city', 'state', 'industry', 'email',
       'contact_consent', 'verified_at', 'lead_status', 'run_status', 'questions_answered', 'cited',
-      'cost_usd', 'booking_clicks', 'report_url',
+      'cost_usd', 'report_views', 'report_first_viewed_at', 'booking_clicks', 'report_url',
     ],
     leads.map((lead) => [
       lead.createdAt,
@@ -35,6 +35,8 @@ export async function GET(req: Request) {
       lead.runStatus === 'done' ? lead.questionCount : null,
       lead.runStatus === 'done' ? lead.citedCount : null,
       lead.runId ? Number(lead.costUsd) : null,
+      lead.runId ? lead.reportViews : null,
+      lead.reportFirstViewedAt,
       lead.runId ? lead.bookingClicks : null,
       lead.publicId ? appUrl(`/report/${lead.publicId}`) : null,
     ])
