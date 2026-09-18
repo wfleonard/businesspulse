@@ -44,6 +44,7 @@ export async function listLeads(filters: LeadFilters) {
       questionCount: aeoRun.questionCount,
       citedCount: aeoRun.citedCount,
       costUsd: aeoRun.costUsd,
+      bookingClicks: sql<number>`(select count(*) from aeo_booking_click c where c.run_id = ${aeoRun.id})::int`,
     })
     .from(aeoRequest)
     .leftJoin(aeoRun, eq(aeoRequest.runId, aeoRun.id))
@@ -99,7 +100,7 @@ export async function loadRunDetail(runId: string) {
   const [run] = await db.select().from(aeoRun).where(eq(aeoRun.id, runId)).limit(1)
   if (!run) return null
 
-  const [requests, results, panels] = await Promise.all([
+  const [requests, results, panels, clicks] = await Promise.all([
     db
       .select({
         id: aeoRequest.id,
@@ -126,9 +127,19 @@ export async function loadRunDetail(runId: string) {
     run.panelSlug
       ? db.select({ name: aeoPanel.name }).from(aeoPanel).where(eq(aeoPanel.slug, run.panelSlug)).limit(1)
       : Promise.resolve([] as { name: string }[]),
+    db.execute(sql`
+      select count(*)::int as clicks, max(created_at) as last
+      from aeo_booking_click where run_id = ${run.id}
+    `),
   ])
 
-  return { run, requests, results, panelName: panels[0]?.name ?? null }
+  const clickRow = clicks.rows[0] as { clicks: number; last: Date | string | null } | undefined
+  const bookingClicks = {
+    count: Number(clickRow?.clicks ?? 0),
+    last: clickRow?.last ? new Date(clickRow.last) : null,
+  }
+
+  return { run, requests, results, panelName: panels[0]?.name ?? null, bookingClicks }
 }
 
 export async function setLeadStatus(requestId: string, status: LeadStatus): Promise<boolean> {

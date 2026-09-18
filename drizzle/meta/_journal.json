@@ -57,6 +57,13 @@
       "when": 1789502052530,
       "tag": "0007_exotic_hemingway",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789769580704,
+      "tag": "0008_broken_ultimatum",
+      "breakpoints": true
     }
   ]
 }

@@ -196,6 +196,7 @@ export default async function LeadsPage({ searchParams }: Props) {
                   <td className="px-3 py-2 text-text-secondary">{lead.verifiedAt ? 'Yes' : 'No'}</td>
                   <td className="whitespace-nowrap px-3 py-2">
                     <Score lead={lead} />
+                    {lead.bookingClicks > 0 && <div className="text-xs text-success">Clicked Book a call</div>}
                   </td>
                   <td className="px-3 py-2 text-text-secondary">{lead.leadStatus}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-right text-text-secondary">

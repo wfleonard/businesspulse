@@ -538,6 +538,19 @@ export const aeoResult = pgTable(
   (t) => [index('aeo_result_run_idx').on(t.runId)]
 )
 
+/** "Book a call" clicks from a report, recorded by /book. Deleted with the run. */
+export const aeoBookingClick = pgTable(
+  'aeo_booking_click',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    runId: uuid('run_id')
+      .notNull()
+      .references(() => aeoRun.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('aeo_booking_click_run_idx').on(t.runId)]
+)
+
 export const schema = {
   user,
   session,
@@ -560,4 +573,5 @@ export const schema = {
   aeoRun,
   aeoRequest,
   aeoResult,
+  aeoBookingClick,
 }

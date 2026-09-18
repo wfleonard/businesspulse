@@ -62,7 +62,7 @@ export default async function RunDetailPage({ params }: Props) {
   const detail = await loadRunDetail(runId)
   if (!detail) notFound()
 
-  const { run, requests, results, panelName } = detail
+  const { run, requests, results, panelName, bookingClicks } = detail
   const title = requests[0]?.businessName ?? run.domain
   const generated = run.generatedPanel
   const answered = results.filter((r) => !r.error).length
@@ -121,6 +121,12 @@ export default async function RunDetailPage({ params }: Props) {
                 : 'Generated (not yet)'}
           </Fact>
           <Fact label="Attempts">{run.attempts}</Fact>
+          <Fact label="Book a call clicks">
+            {bookingClicks.count}
+            {bookingClicks.last && (
+              <span className="ml-1 text-xs text-text-secondary">(last {formatDateTime(bookingClicks.last)})</span>
+            )}
+          </Fact>
           <Fact label="Created">{formatDateTime(run.createdAt)}</Fact>
           <Fact label="Finished">{formatDateTime(run.finishedAt)}</Fact>
         </dl>

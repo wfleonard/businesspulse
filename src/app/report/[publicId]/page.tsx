@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AutoRefresh } from '@/components/aeo/AutoRefresh'
+import { bookingUrl } from '@/lib/aeo/booking'
 import { Card } from '@/components/ui/Card'
 import { loadReport, type LoadedReport, type ReportSummary, type Verdict } from '@/lib/aeo/report'
 
@@ -60,9 +61,9 @@ function scoreLine(summary: ReportSummary, domain: string): string {
   return `${domain} was cited on most of these questions.`
 }
 
-function callToAction(): string | null {
-  const booking = process.env.AEO_BOOKING_URL
-  if (booking?.startsWith('https://')) return booking
+/** Through /book when a booking page is set, so the click is recorded against this report. */
+function callToAction(publicId: string): string | null {
+  if (bookingUrl()) return `/book?r=${encodeURIComponent(publicId)}`
   const contact = process.env.AEO_CONTACT_EMAIL
   return contact ? `mailto:${contact}?subject=${encodeURIComponent('Full AI visibility audit')}` : null
 }
@@ -73,7 +74,7 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
   // Scores count only answered questions: one AI search never answered isn't a miss.
   const remaining = Math.max(0, summary.answeredCount - summary.examples.length)
   const unanswered = summary.questionCount - summary.answeredCount
-  const cta = callToAction()
+  const cta = callToAction(report.publicId)
 
   return (
     <Shell>
