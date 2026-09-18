@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { createRerun, deleteRequest, setLeadStatus } from '@/lib/aeo/admin'
 import { LEAD_STATUSES } from '@/lib/aeo/lead-filters'
+import { fieldErrors, prospectRequestSchema } from '@/lib/aeo/request-schema'
+import { createProspectRequest } from '@/lib/aeo/requests'
 import { recordAudit } from '@/lib/audit'
 import { requireSession } from '@/lib/session'
 
@@ -47,6 +49,39 @@ export async function deleteLead(formData: FormData): Promise<void> {
   }
   revalidatePath('/dashboard/aeo')
   redirect('/dashboard/aeo')
+}
+
+export type ProspectFormState = {
+  error?: string
+  fields?: Record<string, string>
+  /** What was submitted, so the form keeps it after an error. */
+  values?: Record<string, string>
+}
+
+/** Start an outbound prospect snapshot, then go to its run page for the report link. */
+export async function createProspectSnapshot(
+  _previous: ProspectFormState,
+  formData: FormData
+): Promise<ProspectFormState> {
+  const { user } = await requireSession()
+  const values = Object.fromEntries(
+    [...formData.entries()].filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+  )
+
+  const parsed = prospectRequestSchema.safeParse(values)
+  if (!parsed.success) {
+    return { error: 'Please fix the highlighted fields.', fields: fieldErrors(parsed.error), values }
+  }
+
+  const result = await createProspectRequest(parsed.data)
+  await recordAudit({
+    userId: user.id,
+    action: 'aeo.prospect_snapshot',
+    target: result.runId,
+    metadata: { reused: result.reused },
+  })
+  revalidatePath('/dashboard/aeo')
+  redirect(`/dashboard/aeo/${result.runId}?started=${result.reused ? 'reused' : 'new'}`)
 }
 
 export async function rerunSnapshot(formData: FormData): Promise<void> {

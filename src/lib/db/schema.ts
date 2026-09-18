@@ -411,6 +411,8 @@ export const aeoLeadStatusEnum = pgEnum('aeo_lead_status', [
 ])
 export const aeoRunTierEnum = pgEnum('aeo_run_tier', ['snapshot', 'full'])
 export const aeoPanelSourceEnum = pgEnum('aeo_panel_source', ['canned', 'generated'])
+/** form: the public snapshot form. outbound: a prospect snapshot run from the dashboard. */
+export const aeoRequestSourceEnum = pgEnum('aeo_request_source', ['form', 'outbound'])
 export const aeoRunStatusEnum = pgEnum('aeo_run_status', ['queued', 'running', 'done', 'failed'])
 
 /** Canned vertical question panels. Questions carry slots like {service} and {state}. */
@@ -499,6 +501,8 @@ export const aeoRequest = pgTable(
     verifiedAt: timestamp('verified_at'),
     ipAddress: text('ip_address'),
     leadStatus: aeoLeadStatusEnum('lead_status').notNull().default('new'),
+    /** Outbound requests never get the automatic report email and stay out of the form funnel. */
+    source: aeoRequestSourceEnum('source').notNull().default('form'),
     runId: uuid('run_id').references(() => aeoRun.id, { onDelete: 'set null' }),
     /** When the "report ready" email went out. Null until then; the worker sweeps for these. */
     reportEmailedAt: timestamp('report_emailed_at'),

@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { AutoRefresh } from '@/components/aeo/AutoRefresh'
 import { ConfirmSubmit } from '@/components/aeo/ConfirmSubmit'
+import { CopyButton } from '@/components/aeo/CopyButton'
+import { appUrl } from '@/lib/aeo/emails'
 import { Card } from '@/components/ui/Card'
 import { loadRunDetail } from '@/lib/aeo/admin'
 import { LEAD_STATUSES } from '@/lib/aeo/lead-filters'
@@ -11,7 +14,10 @@ import { deleteLead, rerunSnapshot, updateLeadStatus } from '../actions'
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Run | BusinessPulse' }
 
-type Props = { params: Promise<{ runId: string }> }
+type Props = {
+  params: Promise<{ runId: string }>
+  searchParams: Promise<{ started?: string | string[] }>
+}
 
 const VERDICTS: Record<Verdict, { label: string; className: string }> = {
   cited: { label: 'Cited', className: 'bg-success/10 text-success' },
@@ -54,11 +60,12 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
   )
 }
 
-export default async function RunDetailPage({ params }: Props) {
+export default async function RunDetailPage({ params, searchParams }: Props) {
   // Layouts and pages render in parallel, so the layout's session check alone
   // wouldn't stop this page from loading and streaming the run's data.
   await requireSession()
   const { runId } = await params
+  const { started } = await searchParams
   const detail = await loadRunDetail(runId)
   if (!detail) notFound()
 
@@ -66,6 +73,7 @@ export default async function RunDetailPage({ params }: Props) {
   const title = requests[0]?.businessName ?? run.domain
   const generated = run.generatedPanel
   const answered = results.filter((r) => !r.error).length
+  const reportUrl = appUrl(`/report/${run.publicId}`)
 
   return (
     <div className="space-y-6">
@@ -98,6 +106,20 @@ export default async function RunDetailPage({ params }: Props) {
             </form>
           </div>
         </div>
+      </div>
+
+      {(run.status === 'queued' || run.status === 'running') && <AutoRefresh seconds={15} />}
+      {(started === 'new' || started === 'reused') && (
+        <p className="rounded-md bg-primary/5 p-3 text-sm text-dark">
+          {started === 'reused'
+            ? 'This business was measured in the last 30 days, so its existing report is reused. Nothing new was spent.'
+            : 'Snapshot queued. It usually takes a few minutes, and this page updates on its own.'}
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-text-secondary">Report link:</span>
+        <code className="break-all rounded bg-gray-100 px-2 py-1 text-xs text-dark">{reportUrl}</code>
+        <CopyButton text={reportUrl} label="Copy link" />
       </div>
 
       <Card>
@@ -154,9 +176,14 @@ export default async function RunDetailPage({ params }: Props) {
               <Card key={request.id} className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <dl className="grid flex-1 gap-3 sm:grid-cols-3">
-                    <Fact label="Business">{request.businessName}</Fact>
+                    <Fact label="Business">
+                      {request.businessName}
+                      {request.source === 'outbound' && (
+                        <span className="ml-2 text-xs font-medium text-primary">Outbound</span>
+                      )}
+                    </Fact>
                     <Fact label="Email">
-                      {request.email}
+                      {request.email || '-'}
                       {request.contactConsent && <span className="ml-2 text-xs text-success">OK to contact</span>}
                     </Fact>
                     <Fact label="Service">

@@ -3,9 +3,13 @@
 export const LEAD_STATUSES = ['new', 'contacted', 'won', 'ignored'] as const
 export type LeadStatus = (typeof LEAD_STATUSES)[number]
 
+export const LEAD_SOURCES = ['form', 'outbound'] as const
+export type LeadSource = (typeof LEAD_SOURCES)[number]
+
 export type LeadFilters = {
   /** A canned panel slug, or "generated" for requests without one. */
   vertical?: string
+  source?: LeadSource
   leadStatus?: LeadStatus
   verified?: boolean
   minCited?: number
@@ -33,6 +37,9 @@ export function parseLeadFilters(params: Params): LeadFilters {
   const vertical = first(params.vertical)
   if (vertical && /^[a-z0-9-]{1,80}$/.test(vertical)) filters.vertical = vertical
 
+  const source = first(params.source)
+  if (source && (LEAD_SOURCES as readonly string[]).includes(source)) filters.source = source as LeadSource
+
   const status = first(params.status)
   if (status && (LEAD_STATUSES as readonly string[]).includes(status)) filters.leadStatus = status as LeadStatus
 
@@ -52,6 +59,7 @@ export function parseLeadFilters(params: Params): LeadFilters {
 export function filtersToQuery(filters: LeadFilters): string {
   const params = new URLSearchParams()
   if (filters.vertical) params.set('vertical', filters.vertical)
+  if (filters.source) params.set('source', filters.source)
   if (filters.leadStatus) params.set('status', filters.leadStatus)
   if (filters.verified !== undefined) params.set('verified', filters.verified ? 'yes' : 'no')
   if (filters.minCited !== undefined) params.set('min', String(filters.minCited))

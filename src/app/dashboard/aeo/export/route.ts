@@ -15,12 +15,13 @@ export async function GET(req: Request) {
 
   const csv = toCsv(
     [
-      'created_at', 'business_name', 'domain', 'service', 'city', 'state', 'industry', 'email',
+      'created_at', 'source', 'business_name', 'domain', 'service', 'city', 'state', 'industry', 'email',
       'contact_consent', 'verified_at', 'lead_status', 'run_status', 'questions_answered', 'cited',
       'cost_usd', 'report_views', 'report_first_viewed_at', 'booking_clicks', 'report_url',
     ],
     leads.map((lead) => [
       lead.createdAt,
+      lead.source,
       lead.businessName,
       lead.domain,
       lead.service,

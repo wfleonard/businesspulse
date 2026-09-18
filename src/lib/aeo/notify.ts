@@ -37,6 +37,7 @@ export async function sendPendingReportEmails(
     from aeo_request q
     join aeo_run r on r.id = q.run_id
     where r.status = 'done'
+      and q.source = 'form'
       and q.verified_at is not null
       and q.verified_at > now() - ${REPORT_EMAIL_WINDOW_DAYS}::int * interval '1 day'
       and q.report_emailed_at is null

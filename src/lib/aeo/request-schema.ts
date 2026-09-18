@@ -43,6 +43,24 @@ export const snapshotRequestSchema = z.object({
 
 export type SnapshotRequestInput = z.infer<typeof snapshotRequestSchema>
 
+/**
+ * A prospect snapshot started from the dashboard. Same business fields as the
+ * public form; the prospect's email is optional because nothing is sent to it.
+ */
+export const prospectRequestSchema = snapshotRequestSchema
+  .pick({ businessName: true, website: true, service: true, city: true, state: true, vertical: true })
+  .extend({
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .max(254, 'Enter a valid email address')
+      .refine((value) => value === '' || z.email().safeParse(value).success, 'Enter a valid email address')
+      .default(''),
+  })
+
+export type ProspectRequestInput = z.infer<typeof prospectRequestSchema>
+
 /** First message per field, for showing next to the form inputs. */
 export function fieldErrors(error: z.ZodError): Record<string, string> {
   const fields: Record<string, string> = {}

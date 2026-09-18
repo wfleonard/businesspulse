@@ -15,6 +15,7 @@ export async function listLeads(filters: LeadFilters) {
   const conditions: SQL[] = []
   if (filters.vertical === 'generated') conditions.push(isNull(aeoRequest.panelSlug))
   else if (filters.vertical) conditions.push(eq(aeoRequest.panelSlug, filters.vertical))
+  if (filters.source) conditions.push(eq(aeoRequest.source, filters.source))
   if (filters.leadStatus) conditions.push(eq(aeoRequest.leadStatus, filters.leadStatus))
   if (filters.verified === true) conditions.push(isNotNull(aeoRequest.verifiedAt))
   if (filters.verified === false) conditions.push(isNull(aeoRequest.verifiedAt))
@@ -37,6 +38,7 @@ export async function listLeads(filters: LeadFilters) {
       contactConsent: aeoRequest.contactConsent,
       verifiedAt: aeoRequest.verifiedAt,
       leadStatus: aeoRequest.leadStatus,
+      source: aeoRequest.source,
       runId: aeoRun.id,
       publicId: aeoRun.publicId,
       runStatus: aeoRun.status,
@@ -88,9 +90,10 @@ export type FunnelStats = {
 }
 
 /**
- * The lead funnel for requests made in the last `days` days. Stages come from
- * each request's run, so requests sharing a reused run share its report views
- * and booking clicks.
+ * The public-form lead funnel for requests made in the last `days` days.
+ * Outbound prospect snapshots are left out: they skip verification and aren't
+ * inbound demand. Stages come from each request's run, so requests sharing a
+ * reused run share its report views and booking clicks.
  */
 export async function funnelStats(days = 30): Promise<FunnelStats> {
   const result = await db.execute(sql`
@@ -104,6 +107,7 @@ export async function funnelStats(days = 30): Promise<FunnelStats> {
     from aeo_request q
     left join aeo_run r on r.id = q.run_id
     where q.created_at > now() - ${days}::int * interval '1 day'
+      and q.source = 'form'
   `)
   const row = result.rows[0] as Record<string, unknown>
   return {
@@ -157,6 +161,7 @@ export async function loadRunDetail(runId: string) {
         verifiedAt: aeoRequest.verifiedAt,
         ipAddress: aeoRequest.ipAddress,
         leadStatus: aeoRequest.leadStatus,
+        source: aeoRequest.source,
         reportEmailedAt: aeoRequest.reportEmailedAt,
         createdAt: aeoRequest.createdAt,
       })

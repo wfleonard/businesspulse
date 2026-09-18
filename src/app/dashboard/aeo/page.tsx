@@ -60,7 +60,9 @@ function Funnel({ funnel }: { funnel: FunnelStats }) {
   ]
   return (
     <Card className="p-4">
-      <p className="text-xs text-text-secondary">Funnel for requests from the last {funnel.days} days</p>
+      <p className="text-xs text-text-secondary">
+        Funnel for public-form requests from the last {funnel.days} days (outbound snapshots not included)
+      </p>
       <ol className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7">
         {steps.map((step, index) => {
           const previous = index > 0 ? steps[index - 1].value : null
@@ -103,12 +105,20 @@ export default async function LeadsPage({ searchParams }: Props) {
           <h1 className="text-2xl font-bold text-dark">Leads</h1>
           <p className="mt-1 text-text-secondary">AI visibility snapshot requests, newest first.</p>
         </div>
-        <a
-          href={`/dashboard/aeo/export${query}`}
-          className="rounded-md border border-border bg-white px-3 py-1.5 text-sm font-medium text-dark hover:bg-gray-50"
-        >
-          Export CSV
-        </a>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/dashboard/aeo/new"
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90"
+          >
+            Run a snapshot
+          </Link>
+          <a
+            href={`/dashboard/aeo/export${query}`}
+            className="rounded-md border border-border bg-white px-3 py-1.5 text-sm font-medium text-dark hover:bg-gray-50"
+          >
+            Export CSV
+          </a>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -151,6 +161,14 @@ export default async function LeadsPage({ searchParams }: Props) {
               </option>
             ))}
             <option value="generated">Generated</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-text-secondary">Source</span>
+          <select name="source" defaultValue={filters.source ?? ''} className={inputClass}>
+            <option value="">All</option>
+            <option value="form">Public form</option>
+            <option value="outbound">Outbound</option>
           </select>
         </label>
         <label className="flex flex-col gap-1">
@@ -231,10 +249,11 @@ export default async function LeadsPage({ searchParams }: Props) {
                     <div className="text-xs text-text-secondary">
                       {lead.domain} · {lead.city}, {lead.state}
                     </div>
+                    {lead.source === 'outbound' && <div className="text-xs font-medium text-primary">Outbound</div>}
                   </td>
                   <td className="px-3 py-2 text-text-secondary">{lead.panelName ?? lead.panelSlug ?? 'Generated'}</td>
                   <td className="px-3 py-2">
-                    <div className="text-dark">{lead.email}</div>
+                    <div className="text-dark">{lead.email || '-'}</div>
                     {lead.contactConsent && <div className="text-xs text-success">OK to contact</div>}
                   </td>
                   <td className="px-3 py-2 text-text-secondary">{lead.verifiedAt ? 'Yes' : 'No'}</td>
