@@ -58,6 +58,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   'service-geo': 'Hiring near you',
   cost: 'Cost',
   permits: 'Permits',
+  regulation: 'Rules and regulation',
   comparison: 'Comparing options',
   technical: 'How it works',
   application: 'Specific jobs',
@@ -67,7 +68,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 /** Categories with a fixed position; everything else follows alphabetically. */
-const CATEGORY_ORDER = ['service-geo', 'cost', 'permits']
+const CATEGORY_ORDER = ['service-geo', 'cost', 'permits', 'regulation']
 
 export function categoryLabel(category: string): string {
   if (CATEGORY_LABELS[category]) return CATEGORY_LABELS[category]

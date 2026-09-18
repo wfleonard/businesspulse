@@ -45,10 +45,13 @@ describe.each(CANNED_PANELS.map((panel) => [panel.slug, panel] as const))('canne
     )
     expect(plan.questions).toHaveLength(20)
     for (const [category, minimum] of Object.entries(CATEGORY_MINIMUMS)) {
-      const available = plan.questions.filter((q) => q.c === category).length
+      // A minimum applies only where the panel has that category; municipal
+      // advisors, for one, have regulation questions instead of permits.
+      if (panel.questions.filter((q) => q.c === category).length < minimum) continue
       // Without a known state there is no permit agency, so permit questions may run short.
       if (category === 'permits' && state === 'Ontario') continue
-      expect(available).toBeGreaterThanOrEqual(minimum)
+      const sampled = plan.questions.filter((q) => q.c === category).length
+      expect(sampled).toBeGreaterThanOrEqual(minimum)
     }
     for (const { q } of plan.questions) expect(q).not.toMatch(/\{[a-z_]+\}/)
   })

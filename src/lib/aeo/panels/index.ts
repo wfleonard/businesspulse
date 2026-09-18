@@ -1,5 +1,11 @@
 import type { PanelQuestion } from '../questions'
+import { commercialRoofing } from './commercial-roofing'
+import { electricalContracting } from './electrical-contracting'
 import { hddTrenchless } from './hdd-trenchless'
+import { hvacPlumbing } from './hvac-plumbing'
+import { landscaping } from './landscaping'
+import { municipalAdvisors } from './municipal-advisors'
+import { poolsHotTubs } from './pools-hot-tubs'
 
 /**
  * Canned vertical panels, kept in code so they are reviewed and versioned like
@@ -17,4 +23,12 @@ export type CannedPanelDefinition = {
   referenceDomains: string[]
 }
 
-export const CANNED_PANELS: CannedPanelDefinition[] = [hddTrenchless]
+export const CANNED_PANELS: CannedPanelDefinition[] = [
+  hddTrenchless,
+  commercialRoofing,
+  electricalContracting,
+  hvacPlumbing,
+  landscaping,
+  municipalAdvisors,
+  poolsHotTubs,
+]
