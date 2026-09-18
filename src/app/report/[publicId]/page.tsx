@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AutoRefresh } from '@/components/aeo/AutoRefresh'
@@ -36,8 +37,15 @@ function formatDate(date: Date | null): string {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:py-14">
-      <Link href="/" className="rounded bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-        BusinessPulse
+      <Link href="/" className="inline-block" aria-label="BusinessPulse home">
+        <Image
+          src="/business-pulse-logo.webp"
+          alt="BusinessPulse"
+          width={1135}
+          height={853}
+          priority
+          className="h-auto w-36 sm:w-44"
+        />
       </Link>
       {children}
     </main>
