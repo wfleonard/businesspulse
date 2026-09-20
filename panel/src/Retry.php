@@ -23,6 +23,8 @@ final class Retry
             'billing_hard_limit',           // OpenAI
             'exceeded your current quota',  // OpenAI
             'credit balance is too low',    // Anthropic
+            'api_key_invalid',              // Google
+            'permission_denied',            // Google (key not enabled for the API, billing off)
             'invalid_api_key',
             'authentication_error',
             'permission_error',

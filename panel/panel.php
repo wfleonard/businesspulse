@@ -15,6 +15,7 @@ namespace Saxon\Panel;
 
 use Saxon\Panel\Engines\ClaudeEngine;
 use Saxon\Panel\Engines\Engine;
+use Saxon\Panel\Engines\GeminiEngine;
 use Saxon\Panel\Engines\OpenAIEngine;
 use Saxon\Panel\Engines\PerplexityEngine;
 
@@ -67,6 +68,7 @@ foreach ($argvCopy as $arg) {
 /** Default model per engine — overridable with --model. */
 const ENGINE_DEFAULTS = [
     'claude'     => 'claude-sonnet-5',
+    'gemini'     => 'gemini-3.8-flash',
     'openai'     => 'gpt-5.6-terra',
     'perplexity' => 'sonar',
 ];
@@ -78,6 +80,9 @@ function makeEngine(string $engine, array $opts): Engine
 
     return match ($engine) {
         'claude'     => new ClaudeEngine($model, 5, $effort),
+        // --effort carries over: Gemini calls it thinking_level and adds
+        // "minimal" below "low", but low/medium/high mean the same thing.
+        'gemini'     => new GeminiEngine($model, $effort),
         'openai'     => new OpenAIEngine($model, (string) ($opts['context'] ?? 'medium')),
         'perplexity' => new PerplexityEngine($model),
         default      => (static function () use ($engine): never {
@@ -348,6 +353,7 @@ case 'models': {
     if ($engine !== 'openai') {
         fwrite(STDERR, "models is only implemented for --engine=openai.\n"
             . "  claude:     see shared/models.md or GET /v1/models\n"
+            . "  gemini:     ai.google.dev/gemini-api/docs/models — grounding needs a Gemini 3.x model\n"
             . "  perplexity: sonar, sonar-pro, sonar-reasoning-pro, sonar-deep-research\n");
         exit(1);
     }
@@ -453,13 +459,13 @@ default:
     Saxon AEO — Visibility Panel
 
       php panel.php run <client> [options]
-          --engine=a,b       claude | openai | perplexity, comma-separated
+          --engine=a,b       claude | gemini | openai | perplexity, comma-separated
                              (default claude; one run row per engine)
           --limit=N          only the first N queries (use for a cheap smoke test)
           --category=a,b     restrict to intent categories
           --concurrency=N    parallel requests (default 4)
           --model=ID         only when a single engine is named
-          --effort=LEVEL     low|medium|high  (claude only, default medium)
+          --effort=LEVEL     low|medium|high  (claude and gemini, default medium)
           --context=SIZE     low|medium|high  (openai search depth, default medium)
           --dry-run          print the query plan and exit, no API calls
 
@@ -478,7 +484,7 @@ default:
           run a job file and write a result file — no SQLite.
           The BusinessPulse worker's entry point; see README.md.
 
-    Keys:  ANTHROPIC_API_KEY   OPENAI_API_KEY   PERPLEXITY_API_KEY
+    Keys:  ANTHROPIC_API_KEY   GEMINI_API_KEY   OPENAI_API_KEY   PERPLEXITY_API_KEY
       php panel.php runs
       php panel.php queries <client>
 

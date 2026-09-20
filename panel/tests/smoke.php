@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Saxon\Panel;
 
 use Saxon\Panel\Engines\ClaudeEngine;
+use Saxon\Panel\Engines\GeminiEngine;
 use Saxon\Panel\Engines\OpenAIEngine;
 use Saxon\Panel\Engines\PerplexityEngine;
 
@@ -164,6 +165,88 @@ $check('only annotated one is cited',
     count(array_filter($oaSrc['sources'], fn($s) => $s['cited'])), 1);
 
 // ---------------------------------------------------------------------------
+echo "\nGemini response parsing\n";
+// Shape per ai.google.dev/gemini-api/docs/interactions/google-search
+$gemBody = json_encode([
+    'object' => 'interaction',
+    'status' => 'completed',
+    'model'  => 'gemini-3.8-flash',
+    'usage'  => [
+        'total_input_tokens'   => 900,
+        'total_output_tokens'  => 300,
+        'total_thought_tokens' => 200,
+        'total_tokens'         => 1400,
+    ],
+    'steps' => [
+        ['type' => 'thought', 'summary' => [['type' => 'text', 'text' => 'ignore me']]],
+        ['type' => 'google_search_call', 'id' => 's1',
+         'arguments' => ['queries' => ['hdd contractor nj', 'directional boring fair haven nj', '']]],
+        ['type' => 'google_search_result', 'call_id' => 's1',
+         'result' => [['search_suggestions' => '<!-- widget -->']]],
+        ['type' => 'model_output', 'content' => [[
+            'type' => 'text',
+            'text' => 'East Coast Utility handles directional drilling in Monmouth County.',
+            'annotations' => [
+                ['type' => 'url_citation', 'url' => 'https://www.eastcoastutility.com/',
+                 'title' => 'eastcoastutility.com', 'start_index' => 0, 'end_index' => 20],
+                ['type' => 'url_citation', 'url' => 'https://boringcontractors.com/nj',
+                 'title' => 'boringcontractors.com', 'start_index' => 21, 'end_index' => 60],
+                // Same page cited twice; one source, not two.
+                ['type' => 'url_citation', 'url' => 'https://www.eastcoastutility.com/',
+                 'title' => 'eastcoastutility.com', 'start_index' => 61, 'end_index' => 66],
+            ],
+        ]]],
+    ],
+]);
+
+$gem = new GeminiEngine('gemini-3.8-flash', 'medium', 'test-key');
+$g = $gem->parse($gemBody, 200);
+$check('no error', $g['error'], null);
+$check('thought step skipped, answer clean',
+    str_starts_with($g['answer'], 'East Coast Utility'), true);
+$check('empty query not billed', $g['searches'], 2);
+$check('2 sources, repeat citation deduped', count($g['sources']), 2);
+$check('every source is cited (no surfaced tier)',
+    count(array_filter($g['sources'], fn($s) => $s['cited'])), 2);
+$check('input tokens', $g['input_tokens'], 900);
+$check('thinking tokens billed as output', $g['output_tokens'], 500);
+// 900/1M*0.75 + 500/1M*3.75 + 2 searches * $0.014
+$check('cost = tokens + per-query search fee', round($gem->costOf($g), 6), 0.03055);
+
+// usage.grounding_tool_count is what Google billed; it wins over our step tally.
+$gemBilled = $gem->parse(json_encode([
+    'status' => 'completed',
+    'usage'  => ['grounding_tool_count' => [['type' => 'google_search', 'count' => 5]]],
+    'steps'  => [
+        ['type' => 'google_search_call', 'arguments' => ['queries' => ['one']]],
+        ['type' => 'model_output', 'content' => [['type' => 'text', 'text' => 'answer']]],
+    ],
+]), 200);
+$check('billed search count preferred', $gemBilled['searches'], 5);
+$check('answer without citations still parses', $gemBilled['sources'], []);
+
+$gemErr = $gem->parse(json_encode([
+    'error' => ['code' => 429, 'message' => 'Resource has been exhausted', 'status' => 'RESOURCE_EXHAUSTED'],
+]), 429);
+$check('http error surfaces message',
+    str_contains((string) $gemErr['error'], 'Resource has been exhausted'), true);
+
+$gemFailed = $gem->parse(json_encode([
+    'status' => 'failed',
+    'errors' => [['code' => 'internal', 'message' => 'backend unavailable']],
+    'steps'  => [],
+]), 200);
+$check('failed interaction surfaces',
+    str_contains((string) $gemFailed['error'], 'backend unavailable'), true);
+
+$gemEmpty = $gem->parse(json_encode([
+    'status' => 'completed',
+    'steps'  => [['type' => 'google_search_result', 'call_id' => 's1', 'is_error' => true, 'result' => []]],
+]), 200);
+$check('search failure with no answer is an error',
+    str_contains((string) $gemEmpty['error'], 'google search failed'), true);
+
+// ---------------------------------------------------------------------------
 echo "\nRetry classification\n";
 $permanent = [
     'openai out of credits' => '{"error":{"message":"You have no credits remaining","type":"insufficient_quota"}}',
@@ -171,6 +254,8 @@ $permanent = [
     'anthropic low balance' => '{"error":{"message":"Your credit balance is too low"}}',
     'bad key'               => '{"error":{"type":"authentication_error"}}',
     'bad model'             => '{"error":{"code":"model_not_found"}}',
+    'google bad key'        => '{"error":{"code":400,"status":"INVALID_ARGUMENT","details":[{"reason":"API_KEY_INVALID"}]}}',
+    'google key disabled'   => '{"error":{"code":403,"status":"PERMISSION_DENIED"}}',
 ];
 foreach ($permanent as $label => $body) {
     $check("permanent: $label", Retry::isPermanentFailure($body), true);
@@ -178,6 +263,8 @@ foreach ($permanent as $label => $body) {
 $transient = [
     'real rate limit' => '{"error":{"message":"Rate limit reached for requests","type":"rate_limit_error"}}',
     'overloaded'      => '{"type":"error","error":{"type":"overloaded_error"}}',
+    // Google returns RESOURCE_EXHAUSTED for ordinary rate limiting too — back off, don't quit.
+    'google 429'      => '{"error":{"code":429,"status":"RESOURCE_EXHAUSTED","message":"Quota exceeded"}}',
     'empty body'      => '',
 ];
 foreach ($transient as $label => $body) {

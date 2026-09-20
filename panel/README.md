@@ -25,7 +25,8 @@ result file. No SQLite. Contract and field list: `docs/aeo-build-spec.md`, Secti
 | 2 | Bad invocation or invalid job file — nothing was spent |
 
 Keys come from the environment: `PERPLEXITY_API_KEY`, `ANTHROPIC_API_KEY`,
-`OPENAI_API_KEY`.
+`OPENAI_API_KEY`, `GEMINI_API_KEY`. Only the engines a job names are constructed, so a
+Perplexity-only snapshot needs only that key.
 
 ## Local audits
 
