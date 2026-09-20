@@ -8,6 +8,7 @@ export const howBusinessPulseMeasures: ResourceArticle = {
     'We ask Perplexity, with live web search, 20 questions that buyers in your industry and area actually ask, then check which websites each answer cites. Your score is the number of questions where your own site was one of them.',
   industries: [],
   published: '2026-09-18',
+  updated: '2026-09-20',
   body: `
 ## Which questions we ask
 
@@ -29,8 +30,11 @@ Each question goes to Perplexity's Sonar model with live web search, one questio
 | Named, not linked | The answer names your business, but your site isn't a source. |
 | Only through a directory | You're named, and the only route to you is a listing site such as Yelp or Angi. |
 | Not mentioned | The answer searched the web and you weren't in it. |
+| Answered from memory | The assistant answered without searching. |
 
 A question the assistant fails to answer isn't counted either way; the report says how many that affected.
+
+"Answered from memory" is held apart from the rest on purpose. An assistant decides question by question whether to search, and when it doesn't, its answer describes what it absorbed during training rather than what is findable about you now. Counting that as a miss would pad the number with questions nobody actually measured, so those questions are set aside and reported separately, and every rate we quote is out of the questions that were searched. Being named in one of those answers still counts as named: recall without a lookup is a real signal, and a strong one.
 
 ## Who gets cited instead
 
@@ -41,6 +45,8 @@ The report lists the websites cited in your place. Government sites, reference s
 - **It's one assistant.** ChatGPT, Claude, and Gemini often cite different sources for the same question. The full audit asks all three.
 - **It's a point in time.** AI answers change as the models and the web change, so treat a snapshot as a reading, not a ranking.
 - **It's a sample.** Twenty questions show a pattern; they don't cover every way a buyer might ask.
+- **It doesn't cover Google's AI Overviews.** Google publishes no way for a tool to ask AI Overviews a question and read the answer, so no measurement tool covers it, ours included.
+- **It shows what assistants answer, not why.** No assistant explains why it chose one source over another, so a snapshot tells you where you stand, and the work that follows is informed judgment rather than a formula.
 
 ## Industry benchmarks
 

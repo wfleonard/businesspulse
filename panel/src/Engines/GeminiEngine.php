@@ -21,6 +21,11 @@ namespace Saxon\Panel\Engines;
  * (Gemini 3 bills per query, not per prompt). The first 5,000 grounded searches
  * each month are free across all Gemini 3.x models, which costOf() cannot see —
  * so at snapshot volumes the real bill is lower than what this reports.
+ *
+ * Grounding needs a PAID-TIER key, and a free-tier one fails misleadingly: every
+ * grounded question returns HTTP 429 "You exceeded your current quota", which
+ * reads like rate limiting, while an ungrounded call to the same key returns
+ * 200. Enable billing on the key's Google Cloud project. (Measured 2026-09-20.)
  */
 final class GeminiEngine implements Engine
 {
