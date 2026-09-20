@@ -24,6 +24,8 @@ export type WorkerConfig = {
   recheckEnabled: boolean
   recheckDays: number
   recheckMaxPerDay: number
+  /** Contact details are erased this many days after the request (4 months). */
+  retentionDays: number
   phpBin: string
   panelScript: string
   workDir: string
@@ -62,6 +64,7 @@ export function workerConfig(env: Env = process.env, cwd: string = process.cwd()
     recheckEnabled: env.AEO_RECHECK_ENABLED !== 'false',
     recheckDays: wholePositive(env, 'AEO_RECHECK_DAYS', 30),
     recheckMaxPerDay: wholePositive(env, 'AEO_RECHECK_MAX_PER_DAY', 10),
+    retentionDays: wholePositive(env, 'AEO_RETENTION_DAYS', 120),
     phpBin: env.AEO_PHP_BIN?.trim() || 'php',
     panelScript: env.AEO_PANEL_SCRIPT?.trim() || path.join(cwd, 'panel', 'panel.php'),
     workDir: env.AEO_WORK_DIR?.trim() || path.join(os.tmpdir(), 'aeo-worker'),

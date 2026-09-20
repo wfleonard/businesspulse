@@ -253,7 +253,8 @@ export async function loadReport(publicId: string): Promise<LoadedReport | null>
   const base = {
     publicId: run.publicId,
     domain: run.domain,
-    businessName: request?.businessName ?? run.domain,
+    // Falls back to the domain once retention has erased the business name.
+    businessName: request?.businessName || run.domain,
     status: run.status,
     panelSource: run.panelSource,
     finishedAt: run.finishedAt,

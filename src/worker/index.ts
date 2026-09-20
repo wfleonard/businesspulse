@@ -25,6 +25,7 @@ import { notifyRunFailed, sendPendingReportEmails } from '@/lib/aeo/notify'
 import { decideOutcome } from '@/lib/aeo/outcome'
 import { PermanentRunError, planRun } from '@/lib/aeo/plan'
 import { sendRecheckEmails, startDueRechecks } from '@/lib/aeo/recheck'
+import { sweepExpiredContactDetails } from '@/lib/aeo/retention'
 import {
   answeredQueries,
   claimNextRun,
@@ -57,6 +58,16 @@ async function alertRunFailed(runId: string, error: string): Promise<void> {
     log('admin_alert', { run: runId, sent: result.sent, skipped: result.skipped, error: result.error })
   } catch (err) {
     log('admin_alert_error', { run: runId, error: errorMessage(err) })
+  }
+}
+
+/** Erase contact details past the retention period, as the privacy page promises. */
+async function sweepRetention(config: WorkerConfig): Promise<void> {
+  try {
+    const cleared = await sweepExpiredContactDetails(config.retentionDays)
+    if (cleared > 0) log('contact_details_erased', { requests: cleared, afterDays: config.retentionDays })
+  } catch (err) {
+    log('retention_error', { error: errorMessage(err) })
   }
 }
 
@@ -206,6 +217,7 @@ async function processRun(run: ClaimedRun, config: WorkerConfig, shutdown: Abort
 async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worked' | 'idle'> {
   await sweepReportEmails()
   await sweepRechecks(config)
+  await sweepRetention(config)
 
   for (const id of await sweepAbandoned(config)) {
     log('run_abandoned', { run: id })

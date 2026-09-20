@@ -243,10 +243,10 @@ export default async function LeadsPage({ searchParams }: Props) {
                   <td className="px-3 py-2">
                     {lead.runId ? (
                       <Link href={`/dashboard/aeo/${lead.runId}`} className="font-medium text-primary hover:underline">
-                        {lead.businessName}
+                        {lead.businessName || lead.domain}
                       </Link>
                     ) : (
-                      <span className="font-medium text-dark">{lead.businessName}</span>
+                      <span className="font-medium text-dark">{lead.businessName || lead.domain}</span>
                     )}
                     <div className="text-xs text-text-secondary">
                       {lead.domain} · {lead.city}, {lead.state}
@@ -255,7 +255,7 @@ export default async function LeadsPage({ searchParams }: Props) {
                   </td>
                   <td className="px-3 py-2 text-text-secondary">{lead.panelName ?? lead.panelSlug ?? 'Generated'}</td>
                   <td className="px-3 py-2">
-                    <div className="text-dark">{lead.email || '-'}</div>
+                    <div className="text-dark">{lead.email || (lead.anonymizedAt ? 'Details removed' : '-')}</div>
                     {lead.unsubscribedAt ? (
                       <div className="text-xs text-text-secondary">Unsubscribed</div>
                     ) : (

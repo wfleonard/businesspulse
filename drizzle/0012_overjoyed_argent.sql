@@ -1,0 +1,1 @@
+ALTER TABLE "aeo_request" ADD COLUMN "anonymized_at" timestamp;

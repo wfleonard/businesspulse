@@ -37,6 +37,7 @@ export async function listLeads(filters: LeadFilters) {
       email: aeoRequest.email,
       contactConsent: aeoRequest.contactConsent,
       unsubscribedAt: aeoRequest.unsubscribedAt,
+      anonymizedAt: aeoRequest.anonymizedAt,
       verifiedAt: aeoRequest.verifiedAt,
       leadStatus: aeoRequest.leadStatus,
       source: aeoRequest.source,

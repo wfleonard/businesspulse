@@ -19,6 +19,7 @@ describe('workerConfig', () => {
       recheckEnabled: true,
       recheckDays: 30,
       recheckMaxPerDay: 10,
+      retentionDays: 120,
       phpBin: 'php',
       panelScript: path.join('/app', 'panel', 'panel.php'),
       workDir: path.join(os.tmpdir(), 'aeo-worker'),

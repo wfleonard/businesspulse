@@ -505,6 +505,8 @@ export const aeoRequest = pgTable(
     source: aeoRequestSourceEnum('source').notNull().default('form'),
     /** Set when they unsubscribe from the re-check email; contact consent is cleared with it. */
     unsubscribedAt: timestamp('unsubscribed_at'),
+    /** Set when the retention sweep erased the contact details (email, business name, IP). */
+    anonymizedAt: timestamp('anonymized_at'),
     runId: uuid('run_id').references(() => aeoRun.id, { onDelete: 'set null' }),
     /** When the "report ready" email went out. Null until then; the worker sweeps for these. */
     reportEmailedAt: timestamp('report_emailed_at'),

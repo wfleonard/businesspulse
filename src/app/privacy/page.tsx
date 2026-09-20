@@ -73,7 +73,9 @@ export default function PrivacyPage() {
 
       <Section title="How long we keep it, and deleting it">
         <p>
-          We keep requests and reports until you ask us to delete them.
+          Four months after your request, we erase the contact details you gave us: your email address, business
+          name, and IP address. The report itself stays, showing only your website, and results may be kept as
+          anonymized industry statistics.
           {contact ? (
             <>
               {' '}
