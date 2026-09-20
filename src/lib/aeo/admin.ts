@@ -36,6 +36,7 @@ export async function listLeads(filters: LeadFilters) {
       panelName: aeoPanel.name,
       email: aeoRequest.email,
       contactConsent: aeoRequest.contactConsent,
+      unsubscribedAt: aeoRequest.unsubscribedAt,
       verifiedAt: aeoRequest.verifiedAt,
       leadStatus: aeoRequest.leadStatus,
       source: aeoRequest.source,
@@ -149,7 +150,7 @@ export async function loadRunDetail(runId: string) {
   const [run] = await db.select().from(aeoRun).where(eq(aeoRun.id, runId)).limit(1)
   if (!run) return null
 
-  const [requests, results, panels, clicks] = await Promise.all([
+  const [requests, results, panels, clicks, rechecks] = await Promise.all([
     db
       .select({
         id: aeoRequest.id,
@@ -181,6 +182,14 @@ export async function loadRunDetail(runId: string) {
       select count(*)::int as clicks, max(created_at) as last
       from aeo_booking_click where run_id = ${run.id}
     `),
+    db.execute(sql`
+      select c.run_id, later.status, later.public_id, c.emailed_at
+      from aeo_recheck c
+      join aeo_run later on later.id = c.run_id
+      where c.request_id in (select id from aeo_request where run_id = ${run.id})
+      order by c.created_at desc
+      limit 1
+    `),
   ])
 
   const clickRow = clicks.rows[0] as { clicks: number; last: Date | string | null } | undefined
@@ -189,7 +198,19 @@ export async function loadRunDetail(runId: string) {
     last: clickRow?.last ? new Date(clickRow.last) : null,
   }
 
-  return { run, requests, results, panelName: panels[0]?.name ?? null, bookingClicks }
+  const recheckRow = rechecks.rows[0] as
+    | { run_id: string; status: string; public_id: string; emailed_at: Date | string | null }
+    | undefined
+  const recheck = recheckRow
+    ? {
+        runId: String(recheckRow.run_id),
+        status: String(recheckRow.status),
+        publicId: String(recheckRow.public_id),
+        emailedAt: recheckRow.emailed_at ? new Date(recheckRow.emailed_at) : null,
+      }
+    : null
+
+  return { run, requests, results, panelName: panels[0]?.name ?? null, bookingClicks, recheck }
 }
 
 export async function setLeadStatus(requestId: string, status: LeadStatus): Promise<boolean> {

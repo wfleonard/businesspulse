@@ -16,6 +16,9 @@ describe('workerConfig', () => {
       snapshotQuestions: 20,
       concurrency: 2,
       panelModel: 'claude-sonnet-5',
+      recheckEnabled: true,
+      recheckDays: 30,
+      recheckMaxPerDay: 10,
       phpBin: 'php',
       panelScript: path.join('/app', 'panel', 'panel.php'),
       workDir: path.join(os.tmpdir(), 'aeo-worker'),
@@ -50,6 +53,16 @@ describe('workerConfig', () => {
     expect(config.pollMs).toBe(3000)
     expect(config.maxAttempts).toBe(3)
     expect(config.dailySpendCapUsd).toBe(10)
+  })
+
+  it('turns the re-check off only for an explicit false', () => {
+    expect(workerConfig({}, '/app').recheckEnabled).toBe(true)
+    expect(workerConfig({ AEO_RECHECK_ENABLED: 'false' }, '/app').recheckEnabled).toBe(false)
+    expect(workerConfig({ AEO_RECHECK_ENABLED: 'true' }, '/app').recheckEnabled).toBe(true)
+    expect(workerConfig({ AEO_RECHECK_DAYS: '45', AEO_RECHECK_MAX_PER_DAY: '3' }, '/app')).toMatchObject({
+      recheckDays: 45,
+      recheckMaxPerDay: 3,
+    })
   })
 
   it('caps panel concurrency at 10 and floors whole-number settings', () => {

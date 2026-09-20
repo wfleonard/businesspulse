@@ -256,7 +256,11 @@ export default async function LeadsPage({ searchParams }: Props) {
                   <td className="px-3 py-2 text-text-secondary">{lead.panelName ?? lead.panelSlug ?? 'Generated'}</td>
                   <td className="px-3 py-2">
                     <div className="text-dark">{lead.email || '-'}</div>
-                    {lead.contactConsent && <div className="text-xs text-success">OK to contact</div>}
+                    {lead.unsubscribedAt ? (
+                      <div className="text-xs text-text-secondary">Unsubscribed</div>
+                    ) : (
+                      lead.contactConsent && <div className="text-xs text-success">OK to contact</div>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-text-secondary">{lead.verifiedAt ? 'Yes' : 'No'}</td>
                   <td className="whitespace-nowrap px-3 py-2">

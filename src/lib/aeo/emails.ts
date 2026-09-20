@@ -156,3 +156,54 @@ ${requests}
     ].join('\n'),
   }
 }
+
+export type CitedScore = { cited: number; total: number }
+
+/** How this month's score compares with the first one. */
+export function compareCited(domain: string, before: CitedScore, after: CitedScore): string {
+  const now = `AI search now cites ${domain} on ${after.cited} of ${after.total} questions`
+  if (after.cited > before.cited) return `${now}, up from ${before.cited} of ${before.total} a month ago.`
+  if (after.cited < before.cited) return `${now}, down from ${before.cited} of ${before.total} a month ago.`
+  return `${now}, the same as a month ago.`
+}
+
+/** The one-time follow-up a month after a report, for people who asked to hear from us. */
+export function recheckEmail(args: {
+  businessName: string
+  domain: string
+  before: CitedScore
+  after: CitedScore
+  reportUrl: string
+  unsubscribeUrl: string
+  postalAddress?: string
+}): EmailContent {
+  const comparison = compareCited(args.domain, args.before, args.after)
+  const footerLines = [
+    `You asked to hear about your results when you ran your snapshot. This is a one-time follow-up. <a href="${escapeHtml(args.unsubscribeUrl)}">Unsubscribe</a>`,
+    ...(args.postalAddress ? [escapeHtml(args.postalAddress)] : []),
+  ]
+
+  return {
+    subject: `A month on: AI search and ${args.domain}`,
+    html: layout(
+      [
+        `A month ago we checked how AI search answered buyers looking for <strong>${escapeHtml(args.businessName)}</strong>. We asked the same questions again.`,
+        escapeHtml(comparison),
+      ],
+      { label: 'View the new report', url: args.reportUrl },
+      footerLines.join('<br><br>')
+    ),
+    text: [
+      `A month ago we checked how AI search answered buyers looking for ${args.businessName}. We asked the same questions again.`,
+      '',
+      comparison,
+      '',
+      'View the new report:',
+      args.reportUrl,
+      '',
+      'You asked to hear about your results when you ran your snapshot. This is a one-time follow-up.',
+      `Unsubscribe: ${args.unsubscribeUrl}`,
+      ...(args.postalAddress ? ['', args.postalAddress] : []),
+    ].join('\n'),
+  }
+}

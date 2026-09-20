@@ -20,6 +20,10 @@ export type WorkerConfig = {
   concurrency: number
   /** Claude model that writes generated panels. */
   panelModel: string
+  /** 30-day re-check of consenting leads: off switch, age, and a daily ceiling on new runs. */
+  recheckEnabled: boolean
+  recheckDays: number
+  recheckMaxPerDay: number
   phpBin: string
   panelScript: string
   workDir: string
@@ -55,6 +59,9 @@ export function workerConfig(env: Env = process.env, cwd: string = process.cwd()
     // Perplexity rate-limits readily; 3 at once lost 13 of 20 answers in a live snapshot.
     concurrency: Math.min(10, wholePositive(env, 'AEO_PANEL_CONCURRENCY', 2)),
     panelModel: env.AEO_PANEL_MODEL?.trim() || 'claude-sonnet-5',
+    recheckEnabled: env.AEO_RECHECK_ENABLED !== 'false',
+    recheckDays: wholePositive(env, 'AEO_RECHECK_DAYS', 30),
+    recheckMaxPerDay: wholePositive(env, 'AEO_RECHECK_MAX_PER_DAY', 10),
     phpBin: env.AEO_PHP_BIN?.trim() || 'php',
     panelScript: env.AEO_PANEL_SCRIPT?.trim() || path.join(cwd, 'panel', 'panel.php'),
     workDir: env.AEO_WORK_DIR?.trim() || path.join(os.tmpdir(), 'aeo-worker'),

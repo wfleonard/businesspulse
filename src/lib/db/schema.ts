@@ -503,6 +503,8 @@ export const aeoRequest = pgTable(
     leadStatus: aeoLeadStatusEnum('lead_status').notNull().default('new'),
     /** Outbound requests never get the automatic report email and stay out of the form funnel. */
     source: aeoRequestSourceEnum('source').notNull().default('form'),
+    /** Set when they unsubscribe from the re-check email; contact consent is cleared with it. */
+    unsubscribedAt: timestamp('unsubscribed_at'),
     runId: uuid('run_id').references(() => aeoRun.id, { onDelete: 'set null' }),
     /** When the "report ready" email went out. Null until then; the worker sweeps for these. */
     reportEmailedAt: timestamp('report_emailed_at'),
@@ -546,6 +548,30 @@ export const aeoResult = pgTable(
   (t) => [index('aeo_result_run_idx').on(t.runId)]
 )
 
+/**
+ * A 30-day re-check: a fresh run for a consenting lead, and the email that
+ * compares it with their first report. One per request.
+ */
+export const aeoRecheck = pgTable(
+  'aeo_recheck',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    requestId: uuid('request_id')
+      .notNull()
+      .references(() => aeoRequest.id, { onDelete: 'cascade' }),
+    runId: uuid('run_id')
+      .notNull()
+      .references(() => aeoRun.id, { onDelete: 'cascade' }),
+    /** sha256 of the unsubscribe token, set when the email goes out. */
+    tokenHash: text('token_hash').unique(),
+    emailedAt: timestamp('emailed_at'),
+    emailAttempts: integer('email_attempts').notNull().default(0),
+    emailAttemptedAt: timestamp('email_attempted_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('aeo_recheck_request_idx').on(t.requestId), index('aeo_recheck_run_idx').on(t.runId)]
+)
+
 /** "Book a call" clicks from a report, recorded by /book. Deleted with the run. */
 export const aeoBookingClick = pgTable(
   'aeo_booking_click',
@@ -582,4 +608,5 @@ export const schema = {
   aeoRequest,
   aeoResult,
   aeoBookingClick,
+  aeoRecheck,
 }

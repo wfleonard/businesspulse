@@ -24,6 +24,7 @@ import { buildJob, PanelAbortedError, PanelExitError, runPanelJob } from '@/lib/
 import { notifyRunFailed, sendPendingReportEmails } from '@/lib/aeo/notify'
 import { decideOutcome } from '@/lib/aeo/outcome'
 import { PermanentRunError, planRun } from '@/lib/aeo/plan'
+import { sendRecheckEmails, startDueRechecks } from '@/lib/aeo/recheck'
 import {
   answeredQueries,
   claimNextRun,
@@ -56,6 +57,18 @@ async function alertRunFailed(runId: string, error: string): Promise<void> {
     log('admin_alert', { run: runId, sent: result.sent, skipped: result.skipped, error: result.error })
   } catch (err) {
     log('admin_alert_error', { run: runId, error: errorMessage(err) })
+  }
+}
+
+/** 30-day re-checks: queue the runs that are due, and email the ones that finished. */
+async function sweepRechecks(config: WorkerConfig): Promise<void> {
+  try {
+    const started = await startDueRechecks(config)
+    if (started > 0) log('rechecks_started', { started })
+    const emails = await sendRecheckEmails()
+    if (emails.sent || emails.failed) log('recheck_emails', emails)
+  } catch (err) {
+    log('recheck_error', { error: errorMessage(err) })
   }
 }
 
@@ -192,6 +205,7 @@ async function processRun(run: ClaimedRun, config: WorkerConfig, shutdown: Abort
 /** One pass: sweep, check spend, claim and process at most one run. */
 async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worked' | 'idle'> {
   await sweepReportEmails()
+  await sweepRechecks(config)
 
   for (const id of await sweepAbandoned(config)) {
     log('run_abandoned', { run: id })

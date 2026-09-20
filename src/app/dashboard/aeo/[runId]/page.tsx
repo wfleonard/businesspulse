@@ -71,7 +71,7 @@ export default async function RunDetailPage({ params, searchParams }: Props) {
   const detail = await loadRunDetail(runId)
   if (!detail) notFound()
 
-  const { run, requests, results, panelName, bookingClicks } = detail
+  const { run, requests, results, panelName, bookingClicks, recheck } = detail
   const title = requests[0]?.businessName ?? run.domain
   const generated = run.generatedPanel
   const answered = results.filter((r) => !r.error).length
@@ -165,6 +165,16 @@ export default async function RunDetailPage({ params, searchParams }: Props) {
               <span className="ml-1 text-xs text-text-secondary">(last {formatDateTime(bookingClicks.last)})</span>
             )}
           </Fact>
+          {recheck && (
+            <Fact label="30-day re-check">
+              <Link href={`/dashboard/aeo/${recheck.runId}`} className="text-primary hover:underline">
+                {recheck.status}
+              </Link>
+              <span className="ml-1 text-xs text-text-secondary">
+                {recheck.emailedAt ? `(emailed ${formatDateTime(recheck.emailedAt)})` : '(not emailed yet)'}
+              </span>
+            </Fact>
+          )}
           <Fact label="Created">{formatDateTime(run.createdAt)}</Fact>
           <Fact label="Finished">{formatDateTime(run.finishedAt)}</Fact>
         </dl>
