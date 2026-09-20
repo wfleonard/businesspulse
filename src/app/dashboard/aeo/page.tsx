@@ -45,7 +45,9 @@ function Score({ lead }: { lead: LeadRow }) {
       </span>
     )
   }
-  return <span className={lead.runStatus === 'failed' ? 'text-danger' : 'text-text-secondary'}>{lead.runStatus}</span>
+  // Queued after an attempt means the worker is retrying the questions it missed.
+  const label = lead.runStatus === 'queued' && (lead.runAttempts ?? 0) > 0 ? 'retrying' : lead.runStatus
+  return <span className={lead.runStatus === 'failed' ? 'text-danger' : 'text-text-secondary'}>{label}</span>
 }
 
 function Funnel({ funnel }: { funnel: FunnelStats }) {

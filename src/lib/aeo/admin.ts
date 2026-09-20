@@ -42,6 +42,7 @@ export async function listLeads(filters: LeadFilters) {
       runId: aeoRun.id,
       publicId: aeoRun.publicId,
       runStatus: aeoRun.status,
+      runAttempts: aeoRun.attempts,
       panelSource: aeoRun.panelSource,
       questionCount: aeoRun.questionCount,
       citedCount: aeoRun.citedCount,

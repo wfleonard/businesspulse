@@ -6,6 +6,8 @@ import { CopyButton } from '@/components/aeo/CopyButton'
 import { appUrl } from '@/lib/aeo/emails'
 import { Card } from '@/components/ui/Card'
 import { loadRunDetail } from '@/lib/aeo/admin'
+import { workerConfig } from '@/lib/aeo/config'
+import { describeRunState } from '@/lib/aeo/run-status'
 import { LEAD_STATUSES } from '@/lib/aeo/lead-filters'
 import { verdictOf, type Verdict } from '@/lib/aeo/report'
 import { requireSession } from '@/lib/session'
@@ -74,6 +76,11 @@ export default async function RunDetailPage({ params, searchParams }: Props) {
   const generated = run.generatedPanel
   const answered = results.filter((r) => !r.error).length
   const reportUrl = appUrl(`/report/${run.publicId}`)
+  const config = workerConfig()
+  const note = describeRunState(run, {
+    maxAttempts: config.maxAttempts,
+    retryDelaySeconds: config.retryDelaySeconds,
+  })
 
   return (
     <div className="space-y-6">
@@ -161,8 +168,15 @@ export default async function RunDetailPage({ params, searchParams }: Props) {
           <Fact label="Created">{formatDateTime(run.createdAt)}</Fact>
           <Fact label="Finished">{formatDateTime(run.finishedAt)}</Fact>
         </dl>
-        {run.error && (
-          <p className="mt-4 whitespace-pre-wrap break-words rounded-md bg-danger/5 p-3 text-sm text-danger">{run.error}</p>
+        {note && (
+          <div
+            className={`mt-4 rounded-md p-3 text-sm ${
+              note.tone === 'failed' ? 'bg-danger/5 text-danger' : 'bg-amber-50 text-amber-900'
+            }`}
+          >
+            <p className="font-medium">{note.headline}</p>
+            {note.detail && <p className="mt-1 whitespace-pre-wrap break-words text-xs">{note.detail}</p>}
+          </div>
         )}
       </Card>
 
