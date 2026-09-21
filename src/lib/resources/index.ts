@@ -1,7 +1,10 @@
 import { CANNED_PANELS } from '@/lib/aeo/panels'
+import { costQuestionsCiteCostGuides } from './articles/cost-questions-cite-cost-guides'
 import { howBusinessPulseMeasures } from './articles/how-businesspulse-measures'
+import { howToCheckChatGpt } from './articles/how-to-check-chatgpt-recommends'
 import { howToGetCited } from './articles/how-to-get-cited'
 import { whatIsAeo } from './articles/what-is-aeo'
+import { whyAiCitesDirectories } from './articles/why-ai-cites-directories'
 import { RESOURCE_TYPE_LABELS, type ResourceArticle, type ResourceType } from './types'
 
 export { RESOURCE_TYPE_LABELS, type ResourceArticle, type ResourceType }
@@ -10,7 +13,14 @@ export { RESOURCE_TYPE_LABELS, type ResourceArticle, type ResourceType }
  * Written Resource Hub pages. They live in code rather than loose Markdown
  * files because the production image ships compiled code only.
  */
-export const ALL_ARTICLES: ResourceArticle[] = [howBusinessPulseMeasures, whatIsAeo, howToGetCited]
+export const ALL_ARTICLES: ResourceArticle[] = [
+  howBusinessPulseMeasures,
+  whatIsAeo,
+  howToGetCited,
+  whyAiCitesDirectories,
+  costQuestionsCiteCostGuides,
+  howToCheckChatGpt,
+]
 
 function isProduction(): boolean {
   return process.env.NODE_ENV === 'production'
