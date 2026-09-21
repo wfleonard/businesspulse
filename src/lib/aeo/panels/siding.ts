@@ -83,6 +83,8 @@ export const siding: CannedPanelDefinition = {
   ],
 
   directoryDomains: [
+    // Found in live validation, 2026-09-21: review and lead sites.
+    'bestpickreports.com', 'birdeye.com',
     'yelp.com', 'bbb.org', 'angi.com', 'angieslist.com', 'homeadvisor.com', 'thumbtack.com',
     'houzz.com', 'yellowpages.com', 'nextdoor.com', 'porch.com', 'bark.com', 'networx.com',
     'buildzoom.com', 'homeguide.com', 'fixr.com', 'modernize.com', 'facebook.com',
@@ -91,6 +93,11 @@ export const siding: CannedPanelDefinition = {
   ],
 
   referenceDomains: [
+    // Found in live validation, 2026-09-21: publishers, calculators, software and suppliers
+    // that answers cite but that don't compete for the job.
+    'sidingcosts.com', 'simplywise.com', 'moneypit.com', 'doityourself.com',
+    'todayshomeowner.com', 'thespruce.com', 'hover.to', 'procore.com', 'homedepot.com',
+    'lowes.com',
     'wikipedia.org', 'reddit.com', 'quora.com', 'youtube.com',
     'epa.gov', 'iccsafe.org', 'energy.gov', 'energystar.gov', 'nps.gov',
     'vinylsiding.org', 'thisoldhouse.com', 'bobvila.com', 'familyhandyman.com',

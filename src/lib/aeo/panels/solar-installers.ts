@@ -87,6 +87,8 @@ export const solarInstallers: CannedPanelDefinition = {
   ],
 
   directoryDomains: [
+    // Found in live validation, 2026-09-21: review and lead sites.
+    'solar.com', 'consumeraffairs.com',
     'yelp.com', 'bbb.org', 'angi.com', 'angieslist.com', 'homeadvisor.com', 'thumbtack.com',
     'houzz.com', 'yellowpages.com', 'nextdoor.com', 'porch.com', 'bark.com', 'networx.com',
     'buildzoom.com', 'homeguide.com', 'fixr.com', 'modernize.com', 'energysage.com',
@@ -95,6 +97,12 @@ export const solarInstallers: CannedPanelDefinition = {
   ],
 
   referenceDomains: [
+    // Found in live validation, 2026-09-21: publishers, calculators, software and suppliers
+    // that answers cite but that don't compete for the job.
+    'ecowatch.com', 'thecooldown.com', 'cnet.com', 'solartechonline.com',
+    'solarunitedneighbors.org', 'aurorasolar.com', 'greenlancer.com',
+    'solarpermitsolutions.com', 'rencalc.com', 'solarbidanalyzer.com', 'surgepv.com',
+    'ecoflow.com', 'a1solarstore.com', 'anernstore.com',
     'wikipedia.org', 'reddit.com', 'quora.com', 'youtube.com',
     'energy.gov', 'nrel.gov', 'irs.gov', 'eia.gov', 'epa.gov', 'ftc.gov', 'nfpa.org',
     'seia.org', 'dsireusa.org', 'nabcep.org', 'solarpowerworldonline.com', 'pv-magazine-usa.com',

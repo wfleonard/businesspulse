@@ -84,6 +84,8 @@ export const windowsDoors: CannedPanelDefinition = {
   ],
 
   directoryDomains: [
+    // Found in live validation, 2026-09-21: review and lead sites.
+    'bestpickreports.com', 'birdeye.com',
     'yelp.com', 'bbb.org', 'angi.com', 'angieslist.com', 'homeadvisor.com', 'thumbtack.com',
     'houzz.com', 'yellowpages.com', 'nextdoor.com', 'porch.com', 'bark.com', 'networx.com',
     'buildzoom.com', 'homeguide.com', 'fixr.com', 'modernize.com', 'facebook.com',
@@ -92,6 +94,11 @@ export const windowsDoors: CannedPanelDefinition = {
   ],
 
   referenceDomains: [
+    // Found in live validation, 2026-09-21: publishers, calculators, software and suppliers
+    // that answers cite but that don't compete for the job.
+    'thespruce.com', 'todayshomeowner.com', 'efficientwindows.org', 'glassadvisor.org',
+    'latestcost.com', 'remodelingexpense.com', 'nerdwallet.com', 'ecowatch.com',
+    'homedepot.com', 'lowes.com',
     'wikipedia.org', 'reddit.com', 'quora.com', 'youtube.com',
     'energystar.gov', 'energy.gov', 'irs.gov', 'epa.gov', 'iccsafe.org', 'nps.gov', 'nfrc.org',
     'thisoldhouse.com', 'bobvila.com', 'familyhandyman.com', 'consumerreports.org', 'forbes.com',

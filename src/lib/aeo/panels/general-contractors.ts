@@ -89,6 +89,8 @@ export const generalContractors: CannedPanelDefinition = {
   ],
 
   directoryDomains: [
+    // Found in live validation, 2026-09-21: review and lead sites.
+    'justdial.com', 'sweeten.com', 'birdeye.com',
     'yelp.com', 'bbb.org', 'angi.com', 'angieslist.com', 'homeadvisor.com', 'thumbtack.com',
     'houzz.com', 'yellowpages.com', 'nextdoor.com', 'porch.com', 'bark.com', 'networx.com',
     'buildzoom.com', 'homeguide.com', 'fixr.com', 'thebluebook.com', 'constructconnect.com',
@@ -97,6 +99,11 @@ export const generalContractors: CannedPanelDefinition = {
   ],
 
   referenceDomains: [
+    // Found in live validation, 2026-09-21: publishers, calculators, software and suppliers
+    // that answers cite but that don't compete for the job.
+    'levelset.com', 'homeadditioncostcalculator.com', 'thespruce.com', 'procore.com',
+    'autodesk.com', 'buildertrend.com', 'buildern.com', 'tasktag.com', 'yahoo.com',
+    'ground.news', 'bignewsnetwork.com', 'realmhome.com', 'todayshomeowner.com',
     'wikipedia.org', 'reddit.com', 'quora.com', 'youtube.com',
     'iccsafe.org', 'osha.gov', 'ftc.gov', 'hud.gov', 'fema.gov', 'sba.gov',
     'nahb.org', 'nari.org', 'agc.org', 'aia.org', 'remodeling.hw.net', 'builderonline.com',

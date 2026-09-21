@@ -87,6 +87,8 @@ export const residentialRoofing: CannedPanelDefinition = {
   ],
 
   directoryDomains: [
+    // Found in live validation, 2026-09-21: review and lead sites.
+    'birdeye.com', 'consumeraffairs.com',
     'yelp.com', 'bbb.org', 'angi.com', 'angieslist.com', 'homeadvisor.com', 'thumbtack.com',
     'houzz.com', 'yellowpages.com', 'nextdoor.com', 'porch.com', 'bark.com', 'networx.com',
     'buildzoom.com', 'homeguide.com', 'fixr.com', 'modernize.com', 'facebook.com',
@@ -95,6 +97,11 @@ export const residentialRoofing: CannedPanelDefinition = {
   ],
 
   referenceDomains: [
+    // Found in live validation, 2026-09-21: publishers, calculators, software and suppliers
+    // that answers cite but that don't compete for the job.
+    'todayshomeowner.com', 'thespruce.com', 'roofingcalculator.com',
+    'contractorlicenserequirements.com', 'nrcia.org', 'ibuyer.com', 'squaredash.com',
+    'servicetitan.com', 'roofmaxx.com',
     'wikipedia.org', 'reddit.com', 'quora.com', 'youtube.com',
     'iccsafe.org', 'fema.gov', 'energystar.gov', 'energy.gov', 'osha.gov', 'iii.org', 'naic.org',
     'nrca.net', 'roofingcontractor.com', 'roofingcalc.com', 'thisoldhouse.com', 'bobvila.com',
