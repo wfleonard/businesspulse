@@ -1,15 +1,20 @@
 import type { PanelQuestion } from '../questions'
 import { basementWaterproofing } from './basement-waterproofing'
 import { bathroomRemodeling } from './bathroom-remodeling'
+import { collisionRepair } from './collision-repair'
+import { commercialCleaning } from './commercial-cleaning'
 import { commercialRoofing } from './commercial-roofing'
 import { electricalContracting } from './electrical-contracting'
 import { excavationSiteWork } from './excavation-site-work'
+import { fireProtection } from './fire-protection'
 import { generalContractors } from './general-contractors'
 import { hddTrenchless } from './hdd-trenchless'
 import { hvacPlumbing } from './hvac-plumbing'
 import { kitchenRemodeling } from './kitchen-remodeling'
 import { landscaping } from './landscaping'
+import { movingCompanies } from './moving-companies'
 import { municipalAdvisors } from './municipal-advisors'
+import { pestControl } from './pest-control'
 import { poolsHotTubs } from './pools-hot-tubs'
 import { residentialRoofing } from './residential-roofing'
 import { siding } from './siding'
@@ -51,4 +56,9 @@ export const CANNED_PANELS: CannedPanelDefinition[] = [
   basementWaterproofing,
   treeServices,
   excavationSiteWork,
+  pestControl,
+  fireProtection,
+  commercialCleaning,
+  movingCompanies,
+  collisionRepair,
 ]

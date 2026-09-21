@@ -60,6 +60,7 @@ export const treeServices: CannedPanelDefinition = {
     { c: 'application', q: 'clearing trees for a new driveway or lot' },
     { c: 'application', q: 'tree roots damaging a sewer line or foundation' },
     { c: 'application', q: 'tree work for a home sale inspection' },
+    { c: 'application', q: 'removing trees shading a roof before installing solar panels' },
 
     { c: 'problem', q: 'tree fell on my house what do I do' },
     { c: 'problem', q: 'leaning tree after a storm' },
