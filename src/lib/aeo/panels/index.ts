@@ -4,14 +4,19 @@ import { bathroomRemodeling } from './bathroom-remodeling'
 import { collisionRepair } from './collision-repair'
 import { commercialCleaning } from './commercial-cleaning'
 import { commercialRoofing } from './commercial-roofing'
+import { dentists } from './dentists'
 import { electricalContracting } from './electrical-contracting'
 import { excavationSiteWork } from './excavation-site-work'
+import { financialAdvisors } from './financial-advisors'
 import { fireProtection } from './fire-protection'
 import { generalContractors } from './general-contractors'
 import { hddTrenchless } from './hdd-trenchless'
+import { homeHealthcare } from './home-healthcare'
 import { hvacPlumbing } from './hvac-plumbing'
+import { itMsp } from './it-msp'
 import { kitchenRemodeling } from './kitchen-remodeling'
 import { landscaping } from './landscaping'
+import { marineServices } from './marine-services'
 import { movingCompanies } from './moving-companies'
 import { municipalAdvisors } from './municipal-advisors'
 import { pestControl } from './pest-control'
@@ -61,4 +66,9 @@ export const CANNED_PANELS: CannedPanelDefinition[] = [
   commercialCleaning,
   movingCompanies,
   collisionRepair,
+  marineServices,
+  financialAdvisors,
+  itMsp,
+  dentists,
+  homeHealthcare,
 ]
