@@ -32,7 +32,7 @@ Ten to twenty is enough. Write them the way a customer would type them, with you
 - **Problems:** "Why is my flat roof leaking after heavy rain?"
 - **Choosing a provider:** "What should I ask a roofing contractor before hiring?"
 
-Don't only check the first kind. In our snapshots, the businesses we measured were cited on 8 of 35 "near me" questions and on none of 91 questions about cost, permits, comparisons, problems, how the work is done, and choosing a provider. Those are the questions where buyers decide who to trust.
+Don't only check the first kind. In our snapshots, the 27 businesses we measured were cited on 35 of 135 "near me" questions and on none of 351 questions about cost, permits and rules, comparisons, problems, how the work is done, and choosing a provider. Those are the questions where buyers decide who to trust.
 
 ## 2. Ask in a clean session
 

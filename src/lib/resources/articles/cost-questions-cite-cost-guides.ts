@@ -3,34 +3,36 @@ import type { ResourceArticle } from '../types'
 export const costQuestionsCiteCostGuides: ResourceArticle = {
   slug: 'ai-search-cost-questions-cite-cost-guides',
   type: 'explainer',
-  title: 'When buyers ask AI what a job costs, it cites cost guides, not contractors',
+  title: 'When buyers ask AI what a job costs, it cites cost guides, not the businesses that do the work',
   summary:
-    'Ask an AI assistant what a job costs and it quotes national cost guides such as HomeGuide and Angi. In our snapshots, the businesses’ own sites were cited on none of 22 cost answers. That gap is an opening.',
+    'Ask an AI assistant what a job costs and it quotes cost guides such as HomeGuide and Angi. Across 27 industries, the businesses’ own sites were cited on none of 86 cost answers. That gap is an opening.',
   industries: [],
   published: '2026-09-21',
   body: `
 ## The pattern
 
-In September 2026 we ran seven BusinessPulse snapshots, one business in each of seven industries, 20 buyer questions each, asked of Perplexity with live web search. Twenty-two of those questions were about cost: what a job costs, what it costs per foot or per square foot, what drives the price.
+In September 2026 we ran 27 BusinessPulse snapshots, one business in each of 27 industries, 20 buyer questions each, asked of Perplexity with live web search. Eighty-six of those questions were about cost: what a job costs, what it costs per foot or per square foot, what drives the price.
 
-The businesses' own websites were cited on none of the 22.
+The businesses' own websites were cited on none of the 86.
 
 The same few sites answered them instead:
 
-| Site | Cost answers citing it (of 22) |
+| Site | Cost answers citing it (of 86) |
 |---|---|
-| HomeGuide | 14 |
-| Angi | 13 |
-| Fixr | 8 |
-| Bob Vila | 7 |
-| Thumbtack | 6 |
-| HomeAdvisor | 6 |
+| HomeGuide | 38 |
+| Angi | 36 |
+| HomeAdvisor | 24 |
+| Reddit | 22 |
+| Fixr | 20 |
+| Thumbtack | 17 |
+| Bob Vila | 16 |
+| This Old House | 16 |
 
-Across the 22 answers, 240 different websites were cited in all, and not one of them was the business we were measuring.
+Across the 86 answers, 932 different websites were cited in all, and not one of them was the business we were measuring. Reddit's place on the list is worth noticing: when no business answers the question, other buyers' forum threads fill the gap.
 
 ## It isn't only cost
 
-Cost is the clearest case of a wider pattern. Of the 140 questions, the businesses were cited on 11, and every one of those was a "who does this near me" or "who is buying" question. On the other 91, about cost, permits, comparisons, specific jobs, problems, how the work is done, and choosing a provider, they were cited on none.
+Cost is the clearest case of a wider pattern. Of the 540 questions, the businesses were cited on 44, and every one of those was a "who does this near me" or "who is buying" question. On the other 351, about cost, permits and rules, comparisons, specific jobs, problems, how the work is done, and choosing a provider, they were cited on none.
 
 We saw the same shape earlier, measured more deeply. In August 2026 we asked ChatGPT, Claude, and Perplexity 116 buyer questions about one directional drilling contractor: 348 answers. The contractor was cited on 10 questions, all of them requests for a list of companies. On 36 cost answers and 42 permit answers, it was cited on none.
 
@@ -38,7 +40,7 @@ We saw the same shape earlier, measured more deeply. In August 2026 we asked Cha
 
 We can see what gets cited, not why, so this is our reading of it.
 
-- **They publish numbers.** A cost guide leads with a price range and what moves it. A contractor site that says only "call for a free estimate" leaves an assistant nothing to quote.
+- **They publish numbers.** A cost guide leads with a price range and what moves it. A business site that says only "call for a free estimate" leaves an assistant nothing to quote.
 - **They answer the question as asked.** "How much does a heat pump cost to install" is a heading on a cost guide. It often appears nowhere on an installer's site.
 - **They are built for it.** Cost guide publishers write thousands of these pages. A small business writes none.
 
@@ -60,6 +62,6 @@ One good page per question you want to own beats a single page trying to answer 
 
 ## What this sample can and can't tell you
 
-Seven businesses and 22 cost answers is a pattern, not a benchmark: one assistant, answers collected September 15 to 18, 2026, and no business or single industry is shown. A [free snapshot](/) asks your buyers' questions for your area, cost questions included for every industry with a prepared question set, so you can see who answers them.
+Twenty-seven businesses and 86 cost answers is a pattern, not a benchmark: one per industry, all based in New Jersey, one assistant, answers collected September 15 to 21, 2026, and no business or single industry is shown. A [free snapshot](/) asks your buyers' questions for your area, cost questions included for every industry with a prepared question set, so you can see who answers them.
 `,
 }

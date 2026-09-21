@@ -5,15 +5,15 @@ export const whyAiCitesDirectories: ResourceArticle = {
   type: 'explainer',
   title: 'Why AI search cites Angi and Yelp instead of your website',
   summary:
-    'When buyers ask an AI assistant who to hire nearby, it usually answers from directories. In our snapshots, directories were cited on 25 of 35 "near me" answers, and the businesses’ own sites on 8.',
+    'When buyers ask an AI assistant who to hire nearby, it usually answers from directories. Across 27 industries, directories were cited on 106 of 135 "near me" answers, and the businesses’ own sites on 35.',
   industries: [],
   published: '2026-09-21',
   body: `
 ## What we measured
 
-In September 2026 we ran seven BusinessPulse snapshots, one business in each of seven industries: directional drilling, pools and hot tubs, landscaping, commercial roofing, electrical contracting, HVAC and plumbing, and municipal advisory. Each snapshot asked Perplexity, with live web search, 20 questions buyers in that industry ask. That is 140 answers, and the sources each one cited.
+In September 2026 we ran 27 BusinessPulse snapshots, one business in each of 27 industries, from roofing, HVAC, and landscaping to dentists, financial advisors, and IT firms. Each snapshot asked Perplexity, with live web search, 20 questions buyers in that industry ask. That is 540 answers, and the sources each one cited.
 
-The businesses' own websites were cited on 11 of the 140. Directories were cited on 66.
+The businesses' own websites were cited on 44 of the 540. Directories were cited on 307.
 
 ## Directories dominate the questions that matter most
 
@@ -21,10 +21,10 @@ The gap is widest on the question closest to a hire: who does this work near me.
 
 | Question type | Answers | A directory cited | The business's own site cited |
 |---|---|---|---|
-| Who does this near me | 35 | 25 (71%) | 8 (23%) |
-| Everything else | 105 | 41 (39%) | 3 (3%) |
+| Who does this near me | 135 | 106 (79%) | 35 (26%) |
+| Everything else | 405 | 201 (50%) | 9 (2%) |
 
-The directories that came up most were the familiar ones. Across the 140 answers, Angi was cited on 23, HomeGuide on 14, the Better Business Bureau on 10, and Yelp on 9, with Yellow Pages, HomeAdvisor, Fixr, and Thumbtack close behind.
+The directories that came up most were the familiar ones. Across the 540 answers, Angi was cited on 83, Yellow Pages on 46, Houzz on 41, HomeGuide on 38, and HomeAdvisor and the Better Business Bureau on 34 each, with Yelp and Thumbtack close behind.
 
 ## Why assistants reach for directories
 
@@ -51,6 +51,6 @@ You don't need to beat every directory everywhere. Pick the questions where one 
 
 ## What this sample can and can't tell you
 
-Seven businesses is a pattern, not a benchmark: one per industry, one assistant, answers collected September 15 to 18, 2026. The businesses aren't named and no single industry's numbers are shown. A [free snapshot](/) runs the same 20-question check on your own business, so you can see whether the pattern holds for you.
+Twenty-seven businesses is a pattern, not a benchmark: one per industry, all based in New Jersey, one assistant, answers collected September 15 to 21, 2026. What counts as a directory follows each industry's own list, so a dentist's include Zocdoc and Healthgrades. The businesses aren't named and no single industry's numbers are shown. A [free snapshot](/) runs the same 20-question check on your own business, so you can see whether the pattern holds for you.
 `,
 }
