@@ -8,11 +8,11 @@ export const howBusinessPulseMeasures: ResourceArticle = {
     'We ask Perplexity, with live web search, 20 questions that buyers in your industry and area actually ask, then check which websites each answer cites. Your score is the number of questions where your own site was one of them.',
   industries: [],
   published: '2026-09-18',
-  updated: '2026-09-20',
+  updated: '2026-09-21',
   body: `
 ## Which questions we ask
 
-For seven industries we keep a prepared question set of 64 to 104 buyer questions: directional drilling and trenchless utilities, commercial roofing, electrical contracting, HVAC and plumbing, landscaping and lawn care, pools and hot tubs, and municipal advisors. Each question has placeholders for your service, city, and state, so "who installs heat pumps near Red Bank, New Jersey" is asked the way a buyer in your area would type it.
+For each industry we cover, we keep a prepared question set of 60 to 104 buyer questions, written and reviewed by hand. The industry list on the snapshot form shows which ones have a set, from roofing and HVAC to solar and municipal advisors. Each question has placeholders for your service, city, and state, so "who installs heat pumps near Red Bank, New Jersey" is asked the way a buyer in your area would type it.
 
 For your snapshot we fill in those placeholders and pick 20 questions. Every snapshot includes questions about hiring locally, about cost, and about permits or regulation where the set has them, with the rest spread across comparisons, how-it-works questions, specific jobs, choosing a provider, and common problems. The same business always gets the same 20 questions, so a later snapshot is a fair comparison with an earlier one.
 

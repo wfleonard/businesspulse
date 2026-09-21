@@ -60,6 +60,6 @@ One good page per question you want to own beats a single page trying to answer 
 
 ## What this sample can and can't tell you
 
-Seven businesses and 22 cost answers is a pattern, not a benchmark: one assistant, answers collected September 15 to 18, 2026, and no business or single industry is shown. A [free snapshot](/) asks your buyers' questions for your area, cost questions included for the seven industries above, so you can see who answers them.
+Seven businesses and 22 cost answers is a pattern, not a benchmark: one assistant, answers collected September 15 to 18, 2026, and no business or single industry is shown. A [free snapshot](/) asks your buyers' questions for your area, cost questions included for every industry with a prepared question set, so you can see who answers them.
 `,
 }

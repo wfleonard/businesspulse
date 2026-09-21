@@ -1,11 +1,16 @@
 import type { PanelQuestion } from '../questions'
 import { commercialRoofing } from './commercial-roofing'
 import { electricalContracting } from './electrical-contracting'
+import { generalContractors } from './general-contractors'
 import { hddTrenchless } from './hdd-trenchless'
 import { hvacPlumbing } from './hvac-plumbing'
 import { landscaping } from './landscaping'
 import { municipalAdvisors } from './municipal-advisors'
 import { poolsHotTubs } from './pools-hot-tubs'
+import { residentialRoofing } from './residential-roofing'
+import { siding } from './siding'
+import { solarInstallers } from './solar-installers'
+import { windowsDoors } from './windows-doors'
 
 /**
  * Canned vertical panels, kept in code so they are reviewed and versioned like
@@ -31,4 +36,9 @@ export const CANNED_PANELS: CannedPanelDefinition[] = [
   landscaping,
   municipalAdvisors,
   poolsHotTubs,
+  residentialRoofing,
+  siding,
+  windowsDoors,
+  solarInstallers,
+  generalContractors,
 ]
