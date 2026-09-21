@@ -2,15 +2,27 @@ export type PanelQuestion = { c: string; q: string }
 
 const SLOT = /\{([a-z_]+)\}/g
 
+/** Same question, ignoring case and spacing. */
+function questionKey(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, ' ').trim()
+}
+
 /**
  * Fill {slot} placeholders. A question with any slot that has no value is
  * dropped rather than asked with a hole in it.
+ *
+ * Filling can also make two templates identical: "{service} near {city}"
+ * with the service "tree removal" becomes a panel's own "tree removal near
+ * {city}". Only the first is kept. A plan holding one question twice can
+ * never finish, because answers are counted by question text: every attempt
+ * would come up one short.
  */
 export function fillSlots(
   questions: PanelQuestion[],
   values: Record<string, string | null | undefined>
 ): PanelQuestion[] {
   const filled: PanelQuestion[] = []
+  const seen = new Set<string>()
   for (const question of questions) {
     let missing = false
     const q = question.q.replace(SLOT, (_match, key: string) => {
@@ -21,7 +33,11 @@ export function fillSlots(
       }
       return value
     })
-    if (!missing) filled.push({ c: question.c, q })
+    if (missing) continue
+    const key = questionKey(q)
+    if (seen.has(key)) continue
+    seen.add(key)
+    filled.push({ c: question.c, q })
   }
   return filled
 }

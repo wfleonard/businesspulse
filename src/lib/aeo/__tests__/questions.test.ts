@@ -27,6 +27,21 @@ describe('fillSlots', () => {
     ])
   })
 
+  it('keeps only the first of two templates that fill to the same question', () => {
+    // A tree-services run with the service "tree removal" asked this twice
+    // and could never finish: answers are counted by question text.
+    const questions = [
+      { c: 'service-geo', q: '{service} near {city}, {state}' },
+      { c: 'service-geo', q: 'tree removal near {city}, {state}' },
+      { c: 'service-geo', q: 'Tree  Removal near {city}, {state}' },
+      { c: 'cost', q: 'tree removal cost' },
+    ]
+    expect(fillSlots(questions, { service: 'tree removal', city: 'Oceanport', state: 'New Jersey' })).toEqual([
+      { c: 'service-geo', q: 'tree removal near Oceanport, New Jersey' },
+      { c: 'cost', q: 'tree removal cost' },
+    ])
+  })
+
   it('keeps questions that have no slots', () => {
     expect(fillSlots([{ c: 'x', q: 'plain question' }], {})).toEqual([{ c: 'x', q: 'plain question' }])
   })
