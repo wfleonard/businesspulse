@@ -9,7 +9,7 @@ import { loadRunDetail } from '@/lib/aeo/admin'
 import { workerConfig } from '@/lib/aeo/config'
 import { describeRunState } from '@/lib/aeo/run-status'
 import { LEAD_STATUSES } from '@/lib/aeo/lead-filters'
-import { verdictOf, type Verdict } from '@/lib/aeo/report'
+import { siteList, verdictOf, type Verdict } from '@/lib/aeo/report'
 import { requireSession } from '@/lib/session'
 import { deleteLead, rerunSnapshot, updateLeadStatus } from '../actions'
 
@@ -91,7 +91,7 @@ export default async function RunDetailPage({ params, searchParams }: Props) {
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-dark">{title}</h1>
-            <p className="mt-1 text-text-secondary">{run.domain}</p>
+            <p className="mt-1 text-text-secondary">{siteList(run.domain, run.otherDomains, 'and')}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <a

@@ -13,14 +13,23 @@ namespace Saxon\Panel;
  */
 final class Analyzer
 {
-    private string $domain;
+    /**
+     * The client's own sites: the primary domain first, then any other domains
+     * it runs. A citation of any of them is the client's own, never a rival's.
+     *
+     * @var string[]
+     */
+    private array $ownDomains;
     /** @var string[] */ private array $aliases;
     /** @var string[] */ private array $directories;
     /** @var string[] */ private array $references;
 
     public function __construct(array $client)
     {
-        $this->domain      = $this->host($client['domain']);
+        $this->ownDomains = array_values(array_unique(array_filter(array_map(
+            [$this, 'host'],
+            [$client['domain'], ...($client['other_domains'] ?? [])]
+        ))));
         $this->aliases     = $client['aliases'] ?? [];
         $this->directories = array_map([$this, 'host'], $client['directory_domains'] ?? []);
         $this->references  = array_map([$this, 'host'], $client['reference_domains'] ?? []);
@@ -39,7 +48,7 @@ final class Analyzer
             $host = $this->host($src['url'] ?? '');
             if ($host === '') { continue; }
 
-            if ($this->matches($host, $this->domain)) {
+            if ($this->inList($host, $this->ownDomains)) {
                 $ownCited = true;
                 $ownRank ??= $position;
                 continue;

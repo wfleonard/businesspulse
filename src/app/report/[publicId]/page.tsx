@@ -6,7 +6,7 @@ import { AutoRefresh } from '@/components/aeo/AutoRefresh'
 import { ReportViewBeacon } from '@/components/aeo/ReportViewBeacon'
 import { bookingUrl } from '@/lib/aeo/booking'
 import { Card } from '@/components/ui/Card'
-import { loadReport, type LoadedReport, type ReportSummary, type Verdict } from '@/lib/aeo/report'
+import { loadReport, siteList, type LoadedReport, type ReportSummary, type Verdict } from '@/lib/aeo/report'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,12 +54,14 @@ function Shell({ children }: { children: React.ReactNode }) {
   )
 }
 
-function scoreLine(summary: ReportSummary, domain: string): string {
+function scoreLine(summary: ReportSummary, report: LoadedReport): string {
   const { citedCount, answeredCount } = summary
+  const anySite = siteList(report.domain, report.otherDomains, 'or')
+  const subject = report.otherDomains.length ? 'Your sites were' : `${report.domain} was`
   if (answeredCount === 0) return 'AI search did not return answers for these questions.'
-  if (citedCount === 0) return `AI search didn't cite ${domain} on any of these questions.`
-  if (citedCount * 2 < answeredCount) return `${domain} was cited on fewer than half of these questions.`
-  return `${domain} was cited on most of these questions.`
+  if (citedCount === 0) return `AI search didn't cite ${anySite} on any of these questions.`
+  if (citedCount * 2 < answeredCount) return `${subject} cited on fewer than half of these questions.`
+  return `${subject} cited on most of these questions.`
 }
 
 /** Through /book when a booking page is set, so the click is recorded against this report. */
@@ -84,15 +86,17 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
         AI visibility snapshot for {report.businessName}
       </h1>
       <p className="mt-2 text-sm text-text-secondary">
-        {report.domain} · {formatDate(report.finishedAt)}
+        {siteList(report.domain, report.otherDomains, 'and')} · {formatDate(report.finishedAt)}
       </p>
 
       <Card className="mt-8">
-        <p className="text-sm font-medium text-text-secondary">Your website was cited on</p>
+        <p className="text-sm font-medium text-text-secondary">
+          {report.otherDomains.length ? 'Your websites were cited on' : 'Your website was cited on'}
+        </p>
         <p className="mt-1 text-4xl font-bold text-dark">
           {summary.citedCount} <span className="text-2xl font-semibold text-text-secondary">of {summary.answeredCount} questions</span>
         </p>
-        <p className="mt-3 text-sm text-dark">{scoreLine(summary, report.domain)}</p>
+        <p className="mt-3 text-sm text-dark">{scoreLine(summary, report)}</p>
         {summary.namedCount > 0 && (
           <p className="mt-1 text-sm text-text-secondary">
             {`On ${summary.namedCount} more, the answer named your business but didn't link to your site.`}
@@ -202,7 +206,7 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
         <h2 className="text-sm font-semibold text-dark">How this was measured</h2>
         <p className="mt-2">
           We asked {assistants} {summary.questionCount} questions that buyers ask about businesses like yours,
-          on {formatDate(report.finishedAt)}, and checked whether each answer cited {report.domain}. AI answers
+          on {formatDate(report.finishedAt)}, and checked whether each answer cited {siteList(report.domain, report.otherDomains, 'or')}. AI answers
           change as the models and the web change, so treat this as a snapshot rather than a ranking.
         </p>
         {report.panelSource === 'generated' && (

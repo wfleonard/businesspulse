@@ -46,6 +46,7 @@ describe('buildJob', () => {
       {
         businessName: 'East Coast Utility, LLC',
         domain: 'eastcoastutility.com',
+        otherDomains: [],
         directoryDomains: ['yelp.com'],
         referenceDomains: ['nj.gov'],
         questions: [{ c: 'cost', q: 'HDD cost per foot' }],
@@ -58,6 +59,7 @@ describe('buildJob', () => {
       client: {
         name: 'East Coast Utility, LLC',
         domain: 'eastcoastutility.com',
+        other_domains: [],
         aliases: [],
         directory_domains: ['yelp.com'],
         reference_domains: ['nj.gov'],
@@ -66,6 +68,24 @@ describe('buildJob', () => {
       engines: ['perplexity'],
       concurrency: 3,
     })
+  })
+
+  it("passes the business's other sites through, so the panel scores them as its own", () => {
+    const job = buildJob(
+      {
+        businessName: 'John R. Guzzi Roofing',
+        domain: 'johnrguzziroofing.com',
+        otherDomains: ['guzziroofing.com'],
+        directoryDomains: [],
+        referenceDomains: [],
+        questions: [{ c: 'service-geo', q: 'roof repair near Wall Township' }],
+        panelVersion: 2,
+      },
+      ['perplexity'],
+      2
+    )
+    expect(job.client.domain).toBe('johnrguzziroofing.com')
+    expect(job.client.other_domains).toEqual(['guzziroofing.com'])
   })
 })
 
@@ -101,6 +121,7 @@ describe('runPanelJob', () => {
         {
           businessName: 'A Co',
           domain: 'a.com',
+          otherDomains: [],
           directoryDomains: [],
           referenceDomains: [],
           questions: [{ c: 'cost', q: 'q' }],

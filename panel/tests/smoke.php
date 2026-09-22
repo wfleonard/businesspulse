@@ -308,6 +308,18 @@ $v4 = $an->analyze(['answer' => '', 'sources' => [
     ['url' => 'https://blog.eastcoastutility.com/post', 'title' => 'B', 'cited' => true]]]);
 $check('subdomain counts as own', $v4['own_cited'], true);
 
+// A business with a second site: a subdomain of that one counts too, and an
+// unrelated host whose name merely ends the same way does not.
+$twoSites = new Analyzer(['other_domains' => ['ecu-hdd.com']] + $client);
+$v5 = $twoSites->analyze(['answer' => '', 'sources' => [
+    ['url' => 'https://www.shop.ecu-hdd.com/x', 'title' => 'S', 'cited' => true],
+    ['url' => 'https://notecu-hdd.com/', 'title' => 'N', 'cited' => true]]]);
+$check('subdomain of an other domain counts as own', $v5['own_cited'], true);
+$check('lookalike host stays a rival', array_column($v5['rivals'], 'host'), ['notecu-hdd.com']);
+$check('without other_domains, the second site is a rival',
+    $an->analyze(['answer' => '', 'sources' => [['url' => 'https://ecu-hdd.com/', 'title' => 'S', 'cited' => true]]])['own_cited'],
+    false);
+
 // ---------------------------------------------------------------------------
 echo "\nMulti-engine report aggregation\n";
 @unlink($root . '/data/test.sqlite');

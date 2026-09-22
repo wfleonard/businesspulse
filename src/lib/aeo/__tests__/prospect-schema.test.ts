@@ -1,6 +1,6 @@
 /** @jest-environment node */
 import { parseLeadFilters, filtersToQuery } from '../lead-filters'
-import { fieldErrors, prospectRequestSchema } from '../request-schema'
+import { fieldErrors, MAX_OTHER_DOMAINS, prospectRequestSchema } from '../request-schema'
 
 const valid = {
   businessName: ' Green Apple Roofing ',
@@ -21,6 +21,7 @@ describe('prospectRequestSchema', () => {
       state: 'NJ',
       vertical: 'commercial-roofing',
       email: '',
+      otherDomains: [],
     })
   })
 
@@ -38,6 +39,30 @@ describe('prospectRequestSchema', () => {
       website: 'Enter your website, like example.com',
       state: 'Choose a state',
     })
+  })
+
+  it('reads other websites separated by commas, spaces, or new lines', () => {
+    const parsed = prospectRequestSchema.parse({
+      ...valid,
+      website: 'johnrguzziroofing.com',
+      otherDomains: ' https://www.GuzziRoofing.com/ ,\nguzziroofing.com  guzzi-roofing.net; johnrguzziroofing.com',
+    })
+    // Normalized like the main website, repeats and the main website itself dropped.
+    expect(parsed.otherDomains).toEqual(['guzziroofing.com', 'guzzi-roofing.net'])
+  })
+
+  it('names the entry that is not a website', () => {
+    const result = prospectRequestSchema.safeParse({ ...valid, otherDomains: 'guzziroofing.com, localhost' })
+    expect(result.success).toBe(false)
+    if (result.success) return
+    expect(fieldErrors(result.error)).toEqual({ otherDomains: '"localhost" isn\'t a website, like example.com' })
+  })
+
+  it('caps how many other websites one business can list', () => {
+    const many = Array.from({ length: MAX_OTHER_DOMAINS + 1 }, (_, i) => `site${i}.com`).join(', ')
+    expect(prospectRequestSchema.safeParse({ ...valid, otherDomains: many }).success).toBe(false)
+    const most = Array.from({ length: MAX_OTHER_DOMAINS }, (_, i) => `site${i}.com`).join(', ')
+    expect(prospectRequestSchema.parse({ ...valid, otherDomains: most }).otherDomains).toHaveLength(MAX_OTHER_DOMAINS)
   })
 
   it('ignores fields the dashboard form does not send', () => {

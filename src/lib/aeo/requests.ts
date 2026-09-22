@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { aeoPanel, aeoRequest, aeoRun } from '@/lib/db/schema'
+import { coversOtherDomains } from './domain'
 import type { ProspectRequestInput, SnapshotRequestInput } from './request-schema'
 import { hashToken, newPublicId, newVerifyToken } from './tokens'
 
@@ -65,18 +66,20 @@ type AttachedRun = { id: string; publicId: string; status: RunStatus }
  * Mark a request verified and point it at a run, inside the caller's transaction.
  *
  * Reuse: a snapshot run for the same domain that is queued, running, or done in
- * the last REUSE_DAYS days is shared rather than paid for again. A per-domain
- * advisory lock stops two simultaneous requests from both creating a run.
+ * the last REUSE_DAYS days is shared rather than paid for again, as long as it
+ * already credits every other site the request lists. A per-domain advisory
+ * lock stops two simultaneous requests from both creating a run.
  */
 async function attachToRun(
   tx: Tx,
-  request: { id: string; domain: string; panelSlug: string | null },
+  request: { id: string; domain: string; panelSlug: string | null; otherDomains?: string[] },
   now: Date
 ): Promise<{ run: AttachedRun; reused: boolean }> {
   await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`aeo_run:${request.domain}`}))`)
+  const otherDomains = request.otherDomains ?? []
 
-  const [existing] = await tx
-    .select({ id: aeoRun.id, publicId: aeoRun.publicId, status: aeoRun.status })
+  const [latest] = await tx
+    .select({ id: aeoRun.id, publicId: aeoRun.publicId, status: aeoRun.status, otherDomains: aeoRun.otherDomains })
     .from(aeoRun)
     .where(
       and(
@@ -89,6 +92,7 @@ async function attachToRun(
     )
     .orderBy(desc(aeoRun.createdAt))
     .limit(1)
+  const existing = latest && coversOtherDomains(latest.otherDomains, otherDomains) ? latest : undefined
 
   const run =
     existing ??
@@ -98,6 +102,7 @@ async function attachToRun(
         .values({
           publicId: newPublicId(),
           domain: request.domain,
+          otherDomains,
           tier: 'snapshot',
           panelSource: request.panelSlug ? 'canned' : 'generated',
           panelSlug: request.panelSlug,
@@ -206,7 +211,11 @@ export async function createProspectRequest(
       })
       .returning({ id: aeoRequest.id })
 
-    const { run, reused } = await attachToRun(tx, { id: request.id, domain: input.website, panelSlug }, now)
+    const { run, reused } = await attachToRun(
+      tx,
+      { id: request.id, domain: input.website, panelSlug, otherDomains: input.otherDomains },
+      now
+    )
     return { runId: run.id, publicId: run.publicId, reused }
   })
 }

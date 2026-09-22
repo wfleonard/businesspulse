@@ -14,6 +14,8 @@ export type PanelJob = {
   client: {
     name: string
     domain: string
+    /** Optional in the contract; older job files without it still validate. */
+    other_domains: string[]
     aliases: string[]
     directory_domains: string[]
     reference_domains: string[]
@@ -28,6 +30,7 @@ export function buildJob(plan: RunPlan, engines: string[], concurrency: number):
     client: {
       name: plan.businessName,
       domain: plan.domain,
+      other_domains: plan.otherDomains,
       aliases: [],
       directory_domains: plan.directoryDomains,
       reference_domains: plan.referenceDomains,

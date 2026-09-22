@@ -61,6 +61,21 @@ export function ProspectForm({ panels, states }: Props) {
         </Field>
       </div>
 
+      <Field
+        id="otherDomains"
+        label="Other websites"
+        hint="optional, if the business runs more than one site; separate with commas"
+        error={errors.otherDomains}
+      >
+        <input
+          id="otherDomains"
+          name="otherDomains"
+          placeholder="e.g. example-roofing.com"
+          defaultValue={values.otherDomains}
+          className={inputClass}
+        />
+      </Field>
+
       <Field id="service" label="Main service" hint="in the buyer's words" error={errors.service}>
         <input
           id="service"

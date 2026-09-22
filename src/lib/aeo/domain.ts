@@ -34,3 +34,13 @@ export function normalizeDomain(input: string): string {
 
   return host
 }
+
+/**
+ * Whether an existing run can stand in for a new request: it must already
+ * credit every other site the request lists. A run that credits more sites is
+ * fine; one that credits fewer would hand back a report that counted some of
+ * the business's own citations as a competitor's.
+ */
+export function coversOtherDomains(runOtherDomains: readonly string[], requested: readonly string[]): boolean {
+  return requested.every((domain) => runOtherDomains.includes(domain))
+}

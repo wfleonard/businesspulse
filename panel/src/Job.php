@@ -18,6 +18,7 @@ final class Job
     public const RESULT_VERSION = 1;
     public const MAX_QUESTIONS  = 500;
     public const MAX_CONCURRENCY = 10;
+    public const MAX_OTHER_DOMAINS = 10;
 
     /** Trailing entity designators, stripped to make a second alias. */
     private const LEGAL_SUFFIX =
@@ -61,6 +62,27 @@ final class Job
             throw new \InvalidArgumentException('client.domain must be a hostname');
         }
 
+        // Other domains the business owns (optional). A business that runs two
+        // sites gets cited as either one, and counting only the primary told an
+        // owner their site was never cited when the other one was.
+        $otherDomains = [];
+        $rawOther = $client['other_domains'] ?? [];
+        if (!is_array($rawOther)) {
+            throw new \InvalidArgumentException('client.other_domains must be a list');
+        }
+        foreach (array_values($rawOther) as $i => $value) {
+            $other = self::normalizeDomain(is_string($value) ? $value : '');
+            if ($other === '') {
+                throw new \InvalidArgumentException("client.other_domains[$i] must be a hostname");
+            }
+            if ($other !== $domain && !in_array($other, $otherDomains, true)) {
+                $otherDomains[] = $other;
+            }
+        }
+        if (count($otherDomains) > self::MAX_OTHER_DOMAINS) {
+            throw new \InvalidArgumentException('client.other_domains exceeds ' . self::MAX_OTHER_DOMAINS);
+        }
+
         $questions = [];
         foreach (is_array($data['questions'] ?? null) ? $data['questions'] : [] as $i => $q) {
             $text = is_array($q) ? trim((string) ($q['q'] ?? '')) : '';
@@ -98,6 +120,7 @@ final class Job
             'client' => [
                 'name'              => $name,
                 'domain'            => $domain,
+                'other_domains'     => $otherDomains,
                 'aliases'           => self::strings($client['aliases'] ?? []),
                 'directory_domains' => self::strings($client['directory_domains'] ?? []),
                 'reference_domains' => self::strings($client['reference_domains'] ?? []),
@@ -129,6 +152,7 @@ final class Job
 
         return [
             'domain'            => $client['domain'],
+            'other_domains'     => $client['other_domains'] ?? [],
             'aliases'           => array_values(array_unique($aliases)),
             'directory_domains' => $client['directory_domains'] ?? [],
             'reference_domains' => $client['reference_domains'] ?? [],

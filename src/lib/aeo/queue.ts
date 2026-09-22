@@ -27,6 +27,8 @@ export type ClaimedRun = {
   id: string
   publicId: string
   domain: string
+  /** Other sites the business runs; citations of them count as its own. */
+  otherDomains: string[]
   tier: 'snapshot' | 'full'
   engines: string[]
   panelSource: 'canned' | 'generated'
@@ -85,7 +87,7 @@ export async function claimNextRun(options: {
       for update skip locked
       limit 1
     )
-    returning id, public_id, domain, tier, engines, panel_source, panel_slug, attempts, lease_token
+    returning id, public_id, domain, other_domains, tier, engines, panel_source, panel_slug, attempts, lease_token
   `)
 
   const row = result.rows[0] as Row | undefined
@@ -94,6 +96,7 @@ export async function claimNextRun(options: {
     id: String(row.id),
     publicId: String(row.public_id),
     domain: String(row.domain),
+    otherDomains: (row.other_domains as string[] | null) ?? [],
     tier: row.tier as ClaimedRun['tier'],
     engines: row.engines as string[],
     panelSource: row.panel_source as ClaimedRun['panelSource'],

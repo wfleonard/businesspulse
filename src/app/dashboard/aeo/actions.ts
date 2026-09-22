@@ -78,7 +78,7 @@ export async function createProspectSnapshot(
     userId: user.id,
     action: 'aeo.prospect_snapshot',
     target: result.runId,
-    metadata: { reused: result.reused },
+    metadata: { reused: result.reused, otherDomains: parsed.data.otherDomains },
   })
   revalidatePath('/dashboard/aeo')
   redirect(`/dashboard/aeo/${result.runId}?started=${result.reused ? 'reused' : 'new'}`)

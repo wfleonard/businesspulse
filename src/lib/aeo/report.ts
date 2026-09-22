@@ -215,12 +215,25 @@ export function buildReport(
 export type LoadedReport = {
   publicId: string
   domain: string
+  /** Other sites the business runs; the report counted their citations as its own. */
+  otherDomains: string[]
   businessName: string
   status: (typeof aeoRun.$inferSelect)['status']
   panelSource: (typeof aeoRun.$inferSelect)['panelSource']
   finishedAt: Date | null
   engines: { engine: string; model: string | null }[]
   summary: ReportSummary | null
+}
+
+/**
+ * The business's sites in a sentence: "a.com", "a.com and b.com", or
+ * "a.com, b.com, and c.com". Use "or" where any one of them counts.
+ */
+export function siteList(domain: string, otherDomains: readonly string[], conjunction: 'and' | 'or'): string {
+  const sites = [domain, ...otherDomains.filter((d) => d !== domain)]
+  if (sites.length === 1) return sites[0]
+  if (sites.length === 2) return `${sites[0]} ${conjunction} ${sites[1]}`
+  return `${sites.slice(0, -1).join(', ')}, ${conjunction} ${sites[sites.length - 1]}`
 }
 
 const PUBLIC_ID = /^[A-Za-z0-9_-]{24}$/
@@ -233,6 +246,7 @@ export async function loadReport(publicId: string): Promise<LoadedReport | null>
       id: aeoRun.id,
       publicId: aeoRun.publicId,
       domain: aeoRun.domain,
+      otherDomains: aeoRun.otherDomains,
       status: aeoRun.status,
       panelSource: aeoRun.panelSource,
       panelSlug: aeoRun.panelSlug,
@@ -253,6 +267,7 @@ export async function loadReport(publicId: string): Promise<LoadedReport | null>
   const base = {
     publicId: run.publicId,
     domain: run.domain,
+    otherDomains: run.otherDomains,
     // Falls back to the domain once retention has erased the business name.
     businessName: request?.businessName || run.domain,
     status: run.status,

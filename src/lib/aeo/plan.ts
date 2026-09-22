@@ -19,6 +19,8 @@ export class PermanentRunError extends Error {
 export type RunPlan = {
   businessName: string
   domain: string
+  /** Other sites the business runs; the panel scores citations of them as its own. */
+  otherDomains: string[]
   directoryDomains: string[]
   referenceDomains: string[]
   questions: PanelQuestion[]
@@ -28,6 +30,8 @@ export type RunPlan = {
 export type PlanTarget = {
   id: string
   domain: string
+  /** Absent on runs claimed before the column existed; treated as none. */
+  otherDomains?: string[]
   panelSource: 'canned' | 'generated'
   panelSlug: string | null
   leaseToken: string
@@ -73,6 +77,7 @@ export function buildCannedPlan(
   return {
     businessName: request.businessName,
     domain,
+    otherDomains: [],
     directoryDomains: panel.directoryDomains,
     referenceDomains: panel.referenceDomains,
     questions,
@@ -94,6 +99,7 @@ export function buildGeneratedPlan(
   return {
     businessName: request.businessName,
     domain,
+    otherDomains: [],
     directoryDomains: COMMON_DIRECTORY_DOMAINS,
     referenceDomains: [...new Set([...COMMON_REFERENCE_DOMAINS, ...panel.referenceDomains])],
     questions,
@@ -183,7 +189,7 @@ export async function planRun(run: PlanTarget, questionCount: number, options: P
       .where(eq(aeoRun.id, run.id))
       .limit(1)
     const panel = row?.generatedPanel ?? (await generateForRun(run, request, options))
-    return buildGeneratedPlan(panel, request, run.domain, questionCount)
+    return { ...buildGeneratedPlan(panel, request, run.domain, questionCount), otherDomains: run.otherDomains ?? [] }
   }
 
   if (!run.panelSlug) throw new PermanentRunError('canned run has no panel_slug')
@@ -191,5 +197,5 @@ export async function planRun(run: PlanTarget, questionCount: number, options: P
   const [panel] = await db.select().from(aeoPanel).where(eq(aeoPanel.slug, run.panelSlug)).limit(1)
   if (!panel) throw new PermanentRunError(`panel '${run.panelSlug}' does not exist`)
 
-  return buildCannedPlan(panel, request, run.domain, questionCount)
+  return { ...buildCannedPlan(panel, request, run.domain, questionCount), otherDomains: run.otherDomains ?? [] }
 }

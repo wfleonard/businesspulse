@@ -43,9 +43,38 @@ export const snapshotRequestSchema = z.object({
 
 export type SnapshotRequestInput = z.infer<typeof snapshotRequestSchema>
 
+/** Most other websites one business can list. The panel enforces the same limit (Job::MAX_OTHER_DOMAINS). */
+export const MAX_OTHER_DOMAINS = 10
+
+/** Other websites the business runs, as free text separated by commas, spaces, or new lines. */
+const otherDomains = z
+  .string()
+  .max(2048, 'That is too many websites')
+  .default('')
+  .transform((value, ctx) => {
+    const domains: string[] = []
+    for (const part of value.split(/[\s,;]+/).filter(Boolean)) {
+      const domain = normalizeDomain(part)
+      if (!domain) {
+        ctx.addIssue({ code: 'custom', message: `"${part}" isn't a website, like example.com` })
+        return z.NEVER
+      }
+      if (!domains.includes(domain)) domains.push(domain)
+    }
+    if (domains.length > MAX_OTHER_DOMAINS) {
+      ctx.addIssue({ code: 'custom', message: `List at most ${MAX_OTHER_DOMAINS} other websites` })
+      return z.NEVER
+    }
+    return domains
+  })
+
 /**
  * A prospect snapshot started from the dashboard. Same business fields as the
  * public form; the prospect's email is optional because nothing is sent to it.
+ *
+ * `otherDomains` is dashboard-only: a business that runs a second site gets
+ * credit when AI search cites that one. The public form doesn't offer it, so a
+ * visitor can't claim someone else's site as their own.
  */
 export const prospectRequestSchema = snapshotRequestSchema
   .pick({ businessName: true, website: true, service: true, city: true, state: true, vertical: true })
@@ -57,7 +86,10 @@ export const prospectRequestSchema = snapshotRequestSchema
       .max(254, 'Enter a valid email address')
       .refine((value) => value === '' || z.email().safeParse(value).success, 'Enter a valid email address')
       .default(''),
+    otherDomains,
   })
+  // The main website is already the business's own; listing it again changes nothing.
+  .transform((value) => ({ ...value, otherDomains: value.otherDomains.filter((d) => d !== value.website) }))
 
 export type ProspectRequestInput = z.infer<typeof prospectRequestSchema>
 

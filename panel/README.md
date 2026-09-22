@@ -15,7 +15,8 @@ php panel/panel.php job --in=job.json --out=result.json
 ```
 
 Reads a job file, runs every question against every listed engine, and writes a
-result file. No SQLite. Contract and field list: `docs/aeo-build-spec.md`, Section
+result file. No SQLite. `client.other_domains` (optional) lists other sites the business
+runs; their citations count as its own and they never appear as rivals. Contract and field list: `docs/aeo-build-spec.md`, Section
 5.2. A 3-question example: `examples/snapshot-job.json`.
 
 | Exit | Meaning |

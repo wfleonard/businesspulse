@@ -214,6 +214,7 @@ php panel/panel.php job --in=/tmp/aeo/{runId}.job.json --out=/tmp/aeo/{runId}.re
   "client": {
     "name": "East Coast Utility, LLC",
     "domain": "eastcoastutility.com",
+    "other_domains": [],
     "aliases": ["East Coast Utility"],
     "directory_domains": ["yelp.com", "bbb.org"],
     "reference_domains": ["law.cornell.edu", "ditchwitch.com"]
@@ -225,6 +226,12 @@ php panel/panel.php job --in=/tmp/aeo/{runId}.job.json --out=/tmp/aeo/{runId}.re
   "concurrency": 4
 }
 ```
+
+`other_domains` is optional: other sites the business runs. A citation of any of them
+counts as `own_cited`, and none of them is ever listed as a rival. Each must be a
+hostname or the job is rejected; at most 10. Only admin prospect snapshots set it, on
+`aeo_run.other_domains`; the public form can't, so a visitor can't claim someone else's
+site. Questions stay seeded by `domain` alone.
 
 **Result file:** one entry per question × engine with `query`, `category`, `engine`,
 `model`, `own_cited`, `name_mentioned`, `directory_only`, `own_rank`, `rivals`,

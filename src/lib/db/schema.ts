@@ -442,6 +442,11 @@ export const aeoRun = pgTable(
     /** Unguessable report URL segment — 18 random bytes, base64url. */
     publicId: text('public_id').notNull().unique(),
     domain: text('domain').notNull(),
+    /**
+     * Other sites the business runs (dashboard snapshots only). Citations of any
+     * of them count as the business's own. Questions stay seeded by `domain`.
+     */
+    otherDomains: jsonb('other_domains').$type<string[]>().notNull().default([]),
     tier: aeoRunTierEnum('tier').notNull().default('snapshot'),
     engines: jsonb('engines').$type<string[]>().notNull().default(['perplexity']),
     panelSource: aeoPanelSourceEnum('panel_source').notNull(),

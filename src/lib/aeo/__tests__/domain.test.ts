@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { normalizeDomain } from '../domain'
+import { coversOtherDomains, normalizeDomain } from '../domain'
 
 describe('normalizeDomain', () => {
   it.each([
@@ -36,5 +36,17 @@ describe('normalizeDomain', () => {
     [`${'a'.repeat(64)}.com`],
   ])('rejects %s', (input) => {
     expect(normalizeDomain(input)).toBe('')
+  })
+})
+
+describe('coversOtherDomains', () => {
+  it('reuses a run only when it already credits every site the request lists', () => {
+    expect(coversOtherDomains([], [])).toBe(true)
+    expect(coversOtherDomains(['guzziroofing.com'], [])).toBe(true)
+    expect(coversOtherDomains(['guzziroofing.com', 'b.com'], ['guzziroofing.com'])).toBe(true)
+    // The case that found this: the old run said "cited on 0 of 20" because it
+    // didn't credit the second site. Reusing it would hand that report back.
+    expect(coversOtherDomains([], ['guzziroofing.com'])).toBe(false)
+    expect(coversOtherDomains(['b.com'], ['guzziroofing.com', 'b.com'])).toBe(false)
   })
 })

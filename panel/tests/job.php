@@ -106,6 +106,42 @@ $explicit = Job::analyzerProfile(Job::normalize(
 $check('explicit aliases kept; short stripped name skipped', $explicit['aliases'], ['Tom Colleran', 'ECU LLC']);
 
 // ---------------------------------------------------------------------------
+echo "\nOther domains the business owns\n";
+$check('other_domains defaults to empty', $j['client']['other_domains'], []);
+$check('an older job without the field still loads', $profile['other_domains'], []);
+
+$twoSites = Job::normalize(['client' => [
+    'name'          => 'John R. Guzzi Roofing',
+    'domain'        => 'johnrguzziroofing.com',
+    'other_domains' => ['https://www.GuzziRoofing.com/', 'guzziroofing.com', 'johnrguzziroofing.com'],
+]] + $valid, $engines);
+$check('other domains normalized, deduplicated, primary dropped',
+    $twoSites['client']['other_domains'], ['guzziroofing.com']);
+
+foreach ([
+    'other_domains not a list'   => ['name' => 'A Co', 'domain' => 'a.com', 'other_domains' => 'b.com'],
+    'other domain without a dot' => ['name' => 'A Co', 'domain' => 'a.com', 'other_domains' => ['localhost']],
+    'other domain not a string'  => ['name' => 'A Co', 'domain' => 'a.com', 'other_domains' => [42]],
+    'too many other domains'     => ['name' => 'A Co', 'domain' => 'a.com',
+        'other_domains' => array_map(fn($n) => "site$n.com", range(1, Job::MAX_OTHER_DOMAINS + 1))],
+] as $label => $client) {
+    $check("rejects: $label", $throws(fn() => Job::normalize(['client' => $client] + $valid, $engines)) !== null, true);
+}
+
+// The case that found this: the report said "cited on 0 of 20" while the
+// business's second domain was cited, and listed that domain as a rival.
+$guzzi = (new Analyzer(Job::analyzerProfile($twoSites['client'])))->analyze([
+    'answer'  => 'Several roofers serve Wall Township.',
+    'sources' => [
+        ['url' => 'https://guzziroofing.com/roof-repair', 'title' => 'Guzzi Roofing', 'cited' => true],
+        ['url' => 'https://www.fbroofingsiding.com/', 'title' => 'FB Roofing', 'cited' => true],
+    ],
+]);
+$check('a citation of the other domain counts as own_cited', $guzzi['own_cited'], true);
+$check('...at its position among the sources', $guzzi['own_rank'], 1);
+$check('...and it is never listed as a rival', array_column($guzzi['rivals'], 'host'), ['fbroofingsiding.com']);
+
+// ---------------------------------------------------------------------------
 echo "\nResult assembly\n";
 $rows = [
     ['engine' => 'perplexity', 'model' => 'sonar', 'query' => 'q1', 'category' => 'service-geo',

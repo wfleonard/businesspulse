@@ -262,6 +262,7 @@ export async function createRerun(runId: string): Promise<string | null> {
       .values({
         publicId: newPublicId(),
         domain: run.domain,
+        otherDomains: run.otherDomains,
         tier: run.tier,
         engines: run.engines,
         panelSource: run.panelSource,

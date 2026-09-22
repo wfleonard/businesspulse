@@ -1,0 +1,1 @@
+ALTER TABLE "aeo_run" ADD COLUMN "other_domains" jsonb DEFAULT '[]'::jsonb NOT NULL;

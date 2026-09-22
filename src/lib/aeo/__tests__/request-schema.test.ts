@@ -14,6 +14,10 @@ const valid = {
 }
 
 describe('snapshotRequestSchema', () => {
+  it("never accepts other websites: a visitor can't claim someone else's site as their own", () => {
+    expect(snapshotRequestSchema.parse({ ...valid, otherDomains: 'competitor.com' })).not.toHaveProperty('otherDomains')
+  })
+
   it('trims and normalizes a valid request', () => {
     const parsed = snapshotRequestSchema.parse(valid)
     expect(parsed).toEqual({

@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { buildReport, categoryLabel, cleanAnswer, verdictOf, type ReportResultInput } from '../report'
+import { buildReport, categoryLabel, cleanAnswer, siteList, verdictOf, type ReportResultInput } from '../report'
 
 function result(overrides: Partial<ReportResultInput> & { query: string }): ReportResultInput {
   return {
@@ -124,5 +124,14 @@ describe('buildReport', () => {
   it('handles a run with no answers', () => {
     const empty = buildReport([result({ query: 'q', error: 'down', answer: null })])
     expect(empty).toMatchObject({ questionCount: 1, answeredCount: 0, citedCount: 0, examples: [] })
+  })
+})
+
+describe('siteList', () => {
+  it("names the business's sites in a sentence", () => {
+    expect(siteList('a.com', [], 'or')).toBe('a.com')
+    expect(siteList('johnrguzziroofing.com', ['guzziroofing.com'], 'or')).toBe('johnrguzziroofing.com or guzziroofing.com')
+    expect(siteList('a.com', ['b.com', 'c.com'], 'and')).toBe('a.com, b.com, and c.com')
+    expect(siteList('a.com', ['a.com'], 'and')).toBe('a.com')
   })
 })
