@@ -21,6 +21,7 @@ import { movingCompanies } from './moving-companies'
 import { municipalAdvisors } from './municipal-advisors'
 import { pestControl } from './pest-control'
 import { poolsHotTubs } from './pools-hot-tubs'
+import { religiousArt } from './religious-art'
 import { residentialRoofing } from './residential-roofing'
 import { siding } from './siding'
 import { solarInstallers } from './solar-installers'
@@ -71,4 +72,5 @@ export const CANNED_PANELS: CannedPanelDefinition[] = [
   itMsp,
   dentists,
   homeHealthcare,
+  religiousArt,
 ]
