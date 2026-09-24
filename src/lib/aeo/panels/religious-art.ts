@@ -6,6 +6,10 @@ import type { CannedPanelDefinition } from './index'
  * for a devotion or an occasion gift, plus parishes, schools, and gift shops
  * buying in quantity.
  *
+ * A handful of questions name Our Lady of Guadalupe. That is not tailoring to one shop:
+ * it is the most reproduced Catholic image there is, nearly every seller in this market
+ * offers it, and buyers ask about it by name rather than asking about "religious art".
+ *
  * Unlike the trades, the competition here is marketplaces. A seller cited only
  * through Etsy or Amazon is renting the answer, so those are directory
  * domains; museums, dioceses, and the Catholic press are references. Rules
@@ -27,6 +31,7 @@ export const religiousArt: CannedPanelDefinition = {
     { c: 'service-geo', q: 'Catholic artists in {state}' },
 
     { c: 'cost', q: 'how much does a large canvas print of religious art cost' },
+    { c: 'cost', q: 'how much does an Our Lady of Guadalupe canvas cost' },
     { c: 'cost', q: 'how much does a custom religious painting commission cost' },
     { c: 'cost', q: 'cost of a framed icon' },
     { c: 'cost', q: 'how much does a hand carved wooden statue of Mary cost' },
@@ -42,6 +47,7 @@ export const religiousArt: CannedPanelDefinition = {
     { c: 'regulation', q: 'what does a licensed image of a sacred artwork mean' },
 
     { c: 'comparison', q: 'canvas print vs giclée vs poster' },
+    { c: 'comparison', q: 'why do Our Lady of Guadalupe prints look different from each other' },
     { c: 'comparison', q: 'buying religious art on Etsy vs from the artist directly' },
     { c: 'comparison', q: 'hand painted icon vs printed icon' },
     { c: 'comparison', q: 'wood panel vs canvas for religious art' },
@@ -51,6 +57,7 @@ export const religiousArt: CannedPanelDefinition = {
 
     { c: 'technical', q: 'how are canvas prints of religious art made' },
     { c: 'technical', q: 'what is a giclée print' },
+    { c: 'technical', q: 'what is the difference between a tilma replica and an ordinary print' },
     { c: 'technical', q: 'do canvas prints fade in sunlight' },
     { c: 'technical', q: 'what size canvas works over a fireplace or altar' },
     { c: 'technical', q: 'how to hang a heavy framed religious print' },
@@ -64,6 +71,7 @@ export const religiousArt: CannedPanelDefinition = {
     { c: 'application', q: 'wedding gift for a Catholic couple' },
     { c: 'application', q: 'ordination gift for a priest' },
     { c: 'application', q: 'art for a home prayer corner or altar' },
+    { c: 'application', q: 'Guadalupe image for a parish feast day celebration on December 12' },
     { c: 'application', q: 'religious art for a nursery' },
     { c: 'application', q: 'art for a parish hall or classroom' },
 
@@ -74,6 +82,7 @@ export const religiousArt: CannedPanelDefinition = {
     { c: 'problem', q: 'religious art order never shipped' },
     { c: 'problem', q: 'canvas sagging or warping in the frame' },
 
+    { c: 'vendor-selection', q: 'where to buy an authorized Our Lady of Guadalupe tilma replica' },
     { c: 'vendor-selection', q: 'how to choose a religious art seller online' },
     { c: 'vendor-selection', q: 'questions to ask before commissioning religious art' },
     { c: 'vendor-selection', q: 'how to find Catholic artists who sell their own work' },
