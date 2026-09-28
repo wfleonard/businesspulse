@@ -143,7 +143,8 @@ final class GeminiEngine implements Engine
                         $u = $note['url'] ?? null;
                         if (!is_string($u) || $u === '') { continue; }
                         // Title is usually the bare host ("uefa.com"), not a page title.
-                        $urls[$u] ??= ['title' => $note['title'] ?? '', 'cited' => true];
+                        $title = (string) ($note['title'] ?? '');
+                        $urls[self::unwrapRedirect($u, $title)] ??= ['title' => $title, 'cited' => true];
                     }
                 }
                 continue;
@@ -191,6 +192,25 @@ final class GeminiEngine implements Engine
         }
 
         return $out;
+    }
+
+    /**
+     * Live grounding cites Google redirect links
+     * (vertexaisearch.cloud.google.com/grounding-api-redirect/...), not the
+     * page, so scoring by URL host credits every citation to Google. The real
+     * domain is only in the title, so the source becomes that domain's root.
+     * The page path is lost; the domain is what the analyzer scores.
+     * (Measured 2026-09-28, run 14: 63 of 63 searched answers.)
+     */
+    public static function unwrapRedirect(string $url, string $title): string
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+        if ($host !== 'vertexaisearch.cloud.google.com') { return $url; }
+
+        $domain = strtolower(trim($title));
+        if (!preg_match('/^(?:[a-z0-9-]+\.)+[a-z]{2,}$/', $domain)) { return $url; }
+
+        return "https://$domain/";
     }
 
     public function costOf(array $parsed): float

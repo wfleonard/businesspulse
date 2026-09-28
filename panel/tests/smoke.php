@@ -225,6 +225,23 @@ $gemBilled = $gem->parse(json_encode([
 $check('billed search count preferred', $gemBilled['searches'], 5);
 $check('answer without citations still parses', $gemBilled['sources'], []);
 
+// Live grounding cites redirect links; the domain is only in the title.
+$redirect = 'https://vertexaisearch.cloud.google.com/grounding-api-redirect/';
+$gemRedir = $gem->parse(json_encode([
+    'status' => 'completed',
+    'steps'  => [['type' => 'model_output', 'content' => [[
+        'type' => 'text', 'text' => 'answer',
+        'annotations' => [
+            ['type' => 'url_citation', 'url' => $redirect . 'AAA', 'title' => 'eastcoastutility.com'],
+            ['type' => 'url_citation', 'url' => $redirect . 'BBB', 'title' => 'eastcoastutility.com'],
+            ['type' => 'url_citation', 'url' => $redirect . 'CCC', 'title' => 'Some Page Title'],
+        ],
+    ]]]],
+]), 200);
+$check('redirect unwrapped to the titled domain', $gemRedir['sources'][0]['url'], 'https://eastcoastutility.com/');
+$check('same domain via two redirects is one source', count($gemRedir['sources']), 2);
+$check('non-domain title leaves the redirect alone', $gemRedir['sources'][1]['url'], $redirect . 'CCC');
+
 $gemErr = $gem->parse(json_encode([
     'error' => ['code' => 429, 'message' => 'Resource has been exhausted', 'status' => 'RESOURCE_EXHAUSTED'],
 ]), 429);
