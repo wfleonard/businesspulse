@@ -1,4 +1,5 @@
 import type { PanelQuestion } from '../questions'
+import { aiVisibility } from './ai-visibility'
 import { basementWaterproofing } from './basement-waterproofing'
 import { bathroomRemodeling } from './bathroom-remodeling'
 import { collisionRepair } from './collision-repair'
@@ -73,4 +74,5 @@ export const CANNED_PANELS: CannedPanelDefinition[] = [
   dentists,
   homeHealthcare,
   religiousArt,
+  aiVisibility,
 ]
