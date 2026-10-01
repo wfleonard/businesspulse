@@ -3,6 +3,7 @@ import { aeoCost } from './articles/aeo-cost'
 import { costQuestionsCiteCostGuides } from './articles/cost-questions-cite-cost-guides'
 import { howBusinessPulseMeasures } from './articles/how-businesspulse-measures'
 import { howToCheckChatGpt } from './articles/how-to-check-chatgpt-recommends'
+import { hiringAnAeoAgency } from './articles/hiring-an-aeo-agency'
 import { howToGetCited } from './articles/how-to-get-cited'
 import { tintonFallsAudit } from './articles/tinton-falls-audit'
 import { whatIsAeo } from './articles/what-is-aeo'
@@ -24,6 +25,7 @@ export const ALL_ARTICLES: ResourceArticle[] = [
   howToCheckChatGpt,
   aeoCost,
   tintonFallsAudit,
+  hiringAnAeoAgency,
 ]
 
 function isProduction(): boolean {
