@@ -9,7 +9,7 @@ import {
   publishedArticles,
   RESOURCE_TYPE_LABELS,
 } from '..'
-import { articleJsonLd, faqJsonLd, jsonLdString } from '../json-ld'
+import { articleJsonLd, faqJsonLd, jsonLdString, localProviderJsonLd } from '../json-ld'
 
 const panelSlugs = new Set(CANNED_PANELS.map((p) => p.slug))
 
@@ -90,6 +90,16 @@ describe('parseHubFilters', () => {
 })
 
 describe('structured data', () => {
+  it('describes a local provider as a service-area business, with no street address', () => {
+    for (const article of ALL_ARTICLES.filter((a) => a.localProvider)) {
+      const data = localProviderJsonLd(`/resources/${article.slug}`, article.localProvider!)
+      expect(data['@type']).toBe('ProfessionalService')
+      expect(data.address).not.toHaveProperty('streetAddress')
+      expect(data.telephone).toMatch(/^\+1\d{10}$/)
+      expect(data.areaServed.length).toBeGreaterThan(0)
+    }
+  })
+
   it('escapes anything that could close the script element', () => {
     const out = jsonLdString({ headline: '</script><script>alert(1)</script> & more' })
     expect(out).not.toContain('<')

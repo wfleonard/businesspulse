@@ -7,7 +7,7 @@ import { SnapshotCta } from '@/components/resources/SnapshotCta'
 import { PublicHeader } from '@/components/site/PublicHeader'
 import { appUrl } from '@/lib/aeo/emails'
 import { articleDate, findArticle, formatDay, industryName, RESOURCE_TYPE_LABELS } from '@/lib/resources'
-import { articleJsonLd, faqJsonLd } from '@/lib/resources/json-ld'
+import { articleJsonLd, faqJsonLd, localProviderJsonLd } from '@/lib/resources/json-ld'
 import { renderMarkdown } from '@/lib/resources/markdown'
 
 export const dynamic = 'force-dynamic'
@@ -83,6 +83,9 @@ export default async function ArticlePage({ params }: Props) {
         })}
       />
       {article.faq && article.faq.length > 0 && <JsonLd data={faqJsonLd(article.faq)} />}
+      {article.localProvider && (
+        <JsonLd data={localProviderJsonLd(`/resources/${article.slug}`, article.localProvider)} />
+      )}
       <GoogleAnalytics />
     </div>
   )

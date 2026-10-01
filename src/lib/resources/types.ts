@@ -9,6 +9,25 @@ export const RESOURCE_TYPE_LABELS = {
 
 export type ResourceType = keyof typeof RESOURCE_TYPE_LABELS
 
+/**
+ * The business a local service page describes, emitted as ProfessionalService
+ * structured data. A service-area business: town, state, and ZIP only, never a
+ * street address.
+ */
+export type LocalProvider = {
+  name: string
+  legalName?: string
+  description: string
+  /** E.164, e.g. +17326734260. */
+  telephone: string
+  locality: string
+  /** Two-letter state code. */
+  region: string
+  postalCode: string
+  /** Towns and counties served, as written on the page. */
+  areaServed: string[]
+}
+
 export type ResourceArticle = {
   /** URL segment under /resources. */
   slug: string
@@ -28,4 +47,6 @@ export type ResourceArticle = {
   body: string
   /** Questions answered in the body, repeated here for FAQPage structured data. */
   faq?: { q: string; a: string }[]
+  /** Local service pages only: the business offering the service nearby. */
+  localProvider?: LocalProvider
 }

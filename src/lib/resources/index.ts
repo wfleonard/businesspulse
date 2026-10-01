@@ -4,6 +4,7 @@ import { costQuestionsCiteCostGuides } from './articles/cost-questions-cite-cost
 import { howBusinessPulseMeasures } from './articles/how-businesspulse-measures'
 import { howToCheckChatGpt } from './articles/how-to-check-chatgpt-recommends'
 import { howToGetCited } from './articles/how-to-get-cited'
+import { tintonFallsAudit } from './articles/tinton-falls-audit'
 import { whatIsAeo } from './articles/what-is-aeo'
 import { whyAiCitesDirectories } from './articles/why-ai-cites-directories'
 import { RESOURCE_TYPE_LABELS, type ResourceArticle, type ResourceType } from './types'
@@ -22,6 +23,7 @@ export const ALL_ARTICLES: ResourceArticle[] = [
   costQuestionsCiteCostGuides,
   howToCheckChatGpt,
   aeoCost,
+  tintonFallsAudit,
 ]
 
 function isProduction(): boolean {
