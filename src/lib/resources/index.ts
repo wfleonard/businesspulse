@@ -1,4 +1,5 @@
 import { CANNED_PANELS } from '@/lib/aeo/panels'
+import { aeoCost } from './articles/aeo-cost'
 import { costQuestionsCiteCostGuides } from './articles/cost-questions-cite-cost-guides'
 import { howBusinessPulseMeasures } from './articles/how-businesspulse-measures'
 import { howToCheckChatGpt } from './articles/how-to-check-chatgpt-recommends'
@@ -20,6 +21,7 @@ export const ALL_ARTICLES: ResourceArticle[] = [
   whyAiCitesDirectories,
   costQuestionsCiteCostGuides,
   howToCheckChatGpt,
+  aeoCost,
 ]
 
 function isProduction(): boolean {
