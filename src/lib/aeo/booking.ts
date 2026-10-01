@@ -19,7 +19,7 @@ export function bookingUrl(env: Record<string, string | undefined> = process.env
   }
 }
 
-const PUBLIC_ID = /^[A-Za-z0-9_-]{24}$/
+export const PUBLIC_ID = /^[A-Za-z0-9_-]{24}$/
 
 /** Record a click against the report it came from. Unknown or malformed IDs record nothing. */
 export async function recordBookingClick(publicId: string | null): Promise<boolean> {

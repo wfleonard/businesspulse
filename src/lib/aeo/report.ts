@@ -218,6 +218,8 @@ export type LoadedReport = {
   /** Other sites the business runs; the report counted their citations as its own. */
   otherDomains: string[]
   businessName: string
+  /** Where the request came from: public form or outbound prospecting. Null once no request is linked. */
+  requestSource: (typeof aeoRequest.$inferSelect)['source'] | null
   status: (typeof aeoRun.$inferSelect)['status']
   panelSource: (typeof aeoRun.$inferSelect)['panelSource']
   finishedAt: Date | null
@@ -258,7 +260,7 @@ export async function loadReport(publicId: string): Promise<LoadedReport | null>
   if (!run) return null
 
   const [request] = await db
-    .select({ businessName: aeoRequest.businessName })
+    .select({ businessName: aeoRequest.businessName, source: aeoRequest.source })
     .from(aeoRequest)
     .where(eq(aeoRequest.runId, run.id))
     .orderBy(asc(aeoRequest.createdAt))
@@ -270,6 +272,7 @@ export async function loadReport(publicId: string): Promise<LoadedReport | null>
     otherDomains: run.otherDomains,
     // Falls back to the domain once retention has erased the business name.
     businessName: request?.businessName || run.domain,
+    requestSource: request?.source ?? null,
     status: run.status,
     panelSource: run.panelSource,
     finishedAt: run.finishedAt,

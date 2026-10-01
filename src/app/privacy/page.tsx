@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Privacy | BusinessPulse',
 }
 
-const LAST_UPDATED = 'September 18, 2026'
+const LAST_UPDATED = 'October 1, 2026'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -45,6 +45,7 @@ export default function PrivacyPage() {
           <li>To build the report, by asking AI search questions about your service and area.</li>
           <li>To prevent abuse, using your IP address and a Cloudflare Turnstile bot check.</li>
           <li>To follow up about your results, only if you ticked the contact box.</li>
+          <li>To tell you once when BusinessPulse Monitor opens, only if you joined its waitlist.</li>
           <li>
             To publish anonymized statistics by industry, such as how often businesses&apos; own websites are cited.
             They never name a business, and an industry is published only once at least 10 businesses in it have been

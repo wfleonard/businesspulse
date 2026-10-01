@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { AutoRefresh } from '@/components/aeo/AutoRefresh'
 import { ReportViewBeacon } from '@/components/aeo/ReportViewBeacon'
 import { bookingUrl } from '@/lib/aeo/booking'
+import { MONITOR_PRICE_USD, MONITOR_QUESTIONS, offersMonitor } from '@/lib/aeo/monitor'
 import { Card } from '@/components/ui/Card'
 import { loadReport, siteList, type LoadedReport, type ReportSummary, type Verdict } from '@/lib/aeo/report'
 
@@ -201,6 +202,22 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
           </a>
         )}
       </Card>
+
+      {offersMonitor(report.requestSource) && (
+        <Card className="mt-4">
+          <h2 className="text-lg font-semibold text-dark">Doing the work yourself?</h2>
+          <p className="mt-2 text-sm text-dark">
+            BusinessPulse Monitor will ask the same {MONITOR_QUESTIONS} questions every month on ChatGPT, Claude,
+            Perplexity, and Gemini, and show you what changed. ${MONITOR_PRICE_USD} a month.
+          </p>
+          <a
+            href={`/monitor/interest?r=${encodeURIComponent(report.publicId)}`}
+            className="mt-4 inline-flex rounded-md border border-primary px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5"
+          >
+            Track this monthly
+          </a>
+        </Card>
+      )}
 
       <section className="mt-10 text-xs leading-relaxed text-text-secondary">
         <h2 className="text-sm font-semibold text-dark">How this was measured</h2>

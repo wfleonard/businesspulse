@@ -4,8 +4,8 @@ import { appUrl } from '@/lib/aeo/emails'
 // Built per request so the sitemap URL comes from BETTER_AUTH_URL at runtime.
 export const dynamic = 'force-dynamic'
 
-/** Private-by-link or signed-in pages. Reports and /book also send noindex headers. */
-export const PRIVATE_PATHS = ['/dashboard', '/login', '/api/', '/check/', '/report/', '/book']
+/** Private-by-link or signed-in pages. Reports, /book, and /monitor also send noindex headers. */
+export const PRIVATE_PATHS = ['/dashboard', '/login', '/api/', '/check/', '/report/', '/book', '/monitor']
 
 /**
  * AI search assistants fetch pages live when they answer, and can only cite

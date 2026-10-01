@@ -12,6 +12,7 @@ import {
   pgEnum,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 /* ------------------------------------------------------------------ */
 /* better-auth core tables                                             */
@@ -592,6 +593,26 @@ export const aeoBookingClick = pgTable(
   (t) => [index('aeo_booking_click_run_idx').on(t.runId)]
 )
 
+/** BusinessPulse Monitor demand test: clicks on the $49 offer, and waitlist sign-ups, per report. */
+export const aeoMonitorInterestKindEnum = pgEnum('aeo_monitor_interest_kind', ['click', 'waitlist'])
+
+export const aeoMonitorInterest = pgTable(
+  'aeo_monitor_interest',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    runId: uuid('run_id')
+      .notNull()
+      .references(() => aeoRun.id, { onDelete: 'cascade' }),
+    kind: aeoMonitorInterestKindEnum('kind').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('aeo_monitor_interest_run_idx').on(t.runId),
+    // One waitlist sign-up per report; clicks can repeat.
+    uniqueIndex('aeo_monitor_waitlist_run_uq').on(t.runId).where(sql`kind = 'waitlist'`),
+  ]
+)
+
 export const schema = {
   user,
   session,
@@ -616,4 +637,5 @@ export const schema = {
   aeoResult,
   aeoBookingClick,
   aeoRecheck,
+  aeoMonitorInterest,
 }

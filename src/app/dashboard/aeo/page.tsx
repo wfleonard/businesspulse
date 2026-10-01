@@ -57,6 +57,8 @@ function Funnel({ funnel }: { funnel: FunnelStats }) {
     { label: 'Report ready', value: funnel.ready },
     { label: 'Report viewed', value: funnel.viewed },
     { label: 'Clicked Book a call', value: funnel.clickedBook },
+    { label: 'Clicked Monitor ($49)', value: funnel.clickedMonitor },
+    { label: 'Joined Monitor waitlist', value: funnel.joinedMonitor },
     { label: 'Contacted', value: funnel.contacted },
     { label: 'Won', value: funnel.won },
   ]
@@ -271,6 +273,7 @@ export default async function LeadsPage({ searchParams }: Props) {
                       </div>
                     )}
                     {lead.bookingClicks > 0 && <div className="text-xs text-success">Clicked Book a call</div>}
+                    {lead.monitorWaitlist && <div className="text-xs text-success">Joined Monitor waitlist</div>}
                   </td>
                   <td className="px-3 py-2 text-text-secondary">{lead.leadStatus}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-right text-text-secondary">

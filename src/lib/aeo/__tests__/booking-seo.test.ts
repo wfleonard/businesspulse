@@ -47,7 +47,7 @@ describe('robots and sitemap', () => {
 
   it('keeps private pages out for every crawler', () => {
     for (const rule of [robots().rules].flat()) {
-      for (const path of ['/dashboard', '/report/', '/check/', '/book', '/api/']) {
+      for (const path of ['/dashboard', '/report/', '/check/', '/book', '/monitor', '/api/']) {
         expect(rule.disallow).toContain(path)
       }
     }

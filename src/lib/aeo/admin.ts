@@ -50,6 +50,7 @@ export async function listLeads(filters: LeadFilters) {
       citedCount: aeoRun.citedCount,
       costUsd: aeoRun.costUsd,
       bookingClicks: sql<number>`(select count(*) from aeo_booking_click c where c.run_id = ${aeoRun.id})::int`,
+      monitorWaitlist: sql<boolean>`exists (select 1 from aeo_monitor_interest i where i.run_id = ${aeoRun.id} and i.kind = 'waitlist')`,
       reportViews: aeoRun.reportViewCount,
       reportFirstViewedAt: aeoRun.reportFirstViewedAt,
     })
@@ -88,6 +89,9 @@ export type FunnelStats = {
   ready: number
   viewed: number
   clickedBook: number
+  /** Monitor demand test: clicked "Track this monthly", and joined the waitlist. */
+  clickedMonitor: number
+  joinedMonitor: number
   contacted: number
   won: number
 }
@@ -105,6 +109,8 @@ export async function funnelStats(days = 30): Promise<FunnelStats> {
            count(*) filter (where r.status = 'done')::int as ready,
            count(*) filter (where r.report_first_viewed_at is not null)::int as viewed,
            count(*) filter (where exists (select 1 from aeo_booking_click c where c.run_id = r.id))::int as clicked,
+           count(*) filter (where exists (select 1 from aeo_monitor_interest i where i.run_id = r.id and i.kind = 'click'))::int as monitor_clicked,
+           count(*) filter (where exists (select 1 from aeo_monitor_interest i where i.run_id = r.id and i.kind = 'waitlist'))::int as monitor_joined,
            count(*) filter (where q.lead_status in ('contacted', 'won'))::int as contacted,
            count(*) filter (where q.lead_status = 'won')::int as won
     from aeo_request q
@@ -120,6 +126,8 @@ export async function funnelStats(days = 30): Promise<FunnelStats> {
     ready: Number(row.ready),
     viewed: Number(row.viewed),
     clickedBook: Number(row.clicked),
+    clickedMonitor: Number(row.monitor_clicked),
+    joinedMonitor: Number(row.monitor_joined),
     contacted: Number(row.contacted),
     won: Number(row.won),
   }
