@@ -15,7 +15,7 @@ const faq = [
   },
   {
     q: 'What do BusinessPulse and Saxon AEO charge?',
-    a: 'A BusinessPulse snapshot is free. Saxon AEO retainers are $2,500 a month on a six-month term, or $4,000 a month for businesses with more than one location or service line. A small number of founding clients pay $1,500 a month plus $2,500 onboarding. The full audit is included when you book a call.',
+    a: 'A BusinessPulse snapshot is free. Saxon AEO retainers are $1,500 a month on a six-month term. A small number of founding clients pay $1,000 a month plus $500 onboarding. The full audit is included when you book a call.',
   },
   {
     q: 'How long before AEO pays off?',
@@ -28,7 +28,7 @@ export const aeoCost: ResourceArticle = {
   type: 'guide',
   title: 'How much does AEO cost? Prices for tools, audits, and agencies',
   summary:
-    'Answer engine optimization costs from nothing to about $500 a month for self-serve tracking tools, and $1,500 to $5,000 a month for most small-business agency retainers. BusinessPulse snapshots are free; Saxon AEO retainers are $2,500 a month.',
+    'Answer engine optimization costs from nothing to about $500 a month for self-serve tracking tools, and $1,500 to $5,000 a month for most small-business agency retainers. BusinessPulse snapshots are free; Saxon AEO retainers are $1,500 a month.',
   industries: ['ai-visibility'],
   published: '2026-10-01',
   body: `
@@ -105,9 +105,8 @@ BusinessPulse is the measurement tool. Saxon AEO is the service that does the wo
 |---|---|---|
 | BusinessPulse snapshot | Free | 20 buyer questions for your industry, asked of Perplexity, with the sites cited instead |
 | Saxon AEO full audit | Included when you book a call | More than 100 buyer questions across ChatGPT, Claude, Perplexity, and Gemini, and a plan to get your site cited |
-| Saxon AEO Core | $2,500 a month, six-month term | Researched pages, technical fixes, and a monthly re-measurement against your baseline |
-| Saxon AEO Scale | $4,000 a month | Core, for more than one location or service line |
-| Founding clients | $1,500 a month, six-month term, plus $2,500 onboarding | Core, for a small number of clients who agree to a testimonial and to sharing their results |
+| Saxon AEO Core | $1,500 a month, six-month term | Researched pages, technical fixes, and a monthly re-measurement against your baseline |
+| Founding clients | $1,000 a month, six-month term, plus $500 onboarding | Core, for a small number of clients who agree to a testimonial and to sharing their results |
 
 Before you commit, we fix the technical foundation for free: structured data, robots and sitemap, and the homepage changes that make your site easier to read and cite. It is the first measurable change against your baseline.
 
