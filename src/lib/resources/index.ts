@@ -1,5 +1,7 @@
 import { CANNED_PANELS } from '@/lib/aeo/panels'
 import { aeoCost } from './articles/aeo-cost'
+import { aiVisibilityTools } from './articles/ai-visibility-tools'
+import { businessPulseVsTrackers } from './articles/businesspulse-vs-trackers'
 import { costQuestionsCiteCostGuides } from './articles/cost-questions-cite-cost-guides'
 import { howBusinessPulseMeasures } from './articles/how-businesspulse-measures'
 import { howToCheckChatGpt } from './articles/how-to-check-chatgpt-recommends'
@@ -26,6 +28,8 @@ export const ALL_ARTICLES: ResourceArticle[] = [
   aeoCost,
   tintonFallsAudit,
   hiringAnAeoAgency,
+  aiVisibilityTools,
+  businessPulseVsTrackers,
 ]
 
 function isProduction(): boolean {
