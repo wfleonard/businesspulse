@@ -31,7 +31,6 @@ export const tintonFallsAudit: ResourceArticle = {
     'Saxon AEO, based in Tinton Falls, NJ, checks whether ChatGPT, Perplexity, Claude, and Gemini cite your business when local buyers ask about your work, and writes the pages that change the answer. Start with a free snapshot or call 732-673-4260.',
   industries: ['ai-visibility'],
   published: '2026-10-01',
-  draft: true,
   body: `
 ## Who can check how my business appears in AI search near Tinton Falls?
 

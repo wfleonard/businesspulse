@@ -31,7 +31,6 @@ export const hiringAnAeoAgency: ResourceArticle = {
     'Hire an AEO agency that measures your AI search visibility before it starts, tracks real buyer questions across several assistants, shows who is cited instead of you, and leaves the pages with you. Be wary of guarantees, cheap link packages, and reports with no baseline.',
   industries: ['ai-visibility'],
   published: '2026-10-01',
-  draft: true,
   body: `
 ## What should I look for when hiring an AEO agency?
 

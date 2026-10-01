@@ -27,7 +27,6 @@ export const aiVisibilityTools: ResourceArticle = {
     'Start with a free check: a BusinessPulse snapshot or HubSpot’s AI Search Grader. If you want ongoing tracking, Otterly.AI ($29 a month) and Peec AI (about $95) are the small-business-sized options; Semrush, Ahrefs, and Profound make sense for larger teams or existing customers.',
   industries: ['ai-visibility'],
   published: '2026-10-01',
-  draft: true,
   body: `
 We make BusinessPulse, one of the tools on this list. We've tried to describe every tool, ours included, by what it does and what it costs, and to say where another tool is the better fit.
 

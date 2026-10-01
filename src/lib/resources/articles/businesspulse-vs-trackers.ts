@@ -23,7 +23,6 @@ export const businessPulseVsTrackers: ResourceArticle = {
     'BusinessPulse is a free one-time snapshot that chooses the buyer questions for your industry and shows who AI search cites instead of you. Otterly.AI, Peec AI, and Profound are paid trackers for questions you choose, checked on a schedule across several assistants.',
   industries: ['ai-visibility'],
   published: '2026-10-01',
-  draft: true,
   body: `
 We make BusinessPulse. This page compares it with three popular AI visibility trackers as fairly as we can, including where they're the better choice. Competitor details are as listed in October 2026; check each vendor for current plans.
 

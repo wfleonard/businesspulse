@@ -31,7 +31,6 @@ export const aeoCost: ResourceArticle = {
     'Answer engine optimization costs from nothing to about $500 a month for self-serve tracking tools, and $1,500 to $5,000 a month for most small-business agency retainers. BusinessPulse snapshots are free; Saxon AEO retainers are $2,500 a month.',
   industries: ['ai-visibility'],
   published: '2026-10-01',
-  draft: true,
   body: `
 ## How much does answer engine optimization cost?
 
