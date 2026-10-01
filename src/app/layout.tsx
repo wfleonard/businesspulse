@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SITE_DESCRIPTION } from "@/lib/resources/json-ld";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,8 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "BusinessPulse",
-  description:
-    "Dashboards, alerts, and AI insights for everyday business decisions.",
+  description: SITE_DESCRIPTION,
 };
 
 export default function RootLayout({

@@ -9,7 +9,8 @@ import {
   publishedArticles,
   RESOURCE_TYPE_LABELS,
 } from '..'
-import { articleJsonLd, faqJsonLd, jsonLdString, localProviderJsonLd } from '../json-ld'
+import { articleJsonLd, faqJsonLd, jsonLdString, localProviderJsonLd, organizationJsonLd, websiteJsonLd } from '../json-ld'
+import { buildLlmsTxt } from '../llms'
 
 const panelSlugs = new Set(CANNED_PANELS.map((p) => p.slug))
 
@@ -135,5 +136,33 @@ describe('structured data', () => {
       '@type': 'FAQPage',
       mainEntity: [{ '@type': 'Question', name: 'Q?', acceptedAnswer: { '@type': 'Answer', text: 'A.' } }],
     })
+  })
+})
+
+describe('site entity and llms.txt', () => {
+  const saved = process.env.BETTER_AUTH_URL
+  beforeAll(() => {
+    process.env.BETTER_AUTH_URL = 'https://businesspulse.app'
+  })
+  afterAll(() => {
+    process.env.BETTER_AUTH_URL = saved
+  })
+
+  it('gives the homepage Organization the @id every article publisher points to', () => {
+    const org = organizationJsonLd()
+    const article = articleJsonLd({ path: '/resources/x', title: 't', description: 'd', published: articleDate('2026-10-01') })
+    expect(org['@id']).toBe('https://businesspulse.app/#organization')
+    expect(article.publisher['@id']).toBe(org['@id'])
+    expect(org.parentOrganization.address).not.toHaveProperty('streetAddress')
+    expect(websiteJsonLd().publisher['@id']).toBe(org['@id'])
+  })
+
+  it('lists published pages and benchmarks in llms.txt, never drafts', () => {
+    const published = publishedArticles(false)
+    const txt = buildLlmsTxt(published, [{ slug: 'dentists', name: 'Dentists' }])
+    expect(txt.startsWith('# BusinessPulse\n\n> ')).toBe(true)
+    for (const a of published) expect(txt).toContain(`https://businesspulse.app/resources/${a.slug}`)
+    for (const a of ALL_ARTICLES.filter((x) => x.draft)) expect(txt).not.toContain(`/resources/${a.slug}`)
+    expect(txt).toContain('https://businesspulse.app/resources/benchmarks/dentists')
   })
 })

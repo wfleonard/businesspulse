@@ -130,6 +130,17 @@ If `src/lib/aeo/panels/` changed, reload the panels afterwards:
 docker compose -f docker-compose.prod.yml --profile tools run --rm migrate npm run aeo:panels
 ```
 
+If public pages were added or changed, tell Bing (and the other IndexNow engines)
+from your Mac, so they recrawl now rather than whenever they next visit. ChatGPT's
+search draws on Bing's index, so this shortens the time before a new page can be cited:
+
+```bash
+npm run indexnow                          # every URL in the live sitemap
+npm run indexnow -- /resources/some-page  # or just these paths
+```
+
+The script checks that the key file (`public/<key>.txt`) is live before submitting.
+
 Worker logs are one JSON line per event:
 
 ```bash

@@ -75,3 +75,54 @@ export function localProviderJsonLd(path: string, provider: LocalProvider) {
     brand: { '@id': appUrl('/#organization') },
   }
 }
+
+/** What BusinessPulse is, in one sentence. The default meta description and the Organization description. */
+export const SITE_DESCRIPTION =
+  'BusinessPulse shows whether AI search cites your business: a free snapshot asks real buyer questions for your industry and area and reports who gets cited when you don’t.'
+
+/**
+ * BusinessPulse's profiles on other sites (LinkedIn, Product Hunt, G2, and so
+ * on). Listing them as sameAs tells search engines and assistants they are all
+ * the same business. Add each one as it goes live.
+ */
+export const SAME_AS: string[] = []
+
+/** The full Organization, on the homepage. Other pages refer to it by @id through publisher(). */
+export function organizationJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    ...publisher(),
+    description: SITE_DESCRIPTION,
+    ...(SAME_AS.length > 0 && { sameAs: SAME_AS }),
+    founder: { '@type': 'Person', name: 'Bill Leonard' },
+    parentOrganization: {
+      '@type': 'Organization',
+      name: 'Saxon Enterprises Inc',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Tinton Falls',
+        addressRegion: 'NJ',
+        postalCode: '07724',
+        addressCountry: 'US',
+      },
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'sales',
+      telephone: '+17326734260',
+      areaServed: 'US',
+      availableLanguage: 'English',
+    },
+  }
+}
+
+export function websiteJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': appUrl('/#website'),
+    name: 'BusinessPulse',
+    url: appUrl('/'),
+    publisher: { '@id': appUrl('/#organization') },
+  }
+}
