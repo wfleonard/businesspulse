@@ -63,7 +63,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   technical: 'How it works',
   application: 'Specific jobs',
   'vendor-selection': 'Choosing a provider',
-  problem: 'Problems and fixes',
+  problem: 'Problems and urgent needs',
   'buyer-role': 'Who is buying',
 }
 
@@ -178,16 +178,18 @@ export function buildReport(
     .slice(0, 5)
     .map(([host, count]) => ({ host, questions: count, directory: isDirectory(host, directoryDomains) }))
 
-  // Examples: a question the site won (if any), then the misses where the most
-  // other sites were cited, then anything else that has an answer.
+  // Examples: a question the site won (if any), then a missed "hiring near you"
+  // question, since that is the one a buyer asks right before calling, then
+  // the misses where the most other sites were cited, then anything answered.
   const answered = questions.filter((q) => q.verdict !== 'error')
   const wins = answered.filter((q) => q.verdict === 'cited')
   const misses = answered
     .filter((q) => q.verdict !== 'cited' && q.citedHosts.length > 0)
     .sort((a, b) => b.citedHosts.length - a.citedHosts.length || a.query.localeCompare(b.query))
+  const hiringMiss = misses.find((q) => q.category === 'service-geo')
 
   const picks: Question[] = wins.slice(0, 1)
-  for (const q of [...misses, ...answered]) {
+  for (const q of [...(hiringMiss ? [hiringMiss] : []), ...misses, ...answered]) {
     if (picks.length >= exampleCount) break
     if (!picks.includes(q)) picks.push(q)
   }

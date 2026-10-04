@@ -9,6 +9,7 @@ import {
   type GeneratedOutput,
   type GenerationInput,
   type ModelCall,
+  withLocation,
 } from '../generate'
 import { buildGeneratedPlan, COMMON_DIRECTORY_DOMAINS } from '../plan'
 
@@ -164,5 +165,34 @@ describe('buildGeneratedPlan', () => {
     const a = buildGeneratedPlan(panel, { businessName: 'x' }, 'harborlightbakery.com', 20)
     const b = buildGeneratedPlan(panel, { businessName: 'x' }, 'harborlightbakery.com', 20)
     expect(a.questions).toEqual(b.questions)
+  })
+})
+
+describe('withLocation', () => {
+  const place = { city: 'Red Bank', stateName: 'New Jersey', stateCode: 'NJ' }
+
+  it('adds the place to a hiring question that names none', () => {
+    expect(withLocation('I need a piper for a funeral next week, who can I contact?', 'problem', place)).toBe(
+      'I need a piper for a funeral next week, who can I contact in Red Bank, NJ?'
+    )
+    expect(withLocation('bagpiper for hire near me', 'service-geo', place)).toBe('bagpiper for hire near Red Bank, NJ')
+  })
+
+  it('leaves questions that already name a place, and general questions, alone', () => {
+    expect(withLocation('wedding bagpiper in Red Bank', 'service-geo', place)).toBe('wedding bagpiper in Red Bank')
+    expect(withLocation('pipe bands in NJ for parades', 'vendor-selection', place)).toBe('pipe bands in NJ for parades')
+    expect(withLocation('pipe band for hire in Monmouth County', 'service-geo', place)).toBe(
+      'pipe band for hire in Monmouth County'
+    )
+    expect(withLocation('how much does a bagpiper cost?', 'cost', place)).toBe('how much does a bagpiper cost?')
+  })
+
+  it('is applied when a panel is cleaned', () => {
+    const questions = Array.from({ length: MIN_GENERATED_QUESTIONS }, (_, i) => ({
+      category: 'application' as const,
+      question: `Can a pipe band play event number ${i}?`,
+    }))
+    const { questions: cleaned } = cleanGeneratedPanel({ questions, reference_domains: [] }, { ...input, stateCode: 'NJ' })
+    expect(cleaned[0].q).toBe('Can a pipe band play event number 0 in Red Bank, NJ?')
   })
 })

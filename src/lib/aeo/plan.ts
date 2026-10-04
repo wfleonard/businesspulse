@@ -158,6 +158,7 @@ async function generateForRun(
         service: request.service,
         city: request.city,
         stateName: stateInfo(request.state)?.name ?? request.state,
+        stateCode: stateInfo(request.state)?.code,
         siteText,
       },
       { model: options.panelModel, call: options.modelCall }

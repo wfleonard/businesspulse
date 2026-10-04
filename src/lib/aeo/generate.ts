@@ -63,6 +63,7 @@ The questions test whether AI search cites the business's website, so they must 
 - Write in the buyer's voice, the way people type into a search box. No more than 15 words each.
 - Never name the business or its website, and never name any other specific company.
 - Write 20 questions. At least 6 must be "service-geo" questions that name the city or state, the way someone looking for a local provider searches. At least 3 must be "cost" questions. Spread the rest across the other categories that fit. Use "permits" only if the work needs permits, licenses, or inspections.
+- Any question from someone who wants to hire, book, or contact a provider must name the city, county, or state, whatever its category: "service-geo", "vendor-selection", "problem", "application", and "buyer-role" questions all do. Without a place, AI search answers for anywhere in the world. Only general "cost", "comparison", and "technical" questions may leave the place out.
 - Stay within what the business actually offers, based on the service the owner gave and the website text.
 
 Also list up to 10 reference_domains: websites that answers in this industry often cite but that are not competitors, such as regulators, trade associations, industry publications, and equipment makers. Bare domains only, like "osha.gov".
@@ -75,6 +76,8 @@ export type GenerationInput = {
   service: string
   city: string
   stateName: string
+  /** Two-letter state code, used when a question needs its location added. */
+  stateCode?: string
   /** Visible homepage text, or null when the site couldn't be read. */
   siteText: string | null
 }
@@ -118,6 +121,49 @@ export function tokenCostUsd(model: string, inputTokens: number, outputTokens: n
   return (inputTokens * rate.input + outputTokens * rate.output) / 1_000_000
 }
 
+/**
+ * Questions from someone looking for a provider. Asked with no place, AI search
+ * answers for anywhere: a New Jersey band's funeral question came back with
+ * pipers in England.
+ */
+const LOCAL_CATEGORIES = new Set(['service-geo', 'vendor-selection', 'problem', 'application', 'buyer-role'])
+
+/** A "problem" question can be do-it-yourself; only one asking for help is local. */
+const SEEKS_PROVIDER = /\b(?:hire|hiring|book|booking|contact|call|find|who|near|available|recommend|company|companies|service)\b/i
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Add "in City, ST" to a local question that names no place. A question that
+ * already names the city, the state, or the state code is left alone.
+ */
+export function withLocation(
+  question: string,
+  category: string,
+  place: Pick<GenerationInput, 'city' | 'stateName' | 'stateCode'>
+): string {
+  if (!LOCAL_CATEGORIES.has(category)) return question
+  if (category === 'problem' && !SEEKS_PROVIDER.test(question)) return question
+  const city = place.city?.trim() ?? ''
+  const state = place.stateName?.trim() ?? ''
+  const code = place.stateCode?.trim() ?? ''
+  const names = [city, state].filter((term) => term.length >= 3)
+  if (names.length === 0 && !code) return question
+
+  const lower = question.toLowerCase()
+  if (names.some((term) => lower.includes(term.toLowerCase()))) return question
+  if (code && new RegExp(`\\b${escapeRegExp(code)}\\b`).test(question)) return question
+  if (/\bcounty\b/i.test(question)) return question
+
+  const where = city ? `${city}, ${code || state}` : state || code
+  if (/\bnear me\b/i.test(question)) return question.replace(/\bnear me\b/i, `near ${where}`)
+  const match = question.match(/^(.*?)([?.!]*)$/)
+  const [body, end] = match ? [match[1], match[2]] : [question, '']
+  return `${body.trimEnd()} in ${where}${end}`
+}
+
 const LEGAL_SUFFIX = /[,.]?\s+(?:llc|l\.l\.c\.|inc|incorporated|co|corp|corporation|company|ltd|pllc|lp|llp)\.?$/i
 
 /**
@@ -127,7 +173,8 @@ const LEGAL_SUFFIX = /[,.]?\s+(?:llc|l\.l\.c\.|inc|incorporated|co|corp|corporat
  */
 export function cleanGeneratedPanel(
   output: GeneratedOutput,
-  input: Pick<GenerationInput, 'businessName' | 'domain'>
+  input: Pick<GenerationInput, 'businessName' | 'domain'> &
+    Partial<Pick<GenerationInput, 'city' | 'stateName' | 'stateCode'>>
 ): { questions: PanelQuestion[]; referenceDomains: string[] } {
   const name = input.businessName.trim().toLowerCase()
   const domainLabel = input.domain.split('.')[0]
@@ -138,11 +185,16 @@ export function cleanGeneratedPanel(
   const seen = new Set<string>()
   const questions: PanelQuestion[] = []
   for (const { category, question } of output.questions) {
-    const q = question.replace(/\s+/g, ' ').trim()
+    const raw = question.replace(/\s+/g, ' ').trim()
+    if (raw.length < 8 || raw.length > 200) continue
+    if (/https?:\/\/|www\./i.test(raw)) continue
+    if (banned.some((term) => raw.toLowerCase().includes(term))) continue
+    const q = withLocation(raw, category, {
+      city: input.city ?? '',
+      stateName: input.stateName ?? '',
+      stateCode: input.stateCode,
+    })
     const lower = q.toLowerCase()
-    if (q.length < 8 || q.length > 200) continue
-    if (/https?:\/\/|www\./i.test(q)) continue
-    if (banned.some((term) => lower.includes(term))) continue
     if (seen.has(lower)) continue
     seen.add(lower)
     questions.push({ c: category, q })

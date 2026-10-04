@@ -93,14 +93,14 @@ describe('buildReport', () => {
     ])
   })
 
-  it('picks misses with the most rivals first, then one win, and skips errors', () => {
+  it('picks a hiring miss, then misses with the most rivals, then one win, and skips errors', () => {
     expect(summary.examples.map((e) => [e.query, e.verdict])).toEqual([
+      ['hdd contractor monmouth county', 'named'],
       ['hdd cost per foot', 'absent'],
-      ['bore under a driveway', 'absent'],
       ['hdd contractor near fair haven', 'cited'],
     ])
-    expect(summary.examples[0].citedInstead).toEqual(['homeguide.com', 'kielybuilds.com', 'currentcost.org'])
-    expect(summary.examples[0].label).toBe('Cost')
+    expect(summary.examples[1].citedInstead).toEqual(['homeguide.com', 'kielybuilds.com', 'currentcost.org'])
+    expect(summary.examples[1].label).toBe('Cost')
   })
 
   it('takes the best verdict when several engines answered the same question', () => {
@@ -133,5 +133,16 @@ describe('siteList', () => {
     expect(siteList('johnrguzziroofing.com', ['guzziroofing.com'], 'or')).toBe('johnrguzziroofing.com or guzziroofing.com')
     expect(siteList('a.com', ['b.com', 'c.com'], 'and')).toBe('a.com, b.com, and c.com')
     expect(siteList('a.com', ['a.com'], 'and')).toBe('a.com')
+  })
+})
+
+describe('report examples', () => {
+  it('leads with a missed hiring question even when others drew more citations', () => {
+    const summary = buildReport([
+      result({ query: 'a', category: 'problem', rivals: cited('x.com', 'y.com', 'z.com') }),
+      result({ query: 'b', category: 'application', rivals: cited('x.com', 'y.com') }),
+      result({ query: 'c', category: 'service-geo', rivals: cited('thebash.com') }),
+    ])
+    expect(summary.examples.map((e) => e.query)).toEqual(['c', 'a', 'b'])
   })
 })

@@ -110,6 +110,12 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
               : `${unanswered} more questions couldn't be checked because AI search didn't answer them, so they aren't counted.`}
           </p>
         )}
+        {report.panelSource === 'generated' && (
+          <p className="mt-3 border-t border-border pt-3 text-xs text-text-secondary">
+            We don&apos;t have a prepared question set for your field yet, so these questions were written from your
+            website. Treat this score as a rough guide rather than a benchmark.
+          </p>
+        )}
       </Card>
 
       <section className="mt-10">
@@ -226,12 +232,6 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
           on {formatDate(report.finishedAt)}, and checked whether each answer cited {siteList(report.domain, report.otherDomains, 'or')}. AI answers
           change as the models and the web change, so treat this as a snapshot rather than a ranking.
         </p>
-        {report.panelSource === 'generated' && (
-          <p className="mt-2">
-            Your industry isn&apos;t one of our prepared question sets yet, so these questions were generated from
-            your website. Expect them to be less precise than an industry set.
-          </p>
-        )}
       </section>
     </Shell>
   )
