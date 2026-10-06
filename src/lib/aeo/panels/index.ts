@@ -27,6 +27,7 @@ import { residentialRoofing } from './residential-roofing'
 import { siding } from './siding'
 import { solarInstallers } from './solar-installers'
 import { treeServices } from './tree-services'
+import { webDesign } from './web-design'
 import { windowsDoors } from './windows-doors'
 
 /**
@@ -75,4 +76,5 @@ export const CANNED_PANELS: CannedPanelDefinition[] = [
   homeHealthcare,
   religiousArt,
   aiVisibility,
+  webDesign,
 ]
