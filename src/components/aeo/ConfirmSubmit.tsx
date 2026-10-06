@@ -7,14 +7,19 @@ export function ConfirmSubmit({
   message,
   children,
   className,
+  label,
 }: {
   message: string
   children: React.ReactNode
   className?: string
+  /** Accessible name and tooltip, for icon-only buttons. */
+  label?: string
 }) {
   return (
     <button
       type="submit"
+      aria-label={label}
+      title={label}
       className={cn(
         'inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
         className

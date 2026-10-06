@@ -48,7 +48,13 @@ export async function deleteLead(formData: FormData): Promise<void> {
     })
   }
   revalidatePath('/dashboard/aeo')
-  redirect('/dashboard/aeo')
+  redirect(leadListReturn(formData.get('returnTo')))
+}
+
+/** Back to the lead list, keeping its filters. Anything that isn't the lead list falls back to it. */
+function leadListReturn(value: FormDataEntryValue | null): string {
+  const path = typeof value === 'string' ? value : ''
+  return /^\/dashboard\/aeo(\?[\w=&%.+-]*)?$/.test(path) ? path : '/dashboard/aeo'
 }
 
 export type ProspectFormState = {

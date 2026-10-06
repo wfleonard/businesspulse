@@ -1,4 +1,6 @@
+import { Trash2 } from 'lucide-react'
 import Link from 'next/link'
+import { ConfirmSubmit } from '@/components/aeo/ConfirmSubmit'
 import { Card } from '@/components/ui/Card'
 import {
   dashboardStats,
@@ -11,6 +13,7 @@ import {
 } from '@/lib/aeo/admin'
 import { filtersToQuery, LEAD_STATUSES, parseLeadFilters } from '@/lib/aeo/lead-filters'
 import { requireSession } from '@/lib/session'
+import { deleteLead } from './actions'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Leads | BusinessPulse' }
@@ -236,6 +239,9 @@ export default async function LeadsPage({ searchParams }: Props) {
                 <th className="px-3 py-2 font-medium">Cited</th>
                 <th className="px-3 py-2 font-medium">Lead</th>
                 <th className="px-3 py-2 text-right font-medium">Cost</th>
+                <th className="px-3 py-2">
+                  <span className="sr-only">Delete</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -278,6 +284,19 @@ export default async function LeadsPage({ searchParams }: Props) {
                   <td className="px-3 py-2 text-text-secondary">{lead.leadStatus}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-right text-text-secondary">
                     {lead.runId ? usd(lead.costUsd) : '-'}
+                  </td>
+                  <td className="px-1 py-1 text-right">
+                    <form action={deleteLead}>
+                      <input type="hidden" name="requestId" value={lead.requestId} />
+                      <input type="hidden" name="returnTo" value={`/dashboard/aeo${query}`} />
+                      <ConfirmSubmit
+                        message={`Permanently delete the request for ${lead.businessName || lead.domain}? Its run and results go too, unless another request shares them. This can't be undone.`}
+                        label={`Delete ${lead.businessName || lead.domain}`}
+                        className="px-2 text-text-secondary hover:bg-danger/5 hover:text-danger"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </ConfirmSubmit>
+                    </form>
                   </td>
                 </tr>
               ))}
