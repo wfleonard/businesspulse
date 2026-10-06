@@ -44,3 +44,12 @@ export function normalizeDomain(input: string): string {
 export function coversOtherDomains(runOtherDomains: readonly string[], requested: readonly string[]): boolean {
   return requested.every((domain) => runOtherDomains.includes(domain))
 }
+
+/**
+ * A run can be shared with a request only if it asked the same question set:
+ * the same canned industry, or both generated. Otherwise a request for a new
+ * industry would be handed an older report written for a different one.
+ */
+export function sameQuestionSet(runPanelSlug: string | null, requestedPanelSlug: string | null): boolean {
+  return (runPanelSlug ?? null) === (requestedPanelSlug ?? null)
+}

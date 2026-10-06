@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { coversOtherDomains, normalizeDomain } from '../domain'
+import { coversOtherDomains, normalizeDomain, sameQuestionSet } from '../domain'
 
 describe('normalizeDomain', () => {
   it.each([
@@ -48,5 +48,18 @@ describe('coversOtherDomains', () => {
     // didn't credit the second site. Reusing it would hand that report back.
     expect(coversOtherDomains([], ['guzziroofing.com'])).toBe(false)
     expect(coversOtherDomains(['b.com'], ['guzziroofing.com', 'b.com'])).toBe(false)
+  })
+})
+
+describe('sameQuestionSet', () => {
+  it('shares a run only when the question set matches', () => {
+    expect(sameQuestionSet('web-design', 'web-design')).toBe(true)
+    expect(sameQuestionSet(null, null)).toBe(true)
+  })
+
+  it('never hands a new industry an older run for a different one', () => {
+    expect(sameQuestionSet(null, 'web-design')).toBe(false)
+    expect(sameQuestionSet('web-design', null)).toBe(false)
+    expect(sameQuestionSet('it-msp', 'web-design')).toBe(false)
   })
 })

@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { aeoPanel, aeoRequest, aeoRun } from '@/lib/db/schema'
-import { coversOtherDomains } from './domain'
+import { coversOtherDomains, sameQuestionSet } from './domain'
 import type { ProspectRequestInput, SnapshotRequestInput } from './request-schema'
 import { hashToken, newPublicId, newVerifyToken } from './tokens'
 
@@ -67,7 +67,8 @@ type AttachedRun = { id: string; publicId: string; status: RunStatus }
  *
  * Reuse: a snapshot run for the same domain that is queued, running, or done in
  * the last REUSE_DAYS days is shared rather than paid for again, as long as it
- * already credits every other site the request lists. A per-domain advisory
+ * asked the same question set and already credits every other site the
+ * request lists. A per-domain advisory
  * lock stops two simultaneous requests from both creating a run.
  */
 async function attachToRun(
@@ -79,7 +80,13 @@ async function attachToRun(
   const otherDomains = request.otherDomains ?? []
 
   const [latest] = await tx
-    .select({ id: aeoRun.id, publicId: aeoRun.publicId, status: aeoRun.status, otherDomains: aeoRun.otherDomains })
+    .select({
+      id: aeoRun.id,
+      publicId: aeoRun.publicId,
+      status: aeoRun.status,
+      otherDomains: aeoRun.otherDomains,
+      panelSlug: aeoRun.panelSlug,
+    })
     .from(aeoRun)
     .where(
       and(
@@ -92,7 +99,12 @@ async function attachToRun(
     )
     .orderBy(desc(aeoRun.createdAt))
     .limit(1)
-  const existing = latest && coversOtherDomains(latest.otherDomains, otherDomains) ? latest : undefined
+  const existing =
+    latest &&
+    coversOtherDomains(latest.otherDomains, otherDomains) &&
+    sameQuestionSet(latest.panelSlug, request.panelSlug)
+      ? latest
+      : undefined
 
   const run =
     existing ??
