@@ -69,7 +69,7 @@ export default async function Home() {
           turnstileSiteKey={process.env.TURNSTILE_SITE_KEY ?? ''}
         />
       </div>
-      <footer className="mt-auto flex gap-4 pt-16 text-xs text-text-secondary">
+      <footer className="mt-auto flex flex-wrap gap-x-4 gap-y-3 pt-16 text-xs text-text-secondary">
         <Link href="/resources" className="hover:text-dark">
           Resources
         </Link>
@@ -79,6 +79,22 @@ export default async function Home() {
         <Link href="/login" className="hover:text-dark">
           Sign in
         </Link>
+        <p className="saxon-credit w-full" style={{ margin: 0, fontSize: '0.85em', opacity: 0.85 }}>
+          <a
+            href="https://saxonenterprises.net/"
+            title="Website design and development by Saxon Enterprises, Tinton Falls, NJ"
+            style={{ color: 'inherit', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M11 2 4 17h7z" />
+              <path d="M13 5v12h7z" />
+              <path d="M3 19h18l-2 3H5z" />
+            </svg>
+            <span>
+              Charted and crewed by <span style={{ textDecoration: 'underline' }}>Saxon Enterprises</span>
+            </span>
+          </a>
+        </p>
       </footer>
       <JsonLd data={organizationJsonLd()} />
       <JsonLd data={websiteJsonLd()} />
