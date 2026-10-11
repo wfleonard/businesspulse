@@ -149,10 +149,16 @@ export type UnsubscribeOutcome = 'unsubscribed' | 'already' | 'invalid'
 
 /** Unsubscribe from the token in a re-check email. Also clears contact consent. */
 export async function unsubscribeByToken(token: string): Promise<UnsubscribeOutcome> {
+  // Re-check emails and dashboard follow-ups (aeo_mail_send) each carry their own token.
+  const hash = hashToken(token)
   const found = await db.execute(sql`
     select q.id, q.unsubscribed_at is not null as already
-    from aeo_recheck c join aeo_request q on q.id = c.request_id
-    where c.token_hash = ${hashToken(token)}
+    from aeo_request q
+    where q.id in (
+      select request_id from aeo_recheck where token_hash = ${hash}
+      union
+      select request_id from aeo_mail_send where token_hash = ${hash}
+    )
   `)
   const row = found.rows[0] as Row | undefined
   if (!row) return 'invalid'

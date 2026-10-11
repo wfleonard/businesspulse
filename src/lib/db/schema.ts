@@ -677,6 +677,56 @@ export const aeoMonitorInterest = pgTable(
   ]
 )
 
+/* ------------------------------------------------------------------ */
+/* Follow-up email to snapshot leads (/dashboard/email)                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Follow-up email templates, written in light Markdown with @field merge
+ * fields (see src/lib/aeo/mail-format.ts). Seeded from
+ * src/lib/aeo/mail-templates.ts; edits in the dashboard are never overwritten.
+ */
+export const aeoMailTemplate = pgTable('aeo_mail_template', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: text('slug').notNull().unique(),
+  name: text('name').notNull(),
+  /** When to send it, shown next to the name in the picker. */
+  description: text('description').notNull().default(''),
+  subject: text('subject').notNull(),
+  body: text('body').notNull(),
+  position: integer('position').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const aeoMailSendStatusEnum = pgEnum('aeo_mail_send_status', ['sent', 'failed'])
+
+/**
+ * Each follow-up email sent to a lead, exactly as sent. The retention sweep
+ * blanks the address, subject, and body along with the lead's contact details.
+ */
+export const aeoMailSend = pgTable(
+  'aeo_mail_send',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    requestId: uuid('request_id')
+      .notNull()
+      .references(() => aeoRequest.id, { onDelete: 'cascade' }),
+    templateId: uuid('template_id').references(() => aeoMailTemplate.id, { onDelete: 'set null' }),
+    toEmail: text('to_email').notNull(),
+    subject: text('subject').notNull(),
+    body: text('body').notNull(),
+    status: aeoMailSendStatusEnum('status').notNull(),
+    error: text('error'),
+    /** sha256 of this email's unsubscribe token; the token itself is never stored. */
+    tokenHash: text('token_hash').unique(),
+    userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+    sentAt: timestamp('sent_at').notNull().defaultNow(),
+  },
+  (t) => [index('aeo_mail_send_request_idx').on(t.requestId, t.sentAt), index('aeo_mail_send_sent_idx').on(t.sentAt)]
+)
+
 export const schema = {
   user,
   session,
@@ -704,4 +754,6 @@ export const schema = {
   aeoBookingClick,
   aeoRecheck,
   aeoMonitorInterest,
+  aeoMailTemplate,
+  aeoMailSend,
 }

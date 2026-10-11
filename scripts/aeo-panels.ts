@@ -13,8 +13,9 @@
  * Panels edited or created in the dashboard (edited_at set) belong to the
  * database now and are never overwritten from code.
  *
- * Also adds any missing entries from the panel backlog (panels/backlog.ts).
- * Existing backlog entries are left as the dashboard has them.
+ * Also adds any missing entries from the panel backlog (panels/backlog.ts)
+ * and any missing follow-up email templates (mail-templates.ts). Existing
+ * ones are left as the dashboard has them.
  */
 import 'dotenv/config'
 import { config as loadEnv } from 'dotenv'
@@ -25,7 +26,8 @@ import { recordCurrentVersion } from '@/lib/aeo/panel-admin'
 import { CANNED_PANELS } from '@/lib/aeo/panels'
 import { PANEL_BACKLOG } from '@/lib/aeo/panels/backlog'
 import { closeDb, db } from '@/lib/db'
-import { aeoPanel, aeoPanelBacklog } from '@/lib/db/schema'
+import { aeoMailTemplate, aeoPanel, aeoPanelBacklog } from '@/lib/db/schema'
+import { MAIL_TEMPLATES } from '@/lib/aeo/mail-templates'
 
 function contentOf(panel: {
   name: string
@@ -89,6 +91,13 @@ async function main() {
     .onConflictDoNothing({ target: aeoPanelBacklog.slug })
     .returning({ slug: aeoPanelBacklog.slug })
   console.log(`backlog: ${added.length} added, ${PANEL_BACKLOG.length - added.length} already there`)
+
+  const templates = await db
+    .insert(aeoMailTemplate)
+    .values(MAIL_TEMPLATES.map((t, index) => ({ ...t, position: index + 1 })))
+    .onConflictDoNothing({ target: aeoMailTemplate.slug })
+    .returning({ slug: aeoMailTemplate.slug })
+  console.log(`email templates: ${templates.length} added, ${MAIL_TEMPLATES.length - templates.length} already there`)
 }
 
 main()

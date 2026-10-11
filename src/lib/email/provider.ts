@@ -4,11 +4,18 @@
  * unconfigured, so the watch job never fails just because email isn't set up.
  */
 
+export type EmailAddress = { email: string; name?: string }
+
 export type EmailPayload = {
   to: string
   subject: string
   html: string
   text?: string
+  /** Defaults to MAILTRAP_SENDER as "BusinessPulse". The address must be on a domain verified in Mailtrap. */
+  from?: EmailAddress
+  replyTo?: EmailAddress
+  bcc?: string[]
+  headers?: Record<string, string>
 }
 
 export type SendResult = { sent: boolean; skipped?: string; error?: string }
@@ -32,8 +39,11 @@ export async function sendEmail(payload: EmailPayload): Promise<SendResult> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: { email: sender, name: 'BusinessPulse' },
+        from: payload.from ?? { email: sender, name: 'BusinessPulse' },
         to: [{ email: payload.to }],
+        ...(payload.replyTo ? { reply_to: payload.replyTo } : {}),
+        ...(payload.bcc?.length ? { bcc: payload.bcc.map((email) => ({ email })) } : {}),
+        ...(payload.headers ? { headers: payload.headers } : {}),
         subject: payload.subject,
         html: payload.html,
         text: payload.text,
