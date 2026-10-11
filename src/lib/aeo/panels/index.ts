@@ -31,8 +31,10 @@ import { webDesign } from './web-design'
 import { windowsDoors } from './windows-doors'
 
 /**
- * Canned vertical panels, kept in code so they are reviewed and versioned like
- * code. `npm run aeo:panels` writes them to the aeo_panel table.
+ * Canned vertical panels, kept in code as seeds. `npm run aeo:panels` writes
+ * them to the aeo_panel table until a panel is edited in the dashboard
+ * (/dashboard/panels); from then on the database copy is the one that counts,
+ * and changing the file here has no effect on it.
  */
 export type CannedPanelDefinition = {
   slug: string

@@ -1,10 +1,9 @@
 /** @jest-environment node */
 import { normalizeDomain } from '../domain'
+import { PANEL_SLOTS } from '../panel-content'
 import { CANNED_PANELS } from '../panels'
 import { buildCannedPlan } from '../plan'
 import { CATEGORY_MINIMUMS } from '../questions'
-
-const KNOWN_SLOTS = new Set(['business', 'service', 'city', 'state', 'state_permit_agency'])
 
 const request = (state: string) => ({
   businessName: 'East Coast Utility, LLC',
@@ -25,7 +24,7 @@ describe.each(CANNED_PANELS.map((panel) => [panel.slug, panel] as const))('canne
     for (const { q, c } of panel.questions) {
       expect(c).toMatch(/^[a-z]+(?:-[a-z]+)*$/)
       expect(q.length).toBeLessThanOrEqual(150)
-      for (const [, slot] of q.matchAll(/\{([a-z_]+)\}/g)) expect(KNOWN_SLOTS.has(slot)).toBe(true)
+      for (const [, slot] of q.matchAll(/\{([a-z_]+)\}/g)) expect(PANEL_SLOTS.has(slot)).toBe(true)
     }
   })
 

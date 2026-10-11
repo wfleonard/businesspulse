@@ -427,6 +427,70 @@ export const aeoPanel = pgTable('aeo_panel', {
   referenceDomains: jsonb('reference_domains').$type<string[]>().notNull().default([]),
   version: integer('version').notNull().default(1),
   isActive: boolean('is_active').notNull().default(true),
+  /**
+   * Set once the panel is edited or created in the dashboard. From then on the
+   * database is its source of truth and `npm run aeo:panels` leaves it alone.
+   */
+  editedAt: timestamp('edited_at'),
+  /**
+   * Hosts set aside from the "cited across runs" suggestions, usually real
+   * competitors. Not panel content: changing it doesn't bump the version.
+   */
+  dismissedDomains: jsonb('dismissed_domains').$type<string[]>().notNull().default([]),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+/** Each version a panel has had, so a report's panel version can be looked up and changes compared. */
+export const aeoPanelVersion = pgTable(
+  'aeo_panel_version',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    panelId: uuid('panel_id')
+      .notNull()
+      .references(() => aeoPanel.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull(),
+    name: text('name').notNull(),
+    questions: jsonb('questions').$type<{ c: string; q: string }[]>().notNull(),
+    directoryDomains: jsonb('directory_domains').$type<string[]>().notNull(),
+    referenceDomains: jsonb('reference_domains').$type<string[]>().notNull(),
+    note: text('note').notNull().default(''),
+    userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('aeo_panel_version_uq').on(t.panelId, t.version)]
+)
+
+export const aeoPanelBacklogStatusEnum = pgEnum('aeo_panel_backlog_status', ['planned', 'drafted', 'skipped'])
+
+/** A panel Claude drafted from a backlog entry, waiting for review. */
+export type AeoPanelDraft = {
+  name: string
+  questions: { c: string; q: string }[]
+  directoryDomains: string[]
+  referenceDomains: string[]
+  model: string
+  costUsd: number
+  generatedAt: string
+}
+
+/**
+ * Industries worth a panel, ranked. Seeded from src/lib/aeo/panels/backlog.ts
+ * by `npm run aeo:panels`; an entry is live once a panel with its slug exists.
+ */
+export const aeoPanelBacklog = pgTable('aeo_panel_backlog', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: text('slug').notNull().unique(),
+  name: text('name').notNull(),
+  rank: integer('rank').notNull(),
+  /** Who buys, which steers the questions a draft asks. */
+  buyers: text('buyers').notNull().default(''),
+  /** Why it is worth building. */
+  rationale: text('rationale').notNull().default(''),
+  /** Extra direction for Claude's draft, written in the dashboard. */
+  guidance: text('guidance').notNull().default(''),
+  status: aeoPanelBacklogStatusEnum('status').notNull().default('planned'),
+  draft: jsonb('draft').$type<AeoPanelDraft>(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
@@ -632,6 +696,8 @@ export const schema = {
   aiQuery,
   auditLog,
   aeoPanel,
+  aeoPanelVersion,
+  aeoPanelBacklog,
   aeoRun,
   aeoRequest,
   aeoResult,
