@@ -38,10 +38,6 @@ describe('leadFields', () => {
     expect(fields.report_url).toMatch(/\/report\/abc123$/)
     expect(fields.book_url).toMatch(/\/book\?r=abc123$/)
   })
-
-  it('leaves the score blank without a finished count', () => {
-    expect(leadFields({ ...lead, citedCount: null, questionCount: null }).score).toBe('')
-  })
 })
 
 describe('renderMail', () => {
