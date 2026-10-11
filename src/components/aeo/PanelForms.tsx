@@ -5,6 +5,7 @@ import {
   applyPanelSuggestions,
   draftBacklogPanel,
   publishBacklogDraft,
+  renamePanel,
   type PanelFormState,
 } from '@/app/dashboard/panels/actions'
 import type { DomainSuggestion, QuestionStat } from '@/lib/aeo/panel-content'
@@ -168,6 +169,27 @@ export function SuggestionsForm({
           {pending ? 'Saving…' : 'Apply selected changes'}
         </button>
       </div>
+    </form>
+  )
+}
+
+/** Rename a live panel; saved as a new version. */
+export function RenameForm({ slug, version, name }: { slug: string; version: number; name: string }) {
+  const [state, action, pending] = useActionState<PanelFormState, FormData>(renamePanel, {})
+  return (
+    <form action={action} className="space-y-2">
+      <input type="hidden" name="slug" value={slug} />
+      <input type="hidden" name="version" value={version} />
+      <label htmlFor="rename" className="block text-sm font-medium text-dark">
+        Name in the industry dropdown
+      </label>
+      <div className="flex flex-wrap gap-2">
+        <input id="rename" name="name" required maxLength={100} defaultValue={name} className={`${inputClass} max-w-md`} />
+        <button type="submit" disabled={pending} className={buttonClass}>
+          {pending ? 'Saving…' : 'Rename'}
+        </button>
+      </div>
+      <FormStatus state={state} />
     </form>
   )
 }

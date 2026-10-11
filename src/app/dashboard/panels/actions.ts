@@ -108,6 +108,39 @@ export async function applyPanelSuggestions(_previous: PanelFormState, formData:
   return { message: parts.join(' ') || 'No change.' }
 }
 
+/** Rename a live panel. The name is panel content, so this saves a new version. */
+export async function renamePanel(_previous: PanelFormState, formData: FormData): Promise<PanelFormState> {
+  const { user } = await requireSession()
+  const parsed = z
+    .object({ slug: slugSchema, version: z.coerce.number().int().positive(), name: z.string().trim().min(1).max(100) })
+    .safeParse({ slug: formData.get('slug'), version: formData.get('version'), name: formData.get('name') })
+  if (!parsed.success) return { error: 'The panel needs a name.' }
+  const { slug, version, name } = parsed.data
+
+  const panel = await getPanel(slug)
+  if (!panel) return { error: 'That panel no longer exists.' }
+  if (panel.name === name) return { error: 'That is already its name.' }
+
+  let newVersion: number | null
+  try {
+    newVersion = await savePanelEdit({
+      slug,
+      expectedVersion: version,
+      content: { name, questions: panel.questions, directoryDomains: panel.directoryDomains, referenceDomains: panel.referenceDomains },
+      note: `Renamed from "${panel.name}"`,
+      userId: user.id,
+    })
+  } catch (err) {
+    if (err instanceof StalePanelError) return { error: err.message }
+    throw err
+  }
+
+  await recordAudit({ userId: user.id, action: 'aeo.panel_renamed', target: slug, metadata: { from: panel.name, to: name, version: newVersion } })
+  revalidatePath('/dashboard/panels')
+  revalidatePath(`/dashboard/panels/${slug}`)
+  return { message: `Renamed. Saved as version ${newVersion}.` }
+}
+
 export async function togglePanelActive(formData: FormData): Promise<void> {
   const { user } = await requireSession()
   const parsed = z

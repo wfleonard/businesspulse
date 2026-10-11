@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ConfirmSubmit } from '@/components/aeo/ConfirmSubmit'
-import { SuggestionsForm } from '@/components/aeo/PanelForms'
+import { RenameForm, SuggestionsForm } from '@/components/aeo/PanelForms'
 import { Card } from '@/components/ui/Card'
 import { getPanel, listPanelVersions, panelRunRows } from '@/lib/aeo/panel-admin'
 import { summarizePanelRuns } from '@/lib/aeo/panel-content'
@@ -62,6 +62,10 @@ export default async function PanelPage({ params }: Props) {
           </form>
         </div>
       </div>
+
+      <Card>
+        <RenameForm slug={panel.slug} version={panel.version} name={panel.name} />
+      </Card>
 
       <Card>
         <h2 className="text-lg font-semibold text-dark">Learn from runs</h2>

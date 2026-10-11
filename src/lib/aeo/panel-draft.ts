@@ -34,7 +34,6 @@ const DRAFT_JSON_SCHEMA = {
   type: 'object',
   additionalProperties: false,
   properties: {
-    name: { type: 'string' },
     questions: {
       type: 'array',
       items: {
@@ -50,11 +49,10 @@ const DRAFT_JSON_SCHEMA = {
     directory_domains: { type: 'array', items: { type: 'string' } },
     reference_domains: { type: 'array', items: { type: 'string' } },
   },
-  required: ['name', 'questions', 'directory_domains', 'reference_domains'],
+  required: ['questions', 'directory_domains', 'reference_domains'],
 } as const
 
 const outputSchema = z.object({
-  name: z.string(),
   questions: z.array(z.object({ category: z.enum(DRAFT_CATEGORIES), question: z.string() })),
   directory_domains: z.array(z.string()),
   reference_domains: z.array(z.string()),
@@ -67,7 +65,7 @@ export const DRAFT_SYSTEM_PROMPT = `You write question panels for an AI search v
 The questions must be what a real buyer types before they know which company to hire:
 - Write in the buyer's voice, the way people type into a search box. Short: under 15 words, never more than ${MAX_QUESTION_LENGTH} characters.
 - Never name a specific company, brand, or website.
-- Questions are templates. These slots are filled in for each business: {service} (the business's main service in its owner's words), {city}, {state} (the full state name), and {state_permit_agency} (the state agency that issues permits for this kind of work, where one exists). Use no other slots.
+- Questions are templates. These slots are filled in for each business: {service} (the business's main service in its owner's words), {city}, and {state} (the full state name). Use no other slots. To ask about a state regulator or licensing board, name the state with {state} instead, as in "how to verify a contractor license in {state}".
 - Write about 60 questions:
   - "service-geo": 10 to 12 questions from someone looking for a local provider. Start with "{service} near {city}, {state}", then name the industry's main services, specialties, and customer types, each with {city} or {state}.
   - "cost": 7 or 8 questions about price, fees, and what affects cost, including one with {state}.
@@ -78,9 +76,7 @@ The questions must be what a real buyer types before they know which company to 
 
 Also list:
 - directory_domains: 8 to 15 listing sites, marketplaces, and review directories that AI answers in this industry cite instead of the businesses themselves. Bare domains only, like "yelp.com".
-- reference_domains: 10 to 20 sites that answers cite but that are not competitors: regulators, licensing boards, trade associations, industry publications, manufacturers, and consumer reference sites.
-
-The name is the industry as a business owner would pick it from a dropdown, in sentence case.`
+- reference_domains: 10 to 20 sites that answers cite but that are not competitors: regulators, licensing boards, trade associations, industry publications, manufacturers, and consumer reference sites.`
 
 export type DraftInput = {
   name: string
@@ -108,15 +104,22 @@ export class PanelDraftError extends Error {
 
 const ALREADY_COMMON = new Set([...COMMON_DIRECTORY_DOMAINS, ...COMMON_REFERENCE_DOMAINS])
 
+/**
+ * Slots a draft may use. {state_permit_agency} always fills in the state
+ * transportation department, which only fits road work (hdd-trenchless, in
+ * code), and {business} would name the business being checked.
+ */
+const DRAFT_SLOTS = new Set([...PANEL_SLOTS].filter((slot) => slot !== 'business' && slot !== 'state_permit_agency'))
+
 /** Drop anything that can't be asked or stored; the reviewer handles the rest. */
-export function cleanDraft(output: DraftOutput): Pick<AeoPanelDraft, 'name' | 'questions' | 'directoryDomains' | 'referenceDomains'> {
+export function cleanDraft(output: DraftOutput): Pick<AeoPanelDraft, 'questions' | 'directoryDomains' | 'referenceDomains'> {
   const seen = new Set<string>()
   const questions: PanelQuestion[] = []
   for (const { category, question } of output.questions) {
     const q = question.replace(/\s+/g, ' ').trim()
     if (q.length < 8 || q.length > MAX_QUESTION_LENGTH) continue
     if (/https?:\/\/|www\./i.test(q)) continue
-    if ([...q.matchAll(/\{([a-z_]+)\}/g)].some(([, slot]) => !PANEL_SLOTS.has(slot) || slot === 'business')) continue
+    if ([...q.matchAll(/\{([a-z_]+)\}/g)].some(([, slot]) => !DRAFT_SLOTS.has(slot))) continue
     const key = q.toLowerCase()
     if (seen.has(key)) continue
     seen.add(key)
@@ -127,7 +130,7 @@ export function cleanDraft(output: DraftOutput): Pick<AeoPanelDraft, 'name' | 'q
   const referenceDomains = cleanDomains(output.reference_domains).filter(
     (d) => !ALREADY_COMMON.has(d) && !directoryDomains.includes(d)
   )
-  return { name: output.name.trim(), questions, directoryDomains, referenceDomains }
+  return { questions, directoryDomains, referenceDomains }
 }
 
 export type DraftCall = (params: {
@@ -198,7 +201,8 @@ export async function draftPanel(input: DraftInput, options: { model?: string; c
   }
   return {
     ...cleaned,
-    name: cleaned.name || input.name,
+    // The backlog name, already chosen for the industry dropdown; the reviewer can still change it.
+    name: input.name,
     model,
     costUsd,
     generatedAt: new Date().toISOString(),

@@ -6,7 +6,6 @@ import { CANNED_PANELS } from '../panels'
 const pest = CANNED_PANELS.find((p) => p.slug === 'pest-control')!
 
 const output = (extra: Partial<DraftOutput> = {}): DraftOutput => ({
-  name: 'Pest control',
   questions: pest.questions.map((q) => ({ category: q.c as DraftOutput['questions'][number]['category'], question: q.q })),
   directory_domains: ['https://www.Porch.com', 'yelp.com', 'porch.com'],
   reference_domains: ['npic.org', 'wikipedia.org', 'not a domain'],
@@ -31,6 +30,7 @@ describe('cleanDraft', () => {
           { category: 'cost', question: 'How much does pest control cost' },
           { category: 'service-geo', question: 'is {business} any good in {city}' },
           { category: 'service-geo', question: 'exterminator in {county}' },
+          { category: 'permits', question: '{state_permit_agency} pest control license lookup' },
           { category: 'technical', question: 'see www.example.com for tips' },
         ],
       })
@@ -42,8 +42,9 @@ describe('cleanDraft', () => {
 })
 
 describe('draftPanel', () => {
-  it('returns a cleaned draft that validates, priced at Opus 5.5 rates', async () => {
+  it('returns a cleaned draft under the backlog name that validates, priced at Opus 5.5 rates', async () => {
     const draft = await draftPanel(input, { call: fakeCall(JSON.stringify(output())) })
+    expect(draft.name).toBe('Pest control')
     expect(draft.model).toBe('claude-opus-5-5')
     expect(draft.costUsd).toBeCloseTo((1000 * 4 + 5000 * 20) / 1_000_000)
     expect(validatePanelContent(draft)).toEqual([])
