@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
+import { workerConfig } from '@/lib/aeo/config'
 import { listBacklog, listPanels, type BacklogRow } from '@/lib/aeo/panel-admin'
 import { requireSession } from '@/lib/session'
 
@@ -28,7 +29,9 @@ export default async function PanelsPage() {
       <div>
         <h1 className="text-2xl font-bold text-dark">Panels</h1>
         <p className="mt-1 text-text-secondary">
-          The question sets snapshots ask, by industry. Open a panel to improve it from what its runs found.
+          The question sets snapshots ask, by industry. Each snapshot asks {workerConfig().snapshotQuestions} questions
+          from its panel&apos;s pool, the same ones every time for the same business. Open a panel to improve it from
+          what its runs found.
         </p>
       </div>
 
@@ -38,7 +41,7 @@ export default async function PanelsPage() {
             <tr>
               <th className="px-4 py-2 font-medium">Panel</th>
               <th className="px-4 py-2 text-right font-medium">Version</th>
-              <th className="px-4 py-2 text-right font-medium">Questions</th>
+              <th className="px-4 py-2 text-right font-medium">Question pool</th>
               <th className="px-4 py-2 text-right font-medium">Runs, all (last 30 days)</th>
               <th className="px-4 py-2 font-medium">Last run</th>
               <th className="px-4 py-2 font-medium">Managed in</th>
