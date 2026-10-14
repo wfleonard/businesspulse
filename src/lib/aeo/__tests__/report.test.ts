@@ -146,3 +146,31 @@ describe('report examples', () => {
     expect(summary.examples.map((e) => e.query)).toEqual(['c', 'a', 'b'])
   })
 })
+
+describe('full report detail', () => {
+  const long = 'Word '.repeat(400).trim()
+  const rows = [
+    result({ query: 'b cost question', category: 'cost', answer: long, rivals: [] }),
+    result({ query: 'a near me question', category: 'service-geo', answer: 'Short answer.' }),
+    result({ query: 'c down question', category: 'problem', error: 'timeout', answer: null }),
+    result({ query: 'd permit question', category: 'permits', answer: 'Permit answer.' }),
+  ]
+
+  it('keeps the public snapshot to three highlighted, shortened answers', () => {
+    const summary = buildReport(rows, [], 3)
+    expect(summary.examples).toHaveLength(3)
+    for (const e of summary.examples) expect(e.excerpt.length).toBeLessThanOrEqual(701)
+  })
+
+  it('shows every question, in report order, with the whole answer', () => {
+    const summary = buildReport(rows, [], 3, 'full')
+    expect(summary.examples.map((e) => e.query)).toEqual([
+      'a near me question',
+      'b cost question',
+      'd permit question',
+      'c down question',
+    ])
+    expect(summary.examples[1].excerpt).toBe(long)
+    expect(summary.examples[3].excerpt).toBe('')
+  })
+})

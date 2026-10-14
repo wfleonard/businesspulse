@@ -129,10 +129,19 @@ type Question = {
   citedHosts: string[]
 }
 
+/**
+ * How much of the run a report shows. "highlights" is the public snapshot:
+ * three chosen questions, excerpts, three sites cited instead. "full" is the
+ * signed-in view: every question in report order, the whole answer, and every
+ * site cited instead.
+ */
+export type ReportDetail = 'highlights' | 'full'
+
 export function buildReport(
   results: ReportResultInput[],
   directoryDomains: string[] = [],
-  exampleCount = 3
+  exampleCount = 3,
+  detail: ReportDetail = 'highlights'
 ): ReportSummary {
   const byQuery = new Map<string, ReportResultInput[]>()
   for (const result of results) {
@@ -188,20 +197,25 @@ export function buildReport(
     .sort((a, b) => b.citedHosts.length - a.citedHosts.length || a.query.localeCompare(b.query))
   const hiringMiss = misses.find((q) => q.category === 'service-geo')
 
-  const picks: Question[] = wins.slice(0, 1)
-  for (const q of [...(hiringMiss ? [hiringMiss] : []), ...misses, ...answered]) {
-    if (picks.length >= exampleCount) break
-    if (!picks.includes(q)) picks.push(q)
+  const full = detail === 'full'
+  let picks: Question[]
+  if (full) {
+    picks = [...questions].sort((a, b) => compareCategories(a.category, b.category) || a.query.localeCompare(b.query))
+  } else {
+    picks = wins.slice(0, 1)
+    for (const q of [...(hiringMiss ? [hiringMiss] : []), ...misses, ...answered]) {
+      if (picks.length >= exampleCount) break
+      if (!picks.includes(q)) picks.push(q)
+    }
+    picks.sort((a, b) => Number(a.verdict === 'cited') - Number(b.verdict === 'cited'))
   }
-  const examples = picks
-    .sort((a, b) => Number(a.verdict === 'cited') - Number(b.verdict === 'cited'))
-    .map((q) => ({
-      query: q.query,
-      label: categoryLabel(q.category),
-      verdict: q.verdict,
-      excerpt: cleanAnswer(q.row.answer ?? ''),
-      citedInstead: q.citedHosts.slice(0, 3),
-    }))
+  const examples = picks.map((q) => ({
+    query: q.query,
+    label: categoryLabel(q.category),
+    verdict: q.verdict,
+    excerpt: cleanAnswer(q.row.answer ?? '', full ? Number.POSITIVE_INFINITY : undefined),
+    citedInstead: full ? q.citedHosts : q.citedHosts.slice(0, 3),
+  }))
 
   return {
     questionCount: questions.length,
@@ -242,7 +256,7 @@ export function siteList(domain: string, otherDomains: readonly string[], conjun
 
 const PUBLIC_ID = /^[A-Za-z0-9_-]{24}$/
 
-export async function loadReport(publicId: string): Promise<LoadedReport | null> {
+export async function loadReport(publicId: string, detail: ReportDetail = 'highlights'): Promise<LoadedReport | null> {
   if (!PUBLIC_ID.test(publicId)) return null
 
   const [run] = await db
@@ -313,5 +327,5 @@ export async function loadReport(publicId: string): Promise<LoadedReport | null>
   // Generated runs have no panel row; they were scored against the common lists.
   const directoryDomains =
     run.panelSource === 'generated' ? COMMON_DIRECTORY_DOMAINS : (panels[0]?.directoryDomains ?? [])
-  return { ...base, engines, summary: buildReport(results, directoryDomains) }
+  return { ...base, engines, summary: buildReport(results, directoryDomains, 3, detail) }
 }

@@ -102,6 +102,14 @@ export default async function RunDetailPage({ params, searchParams }: Props) {
             >
               Public report
             </a>
+            <a
+              href={`/report/${run.publicId}?full=1`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md border border-border bg-white px-3 py-1.5 text-sm font-medium text-dark hover:bg-gray-50"
+            >
+              Full report
+            </a>
             <form action={rerunSnapshot}>
               <input type="hidden" name="runId" value={run.id} />
               <ConfirmSubmit

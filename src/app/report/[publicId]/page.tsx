@@ -7,6 +7,7 @@ import { ReportViewBeacon } from '@/components/aeo/ReportViewBeacon'
 import { bookingUrl } from '@/lib/aeo/booking'
 import { MONITOR_PRICE_USD, MONITOR_QUESTIONS, offersMonitor } from '@/lib/aeo/monitor'
 import { Card } from '@/components/ui/Card'
+import { getSession } from '@/lib/session'
 import { loadReport, siteList, type LoadedReport, type ReportSummary, type Verdict } from '@/lib/aeo/report'
 
 export const dynamic = 'force-dynamic'
@@ -16,7 +17,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-type Props = { params: Promise<{ publicId: string }> }
+type Props = {
+  params: Promise<{ publicId: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
 const ENGINE_NAMES: Record<string, string> = {
   perplexity: 'Perplexity',
@@ -72,7 +76,11 @@ function callToAction(publicId: string): string | null {
   return contact ? `mailto:${contact}?subject=${encodeURIComponent('Full AI visibility audit')}` : null
 }
 
-function Report({ report, summary }: { report: LoadedReport; summary: ReportSummary }) {
+/**
+ * `full` is the signed-in view: every question and its whole answer, without
+ * the sales cards, and without counting as a customer's report view.
+ */
+function Report({ report, summary, full }: { report: LoadedReport; summary: ReportSummary; full: boolean }) {
   const engineNames = report.engines.map((e) => ENGINE_NAMES[e.engine] ?? e.engine)
   const assistants = engineNames.length ? engineNames.join(', ') : 'AI search'
   // Scores count only answered questions: one AI search never answered isn't a miss.
@@ -82,7 +90,16 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
 
   return (
     <Shell>
-      <ReportViewBeacon publicId={report.publicId} />
+      {full ? (
+        <p className="mt-6 rounded-md border border-border bg-white px-3 py-2 text-xs text-text-secondary">
+          Full report: every question, visible only when signed in.{' '}
+          <Link href={`/report/${report.publicId}`} className="text-primary hover:underline">
+            Customer view
+          </Link>
+        </p>
+      ) : (
+        <ReportViewBeacon publicId={report.publicId} />
+      )}
       <h1 className="mt-5 text-3xl font-bold tracking-tight text-dark sm:text-4xl">
         AI visibility snapshot for {report.businessName}
       </h1>
@@ -168,7 +185,9 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
 
       {summary.examples.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-lg font-semibold text-dark">What AI search said</h2>
+          <h2 className="text-lg font-semibold text-dark">
+            {full ? `Every question (${summary.examples.length})` : 'What AI search said'}
+          </h2>
           <div className="mt-3 space-y-4">
             {summary.examples.map((example) => (
               <Card key={example.query} className="p-5">
@@ -179,7 +198,9 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
                   </span>
                 </div>
                 <p className="mt-2 font-medium text-dark">&ldquo;{example.query}&rdquo;</p>
-                <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-text-secondary">{example.excerpt}</p>
+                <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-text-secondary">
+                  {example.excerpt || "AI search didn't answer this question."}
+                </p>
                 {example.citedInstead.length > 0 && example.verdict !== 'cited' && (
                   <p className="mt-3 text-xs text-text-secondary">
                     Cited instead: <span className="text-dark">{example.citedInstead.join(', ')}</span>
@@ -191,25 +212,27 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
         </section>
       )}
 
-      <Card className="mt-10 border-primary/30 bg-primary/5">
-        <h2 className="text-lg font-semibold text-dark">See the full picture</h2>
-        <p className="mt-2 text-sm text-dark">The full audit from Saxon AEO covers:</p>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-dark">
-          {remaining > 0 && <li>The other {remaining} questions and every answer</li>}
-          <li>ChatGPT and Claude side by side with Perplexity</li>
-          <li>A plan to get your site cited</li>
-        </ul>
-        {cta && (
-          <a
-            href={cta}
-            className="mt-5 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
-          >
-            Book a call
-          </a>
-        )}
-      </Card>
+      {!full && (
+        <Card className="mt-10 border-primary/30 bg-primary/5">
+          <h2 className="text-lg font-semibold text-dark">See the full picture</h2>
+          <p className="mt-2 text-sm text-dark">The full audit from Saxon AEO covers:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-dark">
+            {remaining > 0 && <li>The other {remaining} questions and every answer</li>}
+            <li>ChatGPT and Claude side by side with Perplexity</li>
+            <li>A plan to get your site cited</li>
+          </ul>
+          {cta && (
+            <a
+              href={cta}
+              className="mt-5 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+            >
+              Book a call
+            </a>
+          )}
+        </Card>
+      )}
 
-      {offersMonitor(report.requestSource) && (
+      {!full && offersMonitor(report.requestSource) && (
         <Card className="mt-4">
           <h2 className="text-lg font-semibold text-dark">Doing the work yourself?</h2>
           <p className="mt-2 text-sm text-dark">
@@ -237,9 +260,11 @@ function Report({ report, summary }: { report: LoadedReport; summary: ReportSumm
   )
 }
 
-export default async function ReportPage({ params }: Props) {
+export default async function ReportPage({ params, searchParams }: Props) {
   const { publicId } = await params
-  const report = await loadReport(publicId)
+  // The full view is for us: signed in only. Anyone else asking for it gets the customer's report.
+  const full = (await searchParams).full === '1' && Boolean(await getSession())
+  const report = await loadReport(publicId, full ? 'full' : 'highlights')
   if (!report) notFound()
 
   if (report.status === 'queued' || report.status === 'running') {
@@ -271,5 +296,5 @@ export default async function ReportPage({ params }: Props) {
     )
   }
 
-  return <Report report={report} summary={report.summary} />
+  return <Report report={report} summary={report.summary} full={full} />
 }
