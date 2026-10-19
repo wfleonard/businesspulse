@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BusinessPulse Visibility Scan</title>
+<meta name="author" content="William Leonard, Saxon Enterprises, Inc., wfleonard@saxonenterprises.net">
+<meta name="description" content="BusinessPulse checks how your business shows up in Google and in AI answers, then shows what better visibility could be worth in customers and revenue.">
+<link rel="canonical" href="https://businesspulse.app/scan">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BusinessPulse">
+<meta property="og:title" content="BusinessPulse Visibility Scan">
+<meta property="og:description" content="BusinessPulse checks how your business shows up in Google and in AI answers, then shows what better visibility could be worth in customers and revenue.">
+<meta property="og:url" content="https://businesspulse.app/scan">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="BusinessPulse Visibility Scan">
+<meta name="twitter:description" content="BusinessPulse checks how your business shows up in Google and in AI answers, then shows what better visibility could be worth in customers and revenue.">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="/scan/styles.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-inner">
+    <a class="brand" href="#top" aria-label="BusinessPulse home">
+      <svg class="brand-mark" viewBox="0 0 32 20" aria-hidden="true"><polyline points="0,10 8,10 11,3 15,17 19,6 22,10 32,10"/></svg>
+      <span>BusinessPulse</span>
+    </a>
+    <a class="btn btn-small" href="#scan">Free visibility scan</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">AEO + SEO for local business</p>
+        <h1>Your customers ask Google. Now they ask AI too. <em>Does either one name you?</em></h1>
+        <p class="lede">BusinessPulse scans how your business appears in search results and in AI answers from ChatGPT, Gemini, Perplexity and Google AI Overviews. Then it shows you what fixing the gaps could be worth in real customers.</p>
+        <div class="hero-actions">
+          <a class="btn" href="#scan">Get my free scan</a>
+          <a class="btn btn-ghost" href="#estimate">Estimate my gain</a>
+        </div>
+      </div>
+
+      <figure class="monitor" aria-label="Sample visibility pulse readout">
+        <div class="monitor-head">
+          <span class="mono">VISIBILITY PULSE</span>
+          <span class="mono live"><i></i>SAMPLE SCAN</span>
+        </div>
+        <canvas id="ecg" height="140" aria-hidden="true"></canvas>
+        <dl class="vitals">
+          <div><dt>Search rank</dt><dd class="mono">#14 <small>“plumber near me”</small></dd></div>
+          <div><dt>AI mentions</dt><dd class="mono warn">1 of 12 <small>prompts tested</small></dd></div>
+          <div><dt>Site health</dt><dd class="mono">71<small>/100</small></dd></div>
+          <div><dt>Schema markup</dt><dd class="mono crit">Missing</dd></div>
+        </dl>
+        <figcaption>Example readout for an illustrative local business.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- SHIFT -->
+  <section class="shift">
+    <div class="wrap shift-grid">
+      <div>
+        <p class="eyebrow">What changed</p>
+        <h2>Search used to end with ten blue links. Now it often ends with one answer.</h2>
+      </div>
+      <div class="shift-cols">
+        <article>
+          <h3>SEO</h3>
+          <p class="mono tag">Search Engine Optimization</p>
+          <p>Gets your pages ranked when someone searches. Still the base of everything: clean pages, fast load times, local listings, and content that matches what people type.</p>
+        </article>
+        <article>
+          <h3>AEO</h3>
+          <p class="mono tag">Answer Engine Optimization</p>
+          <p>Gets your business named when someone asks an AI assistant for a recommendation. AI tools pull from sources they can read and trust, so structure and clarity decide who gets mentioned.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- RETURNS CALCULATOR -->
+  <section class="returns" id="estimate">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Your potential gain</p>
+        <h2>What better visibility could be worth to you</h2>
+        <p>Enter your own numbers. The estimate updates as you go.</p>
+      </div>
+
+      <div class="calc">
+        <form class="calc-inputs" id="calcForm" novalidate>
+          <div class="field">
+            <label for="visitors">Website visitors per month</label>
+            <div class="range-row">
+              <input type="range" id="visitors" min="250" max="20000" step="250" value="2500">
+              <output class="mono" for="visitors" id="visitorsOut">2,500</output>
+            </div>
+          </div>
+          <div class="field">
+            <label for="conv">Visitors who become customers</label>
+            <div class="range-row">
+              <input type="range" id="conv" min="0.5" max="10" step="0.5" value="2.5">
+              <output class="mono" for="conv" id="convOut">2.5%</output>
+            </div>
+          </div>
+          <div class="field">
+            <label for="value">Average value of a new customer</label>
+            <div class="range-row">
+              <input type="range" id="value" min="50" max="5000" step="50" value="450">
+              <output class="mono" for="value" id="valueOut">$450</output>
+            </div>
+          </div>
+          <div class="field">
+            <label for="cost">Monthly investment in AEO and SEO</label>
+            <div class="range-row">
+              <input type="range" id="cost" min="100" max="3000" step="50" value="500">
+              <output class="mono" for="cost" id="costOut">$500</output>
+            </div>
+          </div>
+          <fieldset class="field scenario">
+            <legend>Growth scenario</legend>
+            <div class="seg">
+              <input type="radio" name="scenario" id="scConservative" value="conservative">
+              <label for="scConservative">Conservative</label>
+              <input type="radio" name="scenario" id="scExpected" value="expected" checked>
+              <label for="scExpected">Expected</label>
+              <input type="radio" name="scenario" id="scStrong" value="strong">
+              <label for="scStrong">Strong</label>
+            </div>
+            <p class="hint" id="scenarioHint"></p>
+          </fieldset>
+        </form>
+
+        <div class="calc-results" aria-live="polite">
+          <div class="headline-num">
+            <span class="label">Added revenue, first 12 months</span>
+            <strong class="mono" id="rRevenue">$0</strong>
+            <span class="roi mono" id="rRoi"></span>
+          </div>
+          <dl class="kpis">
+            <div><dt>Added visitors per month by month 12</dt><dd class="mono" id="rVisits">0</dd></div>
+            <div><dt>Added customers in year one</dt><dd class="mono" id="rCustomers">0</dd></div>
+            <div><dt>Of those, from AI answers</dt><dd class="mono" id="rAi">0</dd></div>
+          </dl>
+
+          <div class="chart-wrap">
+            <div class="chart-legend">
+              <span><i class="sw sw-seo"></i>From search (SEO)</span>
+              <span><i class="sw sw-aeo"></i>From AI answers (AEO)</span>
+              <span><i class="sw sw-cost"></i>Monthly investment</span>
+            </div>
+            <div class="chart-scroll">
+              <svg id="chart" viewBox="0 0 640 280" role="img" aria-label="Added monthly revenue over 12 months, split by search and AI answers"></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="fine">These figures are estimates for planning, not a guarantee. Results depend on your market, competition, current site condition and how quickly changes are made. Growth usually builds over several months, which the chart reflects. Your free scan replaces these assumptions with your actual starting point.</p>
+    </div>
+  </section>
+
+  <!-- WHAT THE SCAN CHECKS -->
+  <section class="checks">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Inside the scan</p>
+        <h2>What BusinessPulse checks</h2>
+      </div>
+      <ul class="check-list">
+        <li><span class="mono code">AI</span><div><h3>AI answer visibility</h3><p>We ask the questions your customers ask AI assistants and record whether your business is named, how it is described, and who gets named instead.</p></div></li>
+        <li><span class="mono code">SRP</span><div><h3>Search ranking</h3><p>Where you place for the local searches that bring in paying customers, compared with nearby competitors.</p></div></li>
+        <li><span class="mono code">SCH</span><div><h3>Structured data</h3><p>Whether your site tells search engines and AI tools, in their own format, what you do, where you are and when you are open.</p></div></li>
+        <li><span class="mono code">HLT</span><div><h3>Site health</h3><p>Speed, mobile layout, broken links, security and the technical issues that quietly push you down the list.</p></div></li>
+        <li><span class="mono code">GBP</span><div><h3>Listings and reviews</h3><p>Consistency of your name, address and phone across Google and directories, plus the review signals that build trust.</p></div></li>
+        <li><span class="mono code">FIX</span><div><h3>Prioritized fixes</h3><p>A plain English list of what to fix first, ranked by the return you are likely to see.</p></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section class="process">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">How it works</p>
+        <h2>From scan to steady growth</h2>
+      </div>
+      <ol class="steps">
+        <li><h3>Scan</h3><p>Send us your website. We run the BusinessPulse scan and check your AI and search visibility.</p></li>
+        <li><h3>Review</h3><p>We walk you through the results and quote a plan sized to what your business actually needs.</p></li>
+        <li><h3>Improve</h3><p>We fix the gaps, then rescan each month so you can watch your pulse get stronger.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta" id="scan">
+    <div class="wrap cta-grid">
+      <div>
+        <p class="eyebrow">Free, no obligation</p>
+        <h2>Find out if AI recommends you, or your competitor.</h2>
+        <p>Pricing is quoted after your scan, based on what we find. You keep the report either way.</p>
+        <p class="contact">Prefer email? <span class="mono sel" id="emailText">wfleonard@saxonenterprises.net</span> <button type="button" class="copy" id="copyEmail">Copy</button></p>
+      </div>
+      <form class="scan-form" id="scanForm" novalidate>
+        <div class="field">
+          <label for="bizName">Business name</label>
+          <input type="text" id="bizName" autocomplete="organization" required>
+        </div>
+        <div class="field">
+          <label for="bizSite">Website address</label>
+          <input type="url" id="bizSite" placeholder="https://" inputmode="url" required>
+        </div>
+        <div class="field">
+          <label for="bizEmail">Your email</label>
+          <input type="email" id="bizEmail" autocomplete="email" required>
+        </div>
+        <button type="submit" class="btn btn-block">Request my free scan</button>
+        <p class="form-msg" id="formMsg" role="status"></p>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <span>BusinessPulse · businesspulse.app</span>
+    <span>SaxonAEO by Saxon Enterprises Inc.</span>
+  </div>
+</footer>
+
+<script src="/scan/script.js"></script>
+</body>
+</html>

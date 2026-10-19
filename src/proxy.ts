@@ -34,16 +34,23 @@ const GA_SCRIPT = 'https://*.googletagmanager.com'
 const GA_CONNECT = 'https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
 const GA_IMG = 'https://*.google-analytics.com https://*.googletagmanager.com'
 
-function buildCsp(isProd: boolean): string {
+// Google Fonts, allowed only on the /scan landing page, which was designed with them.
+const GOOGLE_FONTS_CSS = 'https://fonts.googleapis.com'
+const GOOGLE_FONTS_FILES = 'https://fonts.gstatic.com'
+const GOOGLE_FONTS_PATHS = ['/scan']
+
+export function buildCsp(isProd: boolean, options: { googleFonts?: boolean } = {}): string {
+  const fontsCss = options.googleFonts ? ` ${GOOGLE_FONTS_CSS}` : ''
+  const fontFiles = options.googleFonts ? ` ${GOOGLE_FONTS_FILES}` : ''
   const directives = [
     "default-src 'self'",
     // Dev needs 'unsafe-eval' for Turbopack HMR; prod does not.
     isProd
       ? `script-src 'self' 'unsafe-inline' ${TURNSTILE_ORIGIN} ${GA_SCRIPT}`
       : `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${TURNSTILE_ORIGIN} ${GA_SCRIPT}`,
-    "style-src 'self' 'unsafe-inline'",
+    `style-src 'self' 'unsafe-inline'${fontsCss}`,
     `img-src 'self' data: blob: ${GA_IMG}`,
-    "font-src 'self' data:",
+    `font-src 'self' data:${fontFiles}`,
     isProd
       ? `connect-src 'self' ${TURNSTILE_ORIGIN} ${GA_CONNECT}`
       : `connect-src 'self' ws: wss: ${TURNSTILE_ORIGIN} ${GA_CONNECT}`,
@@ -69,7 +76,7 @@ export default function proxy(req: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  const csp = buildCsp(isProd)
+  const csp = buildCsp(isProd, { googleFonts: GOOGLE_FONTS_PATHS.includes(pathname) })
   const res = NextResponse.next()
 
   res.headers.set('content-security-policy', csp)
