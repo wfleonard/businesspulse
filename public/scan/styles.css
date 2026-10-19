@@ -218,6 +218,7 @@ input[type="range"] { width: 100%; accent-color: var(--pulse); }
 .cta-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(2rem, 4vw, 4rem); align-items: start; }
 .cta-grid > div { display: grid; gap: 1rem; }
 .cta-grid > div p:not(.eyebrow) { color: var(--muted); max-width: 52ch; }
+.cta-grid a { color: var(--pulse); text-underline-offset: 2px; }
 .contact { font-size: 0.92rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .sel { user-select: all; color: var(--ink); overflow-wrap: anywhere; }
 .copy { font: 600 0.78rem/1 var(--f-body); padding: 0.4rem 0.7rem; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
