@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { createRerun, deleteRequest, setLeadStatus } from '@/lib/aeo/admin'
+import { deleteScanRequest } from '@/lib/aeo/scan-requests'
 import { LEAD_STATUSES } from '@/lib/aeo/lead-filters'
 import { fieldErrors, prospectRequestSchema } from '@/lib/aeo/request-schema'
 import { createProspectRequest } from '@/lib/aeo/requests'
@@ -46,6 +47,18 @@ export async function deleteLead(formData: FormData): Promise<void> {
       target: parsed.data.requestId,
       metadata: { runDeleted: result.runDeleted },
     })
+  }
+  revalidatePath('/dashboard/aeo')
+  redirect(leadListReturn(formData.get('returnTo')))
+}
+
+export async function deleteScanLead(formData: FormData): Promise<void> {
+  const { user } = await requireSession()
+  const parsed = z.object({ scanRequestId: z.uuid() }).safeParse(Object.fromEntries(formData))
+  if (!parsed.success) throw new Error('Invalid delete request')
+
+  if (await deleteScanRequest(parsed.data.scanRequestId)) {
+    await recordAudit({ userId: user.id, action: 'aeo.scan_request_deleted', target: parsed.data.scanRequestId })
   }
   revalidatePath('/dashboard/aeo')
   redirect(leadListReturn(formData.get('returnTo')))

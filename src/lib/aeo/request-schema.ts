@@ -9,20 +9,28 @@ const required = (label: string, max: number) =>
     .min(2, `${label} is required`)
     .max(max, `${label} is too long`)
 
+const websiteField = z
+  .string({ error: 'Website is required' })
+  .max(2048)
+  .transform((value, ctx) => {
+    const domain = normalizeDomain(value)
+    if (!domain) {
+      ctx.addIssue({ code: 'custom', message: 'Enter your website, like example.com' })
+      return z.NEVER
+    }
+    return domain
+  })
+
+const emailField = z
+  .string({ error: 'Email is required' })
+  .trim()
+  .toLowerCase()
+  .pipe(z.email('Enter a valid email address').max(254, 'Enter a valid email address'))
+
 /** Body of POST /api/aeo/requests. `website` comes out normalized to a bare domain. */
 export const snapshotRequestSchema = z.object({
   businessName: required('Business name', 120),
-  website: z
-    .string({ error: 'Website is required' })
-    .max(2048)
-    .transform((value, ctx) => {
-      const domain = normalizeDomain(value)
-      if (!domain) {
-        ctx.addIssue({ code: 'custom', message: 'Enter your website, like example.com' })
-        return z.NEVER
-      }
-      return domain
-    }),
+  website: websiteField,
   service: required('Service', 80),
   city: required('City', 80),
   state: z
@@ -32,16 +40,21 @@ export const snapshotRequestSchema = z.object({
     .refine((code) => STATE_CODES.includes(code), 'Choose a state'),
   /** A canned panel slug, or "other" for a generated panel. */
   vertical: z.string().trim().max(80).default('other'),
-  email: z
-    .string({ error: 'Email is required' })
-    .trim()
-    .toLowerCase()
-    .pipe(z.email('Enter a valid email address').max(254, 'Enter a valid email address')),
+  email: emailField,
   contactConsent: z.boolean().default(false),
   turnstileToken: z.string().max(2048).default(''),
 })
 
 export type SnapshotRequestInput = z.infer<typeof snapshotRequestSchema>
+
+/** Body of POST /api/scan-requests, from the /scan landing page. */
+export const scanRequestSchema = z.object({
+  businessName: required('Business name', 120),
+  website: websiteField,
+  email: emailField,
+})
+
+export type ScanRequestInput = z.infer<typeof scanRequestSchema>
 
 /** Most other websites one business can list. The panel enforces the same limit (Job::MAX_OTHER_DOMAINS). */
 export const MAX_OTHER_DOMAINS = 10

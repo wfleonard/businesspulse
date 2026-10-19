@@ -12,8 +12,9 @@ import {
   type LeadRow,
 } from '@/lib/aeo/admin'
 import { filtersToQuery, LEAD_STATUSES, parseLeadFilters } from '@/lib/aeo/lead-filters'
+import { listScanRequests, type ScanRequestRow } from '@/lib/aeo/scan-requests'
 import { requireSession } from '@/lib/session'
-import { deleteLead } from './actions'
+import { deleteLead, deleteScanLead } from './actions'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Leads | BusinessPulse' }
@@ -51,6 +52,65 @@ function Score({ lead }: { lead: LeadRow }) {
   // Queued after an attempt means the worker is retrying the questions it missed.
   const label = lead.runStatus === 'queued' && (lead.runAttempts ?? 0) > 0 ? 'retrying' : lead.runStatus
   return <span className={lead.runStatus === 'failed' ? 'text-danger' : 'text-text-secondary'}>{label}</span>
+}
+
+/** Scan requests from /scan: three fields only, so each needs a snapshot started by hand. */
+function ScanRequests({ rows, returnTo }: { rows: ScanRequestRow[]; returnTo: string }) {
+  return (
+    <section>
+      <h2 className="text-lg font-semibold text-dark">Scan requests</h2>
+      <p className="mt-1 text-sm text-text-secondary">
+        From the /scan landing page. Start a snapshot for each one; the form is pre-filled.
+      </p>
+      <div className="mt-3 overflow-x-auto rounded-lg border border-border bg-white">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-border bg-bg text-xs text-text-secondary">
+            <tr>
+              <th className="px-3 py-2 font-medium">Date</th>
+              <th className="px-3 py-2 font-medium">Business</th>
+              <th className="px-3 py-2 font-medium">Email</th>
+              <th className="px-3 py-2">
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id} className="border-b border-border align-top last:border-0">
+                <td className="whitespace-nowrap px-3 py-2 text-text-secondary">{formatDate(row.createdAt)}</td>
+                <td className="px-3 py-2">
+                  <div className="font-medium text-dark">{row.businessName}</div>
+                  <div className="text-xs text-text-secondary">{row.domain}</div>
+                </td>
+                <td className="px-3 py-2 text-dark">{row.email}</td>
+                <td className="whitespace-nowrap px-1 py-1 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <Link
+                      href={`/dashboard/aeo/new?${new URLSearchParams({ businessName: row.businessName, website: row.domain, email: row.email })}`}
+                      className="rounded-md border border-border bg-white px-2 py-1 text-xs font-medium text-dark hover:bg-gray-50"
+                    >
+                      Run snapshot
+                    </Link>
+                    <form action={deleteScanLead}>
+                      <input type="hidden" name="scanRequestId" value={row.id} />
+                      <input type="hidden" name="returnTo" value={returnTo} />
+                      <ConfirmSubmit
+                        message={`Permanently delete the scan request from ${row.businessName}? This can't be undone.`}
+                        label={`Delete scan request from ${row.businessName}`}
+                        className="px-2 text-text-secondary hover:bg-danger/5 hover:text-danger"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </ConfirmSubmit>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
 }
 
 function Funnel({ funnel }: { funnel: FunnelStats }) {
@@ -102,6 +162,7 @@ export default async function LeadsPage({ searchParams }: Props) {
     generatedServiceCounts(),
     funnelStats(30),
   ])
+  const scanRequests = await listScanRequests()
   const overCap = stats.spentTodayUsd >= stats.dailyCapUsd
   const query = filtersToQuery(filters)
 
@@ -156,6 +217,8 @@ export default async function LeadsPage({ searchParams }: Props) {
       </div>
 
       <Funnel funnel={funnel} />
+
+      {scanRequests.length > 0 && <ScanRequests rows={scanRequests} returnTo={`/dashboard/aeo${query}`} />}
 
       <form method="get" className="flex flex-wrap items-end gap-3 text-sm">
         <label className="flex flex-col gap-1">

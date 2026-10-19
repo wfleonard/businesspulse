@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Privacy | BusinessPulse',
 }
 
-const LAST_UPDATED = 'October 1, 2026'
+const LAST_UPDATED = 'October 19, 2026'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -36,6 +36,10 @@ export default function PrivacyPage() {
           When you request a snapshot: your business name, website, main service, city, state, industry,
           and email address, plus the IP address the request came from and whether you agreed to be
           contacted. We also store the AI answers gathered for your report.
+        </p>
+        <p>
+          When you request a scan from our scan page: your business name, website, and email address, and the IP
+          address the request came from.
         </p>
       </Section>
 

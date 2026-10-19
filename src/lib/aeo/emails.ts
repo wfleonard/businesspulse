@@ -157,6 +157,39 @@ ${requests}
   }
 }
 
+/** To the admin: someone asked for a scan on the /scan landing page. */
+export function adminScanRequestEmail(args: { businessName: string; domain: string; email: string }): EmailContent {
+  const start = appUrl(
+    `/dashboard/aeo/new?${new URLSearchParams({ businessName: args.businessName, website: args.domain, email: args.email })}`
+  )
+  const facts: [string, string][] = [
+    ['Business', args.businessName],
+    ['Website', args.domain],
+    ['Email', args.email],
+  ]
+  const rows = facts
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding:4px 12px 4px 0;color:#64748b;vertical-align:top">${label}</td><td style="padding:4px 0;color:#0f172a;word-break:break-word">${escapeHtml(value)}</td></tr>`
+    )
+    .join('')
+  return {
+    subject: `[BusinessPulse] Scan request: ${args.businessName} (${args.domain})`,
+    html: `<!doctype html><html><body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a">
+<p style="margin:0 0 16px">New scan request from businesspulse.app/scan.</p>
+<table style="border-collapse:collapse">${rows}</table>
+<p style="margin:16px 0 0"><a href="${escapeHtml(start)}" style="color:#2563eb">Start a snapshot for it</a> (choose the industry, service, and town).</p>
+</body></html>`,
+    text: [
+      'New scan request from businesspulse.app/scan.',
+      '',
+      ...facts.map(([label, value]) => `${label}: ${value}`),
+      '',
+      `Start a snapshot for it: ${start}`,
+    ].join('\n'),
+  }
+}
+
 export type CitedScore = { cited: number; total: number }
 
 /** How this month's score compares with the first one. */

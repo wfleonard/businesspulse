@@ -727,6 +727,28 @@ export const aeoMailSend = pgTable(
   (t) => [index('aeo_mail_send_request_idx').on(t.requestId, t.sentAt), index('aeo_mail_send_sent_idx').on(t.sentAt)]
 )
 
+/**
+ * A scan request from the /scan landing page: business name, website, and
+ * email only. Not a snapshot request: nothing runs until someone starts a
+ * snapshot for it from the dashboard. Contact details are erased on the same
+ * schedule as snapshot requests.
+ */
+export const aeoScanRequest = pgTable(
+  'aeo_scan_request',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessName: text('business_name').notNull(),
+    /** Normalized like aeo_request.domain. */
+    domain: text('domain').notNull(),
+    email: text('email').notNull(),
+    ipAddress: text('ip_address'),
+    notifiedAt: timestamp('notified_at'),
+    anonymizedAt: timestamp('anonymized_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('aeo_scan_request_created_idx').on(t.createdAt)]
+)
+
 export const schema = {
   user,
   session,

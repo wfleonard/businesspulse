@@ -15,13 +15,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [
     { url: appUrl('/'), changeFrequency: 'weekly', priority: 1 },
     { url: appUrl('/resources'), changeFrequency: 'weekly', priority: 0.8 },
+    { url: appUrl('/scan'), changeFrequency: 'monthly', priority: 0.8 },
     ...publishedArticles(false).map((article) => ({
       url: appUrl(`/resources/${article.slug}`),
       lastModified: articleDate(article.updated ?? article.published),
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     })),
-    { url: appUrl('/privacy'), lastModified: new Date('2026-10-01'), changeFrequency: 'yearly', priority: 0.3 },
+    { url: appUrl('/privacy'), lastModified: new Date('2026-10-19'), changeFrequency: 'yearly', priority: 0.3 },
   ]
 
   // The sitemap must still work if the database doesn't.

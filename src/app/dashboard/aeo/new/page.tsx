@@ -8,10 +8,21 @@ import { requireSession } from '@/lib/session'
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Run a snapshot | BusinessPulse' }
 
-export default async function NewProspectSnapshotPage() {
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
+
+/** Fields a link can pre-fill, such as "Run snapshot" on a scan request. */
+const PREFILL = ['businessName', 'website', 'email', 'service', 'city', 'state'] as const
+
+export default async function NewProspectSnapshotPage({ searchParams }: Props) {
   // Pages render in parallel with the layout, so each checks the session itself.
   await requireSession()
   const panels = await activePanels()
+  const params = await searchParams
+  const initialValues: Record<string, string> = {}
+  for (const key of PREFILL) {
+    const value = params[key]
+    if (typeof value === 'string' && value.length <= 2048) initialValues[key] = value
+  }
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -27,7 +38,7 @@ export default async function NewProspectSnapshotPage() {
         </p>
       </div>
       <Card>
-        <ProspectForm panels={panels} states={stateOptions()} />
+        <ProspectForm panels={panels} states={stateOptions()} initialValues={initialValues} />
       </Card>
     </div>
   )

@@ -6,6 +6,8 @@ import { createProspectSnapshot, type ProspectFormState } from '@/app/dashboard/
 type Props = {
   panels: { slug: string; name: string }[]
   states: { code: string; name: string }[]
+  /** Starting values, e.g. from a scan request. */
+  initialValues?: Record<string, string>
 }
 
 const inputClass =
@@ -37,8 +39,10 @@ function Field({
 }
 
 /** Dashboard form for an outbound prospect snapshot. On success the action redirects to the run page. */
-export function ProspectForm({ panels, states }: Props) {
-  const [state, action, pending] = useActionState<ProspectFormState, FormData>(createProspectSnapshot, {})
+export function ProspectForm({ panels, states, initialValues }: Props) {
+  const [state, action, pending] = useActionState<ProspectFormState, FormData>(createProspectSnapshot, {
+    values: initialValues,
+  })
   const values = state.values ?? {}
   const errors = state.fields ?? {}
 

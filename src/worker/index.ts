@@ -26,6 +26,7 @@ import { decideOutcome } from '@/lib/aeo/outcome'
 import { PermanentRunError, planRun } from '@/lib/aeo/plan'
 import { sendRecheckEmails, startDueRechecks } from '@/lib/aeo/recheck'
 import { sweepExpiredContactDetails } from '@/lib/aeo/retention'
+import { sweepExpiredScanRequests } from '@/lib/aeo/scan-requests'
 import {
   answeredQueries,
   claimNextRun,
@@ -66,6 +67,8 @@ async function sweepRetention(config: WorkerConfig): Promise<void> {
   try {
     const cleared = await sweepExpiredContactDetails(config.retentionDays)
     if (cleared > 0) log('contact_details_erased', { requests: cleared, afterDays: config.retentionDays })
+    const scans = await sweepExpiredScanRequests(config.retentionDays)
+    if (scans > 0) log('contact_details_erased', { scanRequests: scans, afterDays: config.retentionDays })
   } catch (err) {
     log('retention_error', { error: errorMessage(err) })
   }
