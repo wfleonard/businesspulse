@@ -53,6 +53,20 @@ export function faqJsonLd(faq: { q: string; a: string }[]) {
   }
 }
 
+/** The trail from the homepage to this page. The homepage is added; the last item is the page itself. */
+export function breadcrumbJsonLd(trail: { name: string; path: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [{ name: 'BusinessPulse', path: '/' }, ...trail].map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: appUrl(item.path),
+    })),
+  }
+}
+
 /** A service-area business: no street address, so the town is its only location. */
 export function localProviderJsonLd(path: string, provider: LocalProvider) {
   return {
@@ -80,6 +94,10 @@ export function localProviderJsonLd(path: string, provider: LocalProvider) {
 export const SITE_DESCRIPTION =
   'BusinessPulse shows whether AI search cites your business: a free snapshot asks real buyer questions for your industry and area and reports who gets cited when you don’t.'
 
+/** SITE_DESCRIPTION cut to what Google shows (about 155 characters), for meta descriptions. */
+export const SITE_META_DESCRIPTION =
+  'See whether AI search cites your business. A free snapshot asks real buyer questions for your industry and area and shows who gets cited instead.'
+
 /**
  * BusinessPulse's profiles on other sites (LinkedIn, Product Hunt, G2, and so
  * on). Listing them as sameAs tells search engines and assistants they are all
@@ -97,7 +115,7 @@ export function organizationJsonLd() {
     founder: { '@type': 'Person', name: 'Bill Leonard' },
     parentOrganization: {
       '@type': 'Organization',
-      name: 'Saxon Enterprises Inc',
+      name: 'Saxon Enterprises, Inc.',
       address: {
         '@type': 'PostalAddress',
         addressLocality: 'Tinton Falls',

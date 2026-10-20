@@ -3,13 +3,16 @@ import { CANNED_PANELS } from '@/lib/aeo/panels'
 import {
   ALL_ARTICLES,
   articleDate,
+  articleDescription,
+  articleTitleTag,
   findArticle,
   formatDay,
+  pageTitle,
   parseHubFilters,
   publishedArticles,
   RESOURCE_TYPE_LABELS,
 } from '..'
-import { articleJsonLd, faqJsonLd, jsonLdString, localProviderJsonLd, organizationJsonLd, websiteJsonLd } from '../json-ld'
+import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, jsonLdString, localProviderJsonLd, organizationJsonLd, websiteJsonLd } from '../json-ld'
 import { buildLlmsTxt } from '../llms'
 
 const panelSlugs = new Set(CANNED_PANELS.map((p) => p.slug))
@@ -38,6 +41,11 @@ describe.each(ALL_ARTICLES.map((a) => [a.slug, a] as const))('article %s', (_slu
     const text = `${article.title} ${article.summary} ${article.body}`
     expect(text).not.toContain('—')
     expect(text).not.toMatch(/\{[a-z_]+\}/)
+  })
+
+  it('fits its title tag and meta description in what Google shows', () => {
+    expect(articleTitleTag(article).length).toBeLessThanOrEqual(65)
+    expect(articleDescription(article).length).toBeLessThanOrEqual(160)
   })
 
   it('repeats every FAQ question in the body', () => {
@@ -125,6 +133,32 @@ describe('structured data', () => {
         dateModified: '2026-09-18T00:00:00.000Z',
         publisher: { name: 'BusinessPulse' },
       })
+    } finally {
+      process.env.BETTER_AUTH_URL = saved
+    }
+  })
+
+  it('adds the brand to a title only when it fits', () => {
+    expect(pageTitle('What is AEO?')).toBe('What is AEO? | BusinessPulse')
+    expect(pageTitle('A title that is already long enough to fill the space')).toBe(
+      'A title that is already long enough to fill the space'
+    )
+  })
+
+  it('builds a breadcrumb trail from the homepage', () => {
+    const saved = process.env.BETTER_AUTH_URL
+    process.env.BETTER_AUTH_URL = 'https://businesspulse.app'
+    try {
+      const trail = breadcrumbJsonLd([
+        { name: 'Resources', path: '/resources' },
+        { name: 'What is AEO?', path: '/resources/what-is-aeo' },
+      ])
+      expect(trail['@type']).toBe('BreadcrumbList')
+      expect(trail.itemListElement.map((i) => [i.position, i.name, i.item])).toEqual([
+        [1, 'BusinessPulse', 'https://businesspulse.app/'],
+        [2, 'Resources', 'https://businesspulse.app/resources'],
+        [3, 'What is AEO?', 'https://businesspulse.app/resources/what-is-aeo'],
+      ])
     } finally {
       process.env.BETTER_AUTH_URL = saved
     }

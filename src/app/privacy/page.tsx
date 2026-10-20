@@ -1,12 +1,18 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
+import { appUrl } from '@/lib/aeo/emails'
 
 // The contact address comes from the environment at request time.
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = {
-  title: 'Privacy | BusinessPulse',
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: 'Privacy | BusinessPulse',
+    description:
+      'What BusinessPulse collects when you request a snapshot or a scan, why, how long it keeps it, and how to have it deleted.',
+    alternates: { canonical: appUrl('/privacy') },
+  }
 }
 
 const LAST_UPDATED = 'October 19, 2026'

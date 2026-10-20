@@ -56,6 +56,21 @@ export function formatDay(date: Date): string {
   return new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' }).format(date)
 }
 
+const TITLE_SUFFIX = ' | BusinessPulse'
+
+/** Google shows about 60 characters of a title, so the brand suffix is added only when it fits. */
+export function pageTitle(title: string): string {
+  return title.length + TITLE_SUFFIX.length <= 60 ? `${title}${TITLE_SUFFIX}` : title
+}
+
+export function articleTitleTag(article: ResourceArticle): string {
+  return pageTitle(article.seoTitle ?? article.title)
+}
+
+export function articleDescription(article: ResourceArticle): string {
+  return article.description ?? article.summary
+}
+
 export function industryName(slug: string): string | null {
   return CANNED_PANELS.find((p) => p.slug === slug)?.name ?? null
 }

@@ -33,8 +33,12 @@ export type ResourceArticle = {
   slug: string
   type: Exclude<ResourceType, 'benchmark'>
   title: string
-  /** The direct answer in one or two sentences. Shown under the title and used as the meta description. */
+  /** A shorter title for the title tag, when the title runs past what Google shows (about 60 characters). */
+  seoTitle?: string
+  /** The direct answer in one or two sentences. Shown under the title, and the meta description unless `description` is set. */
   summary: string
+  /** The meta description, when the summary runs past what Google shows (about 155 characters). */
+  description?: string
   /** Canned panel slugs this page is written for, or [] for every industry. */
   industries: string[]
   /** YYYY-MM-DD */

@@ -6,11 +6,31 @@ export const howBusinessPulseMeasures: ResourceArticle = {
   title: 'How the BusinessPulse snapshot measures AI visibility',
   summary:
     'We ask Perplexity, with live web search, 20 questions that buyers in your industry and area actually ask, then check which websites each answer cites. Your score is the number of questions where your own site was one of them.',
+  description:
+    'We ask Perplexity, with live web search, 20 questions that buyers in your industry and area actually ask, then check which websites each answer cites.',
   industries: [],
   published: '2026-09-18',
   updated: '2026-09-21',
+  faq: [
+    {
+      q: 'Which questions does the snapshot ask?',
+      a: 'For each industry we cover, a prepared set of 60 to 104 buyer questions, written and reviewed by hand. We fill in your service, city, and state and pick 20, always including hiring, cost, and permit questions where the set has them. The same business always gets the same 20. For any other kind of business, we read your homepage and write 20 questions for it.',
+    },
+    {
+      q: 'How are the questions asked?',
+      a: 'Each question goes to Perplexity’s Sonar model with live web search, one question at a time, with no history from earlier questions. We keep the full answer and every source it cites.',
+    },
+    {
+      q: 'What counts as cited?',
+      a: 'Your site is cited when your domain, or a subdomain of it, is one of the answer’s sources. The report also shows answers that name you without linking, reach you only through a directory, don’t mention you, or were answered from memory without a search, which are reported separately.',
+    },
+    {
+      q: 'What can\'t a snapshot tell you?',
+      a: 'It asks one assistant, at one point in time, a sample of 20 questions. It doesn’t cover Google’s AI Overviews, and it shows what an assistant answers, not why it chose one source over another.',
+    },
+  ],
   body: `
-## Which questions we ask
+## Which questions does the snapshot ask?
 
 For each industry we cover, we keep a prepared question set of 60 to 104 buyer questions, written and reviewed by hand. The industry list on the snapshot form shows which ones have a set, from roofing and HVAC to solar and municipal advisors. Each question has placeholders for your service, city, and state, so "who installs heat pumps near Red Bank, New Jersey" is asked the way a buyer in your area would type it.
 
@@ -18,11 +38,11 @@ For your snapshot we fill in those placeholders and pick 20 questions. Every sna
 
 For any other kind of business, we read your homepage and write 20 questions for it. Those are less precise than a prepared set, and the report says so.
 
-## How we ask them
+## How are the questions asked?
 
 Each question goes to Perplexity's Sonar model with live web search, one question at a time, with no history from earlier questions. We keep the full answer and every source it cites.
 
-## What counts as cited
+## What counts as cited?
 
 | Result | Meaning |
 |---|---|
@@ -40,7 +60,7 @@ A question the assistant fails to answer isn't counted either way; the report sa
 
 The report lists the websites cited in your place. Government sites, reference sites, trade press, and equipment makers aren't counted as competitors: each prepared question set carries its own list of those, so a building code or a manufacturer's spec sheet doesn't show up as a rival.
 
-## What a snapshot can't tell you
+## What can't a snapshot tell you?
 
 - **It's one assistant.** ChatGPT, Claude, and Gemini often cite different sources for the same question. The full audit asks all three.
 - **It's a point in time.** AI answers change as the models and the web change, so treat a snapshot as a reading, not a ranking.

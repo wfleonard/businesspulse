@@ -17,6 +17,8 @@ export const howToCheckChatGpt: ResourceArticle = {
   title: 'How to check whether ChatGPT recommends your business',
   summary:
     'Ask ChatGPT, Perplexity, and Claude the questions your buyers ask, in a fresh chat, naming your town, then read the sources under each answer, not just the text. Repeat on a schedule, because answers change.',
+  description:
+    'Ask ChatGPT, Perplexity, and Claude your buyers’ questions in a fresh chat, naming your town, then read the sources under each answer, not just the text.',
   industries: [],
   published: '2026-09-21',
   faq,

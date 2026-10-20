@@ -4,10 +4,27 @@ export const costQuestionsCiteCostGuides: ResourceArticle = {
   slug: 'ai-search-cost-questions-cite-cost-guides',
   type: 'explainer',
   title: 'When buyers ask AI what a job costs, it cites cost guides, not the businesses that do the work',
+  seoTitle: 'Why AI search cites cost guides, not businesses',
   summary:
     'Ask an AI assistant what a job costs and it quotes cost guides such as HomeGuide and Angi. Across 27 industries, the businesses’ own sites were cited on none of 86 cost answers. That gap is an opening.',
+  description:
+    'Across 27 industries, businesses’ own sites were cited on none of 86 AI answers about cost. Cost guides such as HomeGuide and Angi were cited instead.',
   industries: [],
   published: '2026-09-21',
+  faq: [
+    {
+      q: 'Why do cost guides get cited?',
+      a: 'They publish numbers, they use the buyer’s question as a heading, and their publishers write thousands of these pages. A business site that says only "call for a free estimate" leaves an assistant nothing to quote.',
+    },
+    {
+      q: 'Why is that an opening?',
+      a: 'A national cost guide is an average across the country. You know what the job costs in your area, what makes one job cost twice another, and what buyers get wrong when they compare quotes. That is more useful to the buyer, and nobody else can publish it.',
+    },
+    {
+      q: 'How do you write a cost page an assistant can cite?',
+      a: 'Use the buyer’s question as the heading, give a dated price range in the first two sentences, explain what moves the price with specifics only you have, say which towns or region the range applies to, and keep it current.',
+    },
+  ],
   body: `
 ## The pattern
 
@@ -36,7 +53,7 @@ Cost is the clearest case of a wider pattern. Of the 540 questions, the business
 
 We saw the same shape earlier, measured more deeply. In August 2026 we asked ChatGPT, Claude, and Perplexity 116 buyer questions about one directional drilling contractor: 348 answers. The contractor was cited on 10 questions, all of them requests for a list of companies. On 36 cost answers and 42 permit answers, it was cited on none.
 
-## Why cost guides win
+## Why do cost guides get cited?
 
 We can see what gets cited, not why, so this is our reading of it.
 
@@ -44,13 +61,13 @@ We can see what gets cited, not why, so this is our reading of it.
 - **They answer the question as asked.** "How much does a heat pump cost to install" is a heading on a cost guide. It often appears nowhere on an installer's site.
 - **They are built for it.** Cost guide publishers write thousands of these pages. A small business writes none.
 
-## Why that's an opening
+## Why is that an opening?
 
 A national cost guide is an average across the country. You know what the job actually costs in your area, what makes one job cost twice another, and what buyers get wrong when they compare quotes. That is more useful to the buyer than the guide, and nobody else can publish it.
 
 It also matters where these questions sit. A buyer asking about cost is deciding whether and how to go ahead, and the source that answers is the one they trust next. Right now that is a cost guide, often one that sells the lead on to whoever pays.
 
-## How to write a cost page an assistant can cite
+## How do you write a cost page an assistant can cite?
 
 - **Use the buyer's question as the heading,** in their words: "How much does it cost to replace a commercial flat roof?"
 - **Give a range in the first two sentences,** with a date. You don't have to publish a quote; a typical range and what puts a job at the top or bottom of it is enough.

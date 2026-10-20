@@ -6,8 +6,24 @@ export const whyAiCitesDirectories: ResourceArticle = {
   title: 'Why AI search cites Angi and Yelp instead of your website',
   summary:
     'When buyers ask an AI assistant who to hire nearby, it usually answers from directories. Across 27 industries, directories were cited on 106 of 135 "near me" answers, and the businesses’ own sites on 35.',
+  description:
+    'Across 27 industries, directories such as Angi and Yelp were cited on 106 of 135 “near me” AI answers, and the businesses’ own sites on 35.',
   industries: [],
   published: '2026-09-21',
+  faq: [
+    {
+      q: 'Why do AI assistants cite directories?',
+      a: 'We can see what an assistant cites, not why, but the pattern is clear: a "near me" question asks for a list, and a directory is a list; a directory page states which town it covers, where many small business sites don’t; and its reviews are all in one place.',
+    },
+    {
+      q: 'What does a directory citation cost you?',
+      a: 'The buyer may still find you, but the directory owns the lead. You sit on its page next to your competitors, often below whoever pays for placement, and on several of these sites a lead reaches you only as a paid referral.',
+    },
+    {
+      q: 'How do you take questions back from directories?',
+      a: 'Name your service area and towns on your own site, put your licenses, certifications, and reviews on your own pages, answer the cost, permit, and how-it-works questions a directory can’t, and keep your directory listings consistent.',
+    },
+  ],
   body: `
 ## What we measured
 
@@ -26,7 +42,7 @@ The gap is widest on the question closest to a hire: who does this work near me.
 
 The directories that came up most were the familiar ones. Across the 540 answers, Angi was cited on 83, Yellow Pages on 46, Houzz on 41, HomeGuide on 38, and HomeAdvisor and the Better Business Bureau on 34 each, with Yelp and Thumbtack close behind.
 
-## Why assistants reach for directories
+## Why do AI assistants cite directories?
 
 We can see what an assistant cites, not why it chose it, so this is our reading of the pattern rather than a rule.
 
@@ -34,13 +50,13 @@ We can see what an assistant cites, not why it chose it, so this is our reading 
 - **A directory states where it works.** Its page for your town says so in plain words. Many small business sites never name the towns they serve, so there is nothing tying them to the question.
 - **Reviews are in one place.** An assistant weighing who to recommend finds ratings on the directory page and rarely on the business's own site.
 
-## What it costs you
+## What does a directory citation cost you?
 
 A directory citation isn't nothing: the buyer may still find you. But the directory owns the lead. You sit on its page next to your competitors, often below whoever pays for placement, and on several of these sites a lead reaches you only as a paid referral.
 
 It is also the easiest position to lose, because nothing about it is yours.
 
-## How to take questions back
+## How do you take questions back from directories?
 
 You don't need to beat every directory everywhere. Pick the questions where one is cited in your place and give the assistant a better page to cite.
 

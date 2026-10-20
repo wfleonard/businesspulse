@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
+import { JsonLd } from '@/components/resources/JsonLd'
 import { SnapshotCta } from '@/components/resources/SnapshotCta'
 import { PublicHeader } from '@/components/site/PublicHeader'
 import { appUrl } from '@/lib/aeo/emails'
 import { benchmarkAvailability, type BenchmarkAvailability } from '@/lib/resources/benchmarks'
+import { breadcrumbJsonLd } from '@/lib/resources/json-ld'
 import {
   articleDate,
   formatDay,
@@ -26,7 +28,14 @@ export async function generateMetadata(): Promise<Metadata> {
     title: 'Resources | BusinessPulse',
     description: DESCRIPTION,
     alternates: { canonical: appUrl('/resources') },
-    openGraph: { title: 'BusinessPulse Resources', description: DESCRIPTION, url: appUrl('/resources'), type: 'website' },
+    // Setting openGraph here replaces the inherited one, so the default share image is named again.
+    openGraph: {
+      title: 'BusinessPulse Resources',
+      description: DESCRIPTION,
+      url: appUrl('/resources'),
+      type: 'website',
+      images: '/opengraph-image.jpg',
+    },
   }
 }
 
@@ -170,6 +179,7 @@ export default async function ResourcesPage({ searchParams }: Props) {
 
         <SnapshotCta />
       </main>
+      <JsonLd data={breadcrumbJsonLd([{ name: 'Resources', path: '/resources' }])} />
       <GoogleAnalytics />
     </div>
   )

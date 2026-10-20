@@ -27,8 +27,11 @@ export const hiringAnAeoAgency: ResourceArticle = {
   slug: 'how-to-hire-an-aeo-agency',
   type: 'guide',
   title: 'How to hire an AEO agency: what to look for, what to ask, and the red flags',
+  seoTitle: 'How to hire an AEO agency: what to ask and red flags',
   summary:
     'Hire an AEO agency that measures your AI search visibility before it starts, tracks real buyer questions across several assistants, shows who is cited instead of you, and leaves the pages with you. Be wary of guarantees, cheap link packages, and reports with no baseline.',
+  description:
+    'What to look for in an AEO agency: a measured baseline, real buyer questions across several assistants, who is cited instead of you, and pages you keep.',
   industries: ['ai-visibility'],
   published: '2026-10-01',
   body: `

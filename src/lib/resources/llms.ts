@@ -17,7 +17,7 @@ export function buildLlmsTxt(
     '',
     'BusinessPulse measures AI search visibility for small and midsize businesses. A snapshot asks Perplexity buyer questions drawn from a question set for the business’s industry, filled in with its service and town, and reports which answers cite the business’s website, whether the business is named, and which sites are cited instead (directories, reference sites, and competitors). It is free and needs no account.',
     '',
-    'BusinessPulse is run by Saxon AEO (Saxon Enterprises Inc, Tinton Falls, New Jersey), which offers full audits across ChatGPT, Claude, Perplexity, and Gemini, and answer engine optimization for businesses.',
+    'BusinessPulse is run by Saxon AEO (Saxon Enterprises, Inc., Tinton Falls, New Jersey), which offers full audits across ChatGPT, Claude, Perplexity, and Gemini, and answer engine optimization for businesses.',
     '',
     '## Start here',
     '',

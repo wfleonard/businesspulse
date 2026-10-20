@@ -7,9 +7,9 @@ import { SnapshotCta } from '@/components/resources/SnapshotCta'
 import { Card } from '@/components/ui/Card'
 import { PublicHeader } from '@/components/site/PublicHeader'
 import { appUrl } from '@/lib/aeo/emails'
-import { formatDay } from '@/lib/resources'
+import { formatDay, pageTitle } from '@/lib/resources'
 import { loadBenchmark, MIN_BENCHMARK_BUSINESSES, type Benchmark } from '@/lib/resources/benchmarks'
-import { articleJsonLd } from '@/lib/resources/json-ld'
+import { articleJsonLd, breadcrumbJsonLd } from '@/lib/resources/json-ld'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!benchmark) return {}
   const url = appUrl(`/resources/benchmarks/${benchmark.slug}`)
   return {
-    title: `${titleOf(benchmark)} | BusinessPulse`,
+    title: pageTitle(titleOf(benchmark)),
     description: summaryOf(benchmark),
     alternates: { canonical: url },
     openGraph: { title: titleOf(benchmark), description: summaryOf(benchmark), url, type: 'article' },
@@ -156,6 +156,12 @@ export default async function BenchmarkPage({ params }: Props) {
           published: benchmark.measuredFrom,
           modified: benchmark.measuredTo,
         })}
+      />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Resources', path: '/resources' },
+          { name: titleOf(benchmark), path: `/resources/benchmarks/${benchmark.slug}` },
+        ])}
       />
       <GoogleAnalytics />
     </div>

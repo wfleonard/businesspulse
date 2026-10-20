@@ -75,6 +75,7 @@ describe('robots and sitemap', () => {
       ])
     )
     expect(urls).not.toContain('/resources/benchmarks/landscaping')
+    expect(urls).not.toContain('/scan')
     for (const path of urls) expect(PRIVATE_PATHS.some((p) => path.startsWith(p))).toBe(false)
   })
 

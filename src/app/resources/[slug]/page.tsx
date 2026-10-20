@@ -6,8 +6,16 @@ import { JsonLd } from '@/components/resources/JsonLd'
 import { SnapshotCta } from '@/components/resources/SnapshotCta'
 import { PublicHeader } from '@/components/site/PublicHeader'
 import { appUrl } from '@/lib/aeo/emails'
-import { articleDate, findArticle, formatDay, industryName, RESOURCE_TYPE_LABELS } from '@/lib/resources'
-import { articleJsonLd, faqJsonLd, localProviderJsonLd } from '@/lib/resources/json-ld'
+import {
+  articleDate,
+  articleDescription,
+  articleTitleTag,
+  findArticle,
+  formatDay,
+  industryName,
+  RESOURCE_TYPE_LABELS,
+} from '@/lib/resources'
+import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, localProviderJsonLd } from '@/lib/resources/json-ld'
 import { renderMarkdown } from '@/lib/resources/markdown'
 
 export const dynamic = 'force-dynamic'
@@ -19,12 +27,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!article) return {}
   const url = appUrl(`/resources/${article.slug}`)
   return {
-    title: `${article.title} | BusinessPulse`,
-    description: article.summary,
+    title: articleTitleTag(article),
+    description: articleDescription(article),
     alternates: { canonical: url },
     openGraph: {
       title: article.title,
-      description: article.summary,
+      description: articleDescription(article),
       url,
       type: 'article',
       publishedTime: articleDate(article.published).toISOString(),
@@ -81,6 +89,12 @@ export default async function ArticlePage({ params }: Props) {
           published,
           modified: updated ?? undefined,
         })}
+      />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Resources', path: '/resources' },
+          { name: article.title, path: `/resources/${article.slug}` },
+        ])}
       />
       {article.faq && article.faq.length > 0 && <JsonLd data={faqJsonLd(article.faq)} />}
       {article.localProvider && (

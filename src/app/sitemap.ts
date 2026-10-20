@@ -9,13 +9,13 @@ export const dynamic = 'force-dynamic'
 
 /**
  * Public pages only. Reports, verification links, the dashboard, and the API
- * stay out (see robots.ts). Drafts are never listed.
+ * stay out (see robots.ts). Drafts are never listed, and neither is /scan, the
+ * ad landing page, which is noindex so it doesn't compete with the homepage.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [
     { url: appUrl('/'), changeFrequency: 'weekly', priority: 1 },
     { url: appUrl('/resources'), changeFrequency: 'weekly', priority: 0.8 },
-    { url: appUrl('/scan'), changeFrequency: 'monthly', priority: 0.8 },
     ...publishedArticles(false).map((article) => ({
       url: appUrl(`/resources/${article.slug}`),
       lastModified: articleDate(article.updated ?? article.published),

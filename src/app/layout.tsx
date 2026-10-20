@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { SITE_DESCRIPTION } from "@/lib/resources/json-ld";
+import { appUrl } from "@/lib/aeo/emails";
+import { SITE_META_DESCRIPTION } from "@/lib/resources/json-ld";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,10 +14,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "BusinessPulse",
-  description: SITE_DESCRIPTION,
-};
+// A function, not a constant, so metadataBase reads the site's URL at request
+// time rather than at build time. Share images resolve against it.
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    metadataBase: new URL(appUrl("/")),
+    title: "BusinessPulse",
+    description: SITE_META_DESCRIPTION,
+    twitter: { card: "summary_large_image" },
+  };
+}
 
 export default function RootLayout({
   children,

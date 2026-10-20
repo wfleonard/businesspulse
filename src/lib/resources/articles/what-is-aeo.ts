@@ -33,6 +33,8 @@ export const whatIsAeo: ResourceArticle = {
   title: 'What is AEO (answer engine optimization)?',
   summary:
     'AEO is the work of getting your business cited when people ask AI assistants like ChatGPT, Perplexity, and Claude for recommendations. Where SEO aims for a ranking on a results page, AEO aims to be one of the few sources an assistant quotes in its answer.',
+  description:
+    'AEO is the work of getting your business cited when people ask AI assistants like ChatGPT, Perplexity, and Claude for recommendations.',
   industries: [],
   published: '2026-09-18',
   updated: '2026-09-20',

@@ -23,8 +23,11 @@ export const aiVisibilityTools: ResourceArticle = {
   slug: 'ai-visibility-tools-for-small-businesses',
   type: 'guide',
   title: 'AI visibility tools for small businesses: free and paid options compared',
+  seoTitle: 'AI visibility tools for small businesses, compared',
   summary:
     'Start with a free check: a BusinessPulse snapshot or HubSpot’s AI Search Grader. If you want ongoing tracking, Otterly.AI ($29 a month) and Peec AI (about $95) are the small-business-sized options; Semrush, Ahrefs, and Profound make sense for larger teams or existing customers.',
+  description:
+    'Free and paid AI visibility tools for small businesses, compared: BusinessPulse, HubSpot’s AI Search Grader, Otterly.AI, Peec AI, Semrush, and Profound.',
   industries: ['ai-visibility'],
   published: '2026-10-01',
   body: `

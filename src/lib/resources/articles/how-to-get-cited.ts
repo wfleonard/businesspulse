@@ -6,9 +6,21 @@ export const howToGetCited: ResourceArticle = {
   title: 'How to get your business cited by AI search',
   summary:
     'Answer the exact questions your buyers ask, on pages AI assistants can read, and make your business easy to verify across the web. Most of it is plain, specific writing and a few technical settings.',
+  description:
+    'Answer the exact questions your buyers ask, on pages AI assistants can read, and make your business easy to verify across the web.',
   industries: [],
   published: '2026-09-18',
   updated: '2026-09-20',
+  faq: [
+    {
+      q: 'What does a realistic first win look like?',
+      a: 'Taking one specific question off a directory, usually a cost, permit, or how-it-works question, because a directory listing has nothing to say about those. Pick the two or three questions where a directory is cited in your place and write the pages that answer them properly.',
+    },
+    {
+      q: 'What doesn\'t work?',
+      a: 'Hundreds of near-identical pages, bought links, keyword stuffing and hidden text, paying for files that claim to instruct AI crawlers, and a single "AI visibility score" with no assistant, questions, or date behind it.',
+    },
+  ],
   body: `
 ## 1. Find the questions you're missing
 
@@ -46,7 +58,7 @@ Assistants trust what they can confirm in several places.
 - List your licenses, certifications, and trade association memberships on your site, and get listed in those associations' directories.
 - Link your site to your official profiles, and those profiles back to your site.
 
-## What a realistic first win looks like
+## What does a realistic first win look like?
 
 Most local businesses aren't losing to a rival contractor. They're losing to a directory: the assistant knows them, and the only route it offers is a Yelp, Angi, or Blue Book listing. That's a lead the directory owns and rents back to you.
 
@@ -58,7 +70,7 @@ Watch for a second pattern too: an answer that names your business but cites no 
 
 New and changed pages take weeks to be found and trusted. Run another snapshot after a month or two and compare question by question, since the same business always gets the same questions.
 
-## What doesn't work
+## What doesn't work?
 
 - **Hundreds of near-identical pages,** such as one templated page per town. Search engines treat unoriginal pages published at scale as spam.
 - **Bought links.** Assistants weigh consistent, verifiable presence over link counts.

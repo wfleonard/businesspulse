@@ -8,7 +8,7 @@ import { workerConfig } from '@/lib/aeo/config'
 import { appUrl } from '@/lib/aeo/emails'
 import { activePanels } from '@/lib/aeo/requests'
 import { stateOptions } from '@/lib/aeo/states'
-import { organizationJsonLd, SITE_DESCRIPTION, websiteJsonLd } from '@/lib/resources/json-ld'
+import { organizationJsonLd, SITE_META_DESCRIPTION, websiteJsonLd } from '@/lib/resources/json-ld'
 
 // Reads the panel list and the Turnstile site key at request time, so neither
 // is baked into the build.
@@ -19,9 +19,9 @@ const TITLE = 'BusinessPulse | Free AI search visibility check for your business
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: TITLE,
-    description: SITE_DESCRIPTION,
+    description: SITE_META_DESCRIPTION,
     alternates: { canonical: appUrl('/') },
-    openGraph: { title: TITLE, description: SITE_DESCRIPTION, url: appUrl('/'), type: 'website' },
+    openGraph: { title: TITLE, description: SITE_META_DESCRIPTION, url: appUrl('/'), type: 'website' },
   }
 }
 

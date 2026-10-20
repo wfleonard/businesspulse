@@ -27,8 +27,11 @@ export const tintonFallsAudit: ResourceArticle = {
   slug: 'ai-search-visibility-audit-tinton-falls-nj',
   type: 'guide',
   title: 'AI search visibility audits for Tinton Falls and Monmouth County businesses',
+  seoTitle: 'AI search visibility audits in Tinton Falls, NJ',
   summary:
     'Saxon AEO, based in Tinton Falls, NJ, checks whether ChatGPT, Perplexity, Claude, and Gemini cite your business when local buyers ask about your work, and writes the pages that change the answer. Start with a free snapshot or call 732-673-4260.',
+  description:
+    'Saxon AEO in Tinton Falls, NJ checks whether ChatGPT, Perplexity, Claude, and Gemini cite your business, and writes the pages that change the answer.',
   industries: ['ai-visibility'],
   published: '2026-10-01',
   body: `
@@ -87,7 +90,7 @@ We also work with businesses anywhere in New Jersey and beyond by video call.
   faq,
   localProvider: {
     name: 'Saxon AEO',
-    legalName: 'Saxon Enterprises Inc',
+    legalName: 'Saxon Enterprises, Inc.',
     description:
       'AI search visibility audits and answer engine optimization for businesses in Tinton Falls and Monmouth County, New Jersey.',
     telephone: '+17326734260',
