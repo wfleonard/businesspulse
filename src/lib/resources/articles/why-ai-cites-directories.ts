@@ -8,6 +8,7 @@ export const whyAiCitesDirectories: ResourceArticle = {
     'When buyers ask an AI assistant who to hire nearby, it usually answers from directories. Across 27 industries, directories were cited on 106 of 135 "near me" answers, and the businesses’ own sites on 35.',
   description:
     'Across 27 industries, directories such as Angi and Yelp were cited on 106 of 135 “near me” AI answers, and the businesses’ own sites on 35.',
+  image: { src: '/resources/buyers-ask-ai-who-to-hire.webp', alt: 'A stack of directory listings passes through AI search, which points to one business' },
   industries: [],
   published: '2026-09-21',
   faq: [

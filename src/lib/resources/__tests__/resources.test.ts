@@ -1,4 +1,6 @@
 /** @jest-environment node */
+import { existsSync } from 'fs'
+import path from 'path'
 import { CANNED_PANELS } from '@/lib/aeo/panels'
 import {
   ALL_ARTICLES,
@@ -46,6 +48,12 @@ describe.each(ALL_ARTICLES.map((a) => [a.slug, a] as const))('article %s', (_slu
   it('fits its title tag and meta description in what Google shows', () => {
     expect(articleTitleTag(article).length).toBeLessThanOrEqual(65)
     expect(articleDescription(article).length).toBeLessThanOrEqual(160)
+  })
+
+  it('points its header image at a file that exists, with alt text', () => {
+    if (!article.image) return
+    expect(article.image.alt.trim()).not.toBe('')
+    expect(existsSync(path.join(process.cwd(), 'public', article.image.src))).toBe(true)
   })
 
   it('repeats every FAQ question in the body', () => {

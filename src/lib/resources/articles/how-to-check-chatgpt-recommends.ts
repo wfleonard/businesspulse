@@ -19,6 +19,7 @@ export const howToCheckChatGpt: ResourceArticle = {
     'Ask ChatGPT, Perplexity, and Claude the questions your buyers ask, in a fresh chat, naming your town, then read the sources under each answer, not just the text. Repeat on a schedule, because answers change.',
   description:
     'Ask ChatGPT, Perplexity, and Claude your buyers’ questions in a fresh chat, naming your town, then read the sources under each answer, not just the text.',
+  image: { src: '/resources/close-the-competitor-gap.webp', alt: 'Three businesses connect to AI search, two of them cited and one not' },
   industries: [],
   published: '2026-09-21',
   faq,

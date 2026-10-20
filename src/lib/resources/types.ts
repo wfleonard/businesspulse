@@ -39,6 +39,8 @@ export type ResourceArticle = {
   summary: string
   /** The meta description, when the summary runs past what Google shows (about 155 characters). */
   description?: string
+  /** Header image under the summary, a 16:9 WebP in public/resources/. Also the Article's image in structured data. */
+  image?: { src: string; alt: string }
   /** Canned panel slugs this page is written for, or [] for every industry. */
   industries: string[]
   /** YYYY-MM-DD */

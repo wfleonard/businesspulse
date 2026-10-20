@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
@@ -62,6 +63,17 @@ export default async function ArticlePage({ params }: Props) {
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-dark sm:text-4xl">{article.title}</h1>
         <p className="mt-4 text-lg text-text-secondary">{article.summary}</p>
+        {article.image && (
+          <Image
+            src={article.image.src}
+            alt={article.image.alt}
+            width={1200}
+            height={675}
+            sizes="(min-width: 768px) 48rem, 100vw"
+            preload
+            className="mt-6 h-auto w-full rounded-2xl"
+          />
+        )}
 
         <article className="prose-bp mt-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(article.body) }} />
 
@@ -88,6 +100,7 @@ export default async function ArticlePage({ params }: Props) {
           description: article.summary,
           published,
           modified: updated ?? undefined,
+          image: article.image?.src,
         })}
       />
       <JsonLd

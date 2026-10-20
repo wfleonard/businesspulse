@@ -8,6 +8,7 @@ export const howToGetCited: ResourceArticle = {
     'Answer the exact questions your buyers ask, on pages AI assistants can read, and make your business easy to verify across the web. Most of it is plain, specific writing and a few technical settings.',
   description:
     'Answer the exact questions your buyers ask, on pages AI assistants can read, and make your business easy to verify across the web.',
+  image: { src: '/resources/how-to-become-cite-worthy.webp', alt: 'Reviews, credentials, a map listing, and pages feed a business website that AI search cites' },
   industries: [],
   published: '2026-09-18',
   updated: '2026-09-20',

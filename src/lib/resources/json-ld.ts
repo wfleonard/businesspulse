@@ -26,12 +26,15 @@ export function articleJsonLd(args: {
   description: string
   published: Date
   modified?: Date
+  /** Site path of the header image, if the page has one. */
+  image?: string
 }) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: args.title,
     description: args.description,
+    ...(args.image && { image: appUrl(args.image) }),
     url: appUrl(args.path),
     mainEntityOfPage: appUrl(args.path),
     datePublished: args.published.toISOString(),
