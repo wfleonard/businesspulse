@@ -63,11 +63,22 @@ export default async function Home() {
             </li>
           </ul>
         </section>
-        <SnapshotForm
-          panels={panels}
-          states={stateOptions()}
-          turnstileSiteKey={process.env.TURNSTILE_SITE_KEY ?? ''}
-        />
+        <div className="flex flex-col gap-6">
+          <Image
+            src="/businesspulse-ai-visibility-hero.webp"
+            alt="Buyer questions flow through AI search to a list of businesses, with one business cited"
+            width={1200}
+            height={675}
+            sizes="(min-width: 1024px) 26rem, 100vw"
+            preload
+            className="h-auto w-full rounded-2xl"
+          />
+          <SnapshotForm
+            panels={panels}
+            states={stateOptions()}
+            turnstileSiteKey={process.env.TURNSTILE_SITE_KEY ?? ''}
+          />
+        </div>
       </div>
       <footer className="mt-auto flex flex-wrap gap-x-4 gap-y-3 pt-16 text-xs text-text-secondary">
         <Link href="/resources" className="hover:text-dark">
