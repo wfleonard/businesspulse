@@ -1,6 +1,7 @@
 # BusinessPulse Monitor — $49/month build plan
 
-**Status:** approved October 1, 2026 · building M0 · for Bill Leonard
+**Status:** approved October 1, 2026 · M0 live since October 1 · revised October 26, 2026
+(subscribers have accounts; see `customer-accounts-plan.md`) · for Bill Leonard
 
 A paid monthly tier for businesses that want to track their own AI search visibility and
 do the work themselves. It is a BusinessPulse product: it is not offered in Saxon AEO
@@ -69,16 +70,18 @@ More of this is built than it looks:
 
 ## 3. What has to change
 
-### 3.1 Billing — Stripe, no customer login
+### 3.1 Billing — Stripe, signed-in subscribers
 
-The build spec says free users never get a login. Keep that: subscribers don't need one
-either.
+*Revised October 26, 2026:* subscribers have a BusinessPulse account
+(`customer-accounts-plan.md`). The free snapshot still needs none.
 
-- **Stripe Checkout** in subscription mode starts the subscription. Entry points: a
+- **Sign up, then Stripe Checkout** in subscription mode. Entry points: a
   "Track this monthly — $49" button on every snapshot report (domain, industry, and town
-  already known), and a link on the cost guide and comparison pages.
-- **Stripe Customer Portal** handles cards, invoices, and cancellation. Every monthly email
-  carries a "Manage subscription" link to it.
+  already known), and a link on the cost guide and comparison pages. The button sends a
+  visitor without an account to sign-up first, with the report's email filled in, then to
+  checkout.
+- **Stripe Customer Portal** handles cards, invoices, and cancellation, reached from
+  `/account` and from a "Manage subscription" link in every monthly email.
 - **Webhook** `POST /api/stripe/webhook`, signature-verified:
   `checkout.session.completed` creates the subscription; `customer.subscription.updated`
   and `.deleted` track status; `invoice.payment_failed` pauses runs after Stripe's retries
@@ -96,6 +99,7 @@ New table `aeo_subscription`:
 | `id`, `created_at` | |
 | `stripe_customer_id`, `stripe_subscription_id` | unique |
 | `status` | `active`, `past_due`, `canceled` |
+| `user_id` | the account that pays; deleting the account cancels the subscription first |
 | `email`, `business_name` | a customer record, not a lead |
 | `domain`, `other_domains`, `panel_slug`, `service`, `city`, `state` | copied from the request that started it, so every month asks the same questions |
 | `current_period_end`, `canceled_at` | from Stripe |
@@ -106,9 +110,11 @@ And `aeo_run.subscription_id` (nullable) to tie each monthly run to its subscrip
 Add `monitor` to `aeo_run_tier`, and give the tier a question count (50) in config next to
 `snapshotQuestions`, instead of overloading `full`.
 
-**Retention.** The 120-day sweep erases contact details from `aeo_request`. Subscribers live
-in their own table, so the sweep doesn't touch them while active. Erase a canceled
-subscriber's contact details 120 days after cancellation, and say so on the privacy page.
+**Retention.** The 120-day sweep erases contact details from `aeo_request`, except requests
+linked to an account (`customer-accounts-plan.md` §3.3). Subscribers live in their own
+table, so the sweep doesn't touch them while active. Erase a canceled subscriber's contact
+details 120 days after cancellation unless they keep their account, and say so on the
+privacy page.
 
 ### 3.3 Worker
 
@@ -154,11 +160,12 @@ Each one ships on its own and is checked before the next starts.
 | **M0** | **Demand test.** "Track this monthly — $49" on reports, recording clicks like Book a call, leading to a waitlist email form | People want it before we build payments | ½ day |
 | **M1** | **Monitor run by hand.** `monitor` tier, 50 questions, four assistants, started from the admin run page. Run it on two businesses (ECU and Primos) | Real cost per run, real run time, Gemini cost, the timeout question | 1–2 days |
 | **M2** | **Month-over-month report and email.** Run the M1 businesses again and compare | The report is worth $49 | 2 days |
-| **M3** | **Stripe.** Checkout, webhook, portal, Stripe Tax, `aeo_subscription`, terms page. Test mode end to end | Money in, tax collected, cancellation works | 2–3 days |
+| **M3** | **Stripe.** Sign-up then checkout, webhook, portal from `/account`, Stripe Tax, `aeo_subscription` with `user_id`, terms page. Test mode end to end. Needs accounts A1–A3 | Money in, tax collected, cancellation works | 2–3 days |
 | **M4** | **Scheduler and spend.** Monthly runs on the anniversary, monitor spend cap, retention for canceled subscribers | It runs without Bill | 1–2 days |
 | **M5** | **Launch.** Admin view, live Stripe keys, the button goes from waitlist to checkout, cost guide and comparison pages list Monitor | | ½ day |
 
-About two weeks of build in total. **M0 and M1 come first and cost almost nothing:** if
+About two weeks of build in total, plus about a week for accounts (A1–A3 before M3).
+**M0 and M1 come first and cost almost nothing:** if
 nobody clicks the button in a month, or a run costs $25 instead of $9, we find out before
 building payments.
 
@@ -173,6 +180,7 @@ building payments.
 | NJ sales tax | **Collect it,** through Stripe Tax |
 | Refunds | **None.** Cancel anytime; a month already billed isn't refunded |
 | Saxon AEO proposals | **Monitor is BusinessPulse only** and isn't offered in proposals |
+| Customer login (October 26) | **Subscribers have accounts.** Sign up before checkout; the free snapshot still needs none (`customer-accounts-plan.md`) |
 
 ## 6. After launch
 

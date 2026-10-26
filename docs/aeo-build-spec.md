@@ -30,7 +30,9 @@ BusinessPulse is the free front door; Saxon AEO sells the service. Every report 
 - Payments and the paid full-audit tier
 - Self-serve multi-engine runs (Claude, ChatGPT)
 - Monthly monitoring
-- Customer accounts — free users never get a login
+- Customer accounts — free users never get a login in v1. *Changed October 26, 2026:*
+  optional customer accounts are planned in `customer-accounts-plan.md`; the snapshot
+  itself still needs no account.
 
 ---
 
@@ -157,6 +159,11 @@ generation; PHP owns only the engine calls and verdict analysis.
 
 Verification is a signed, single-use email link — not better-auth signup.
 `BP_ALLOW_SIGNUP` stays `false`. The only login is the admin.
+
+*Updated October 26, 2026:* the snapshot still needs no account, but customers will be
+able to create one to keep their reports (`customer-accounts-plan.md`). Admin logins now
+come from request access and approval at `/dashboard/users`. `BP_ALLOW_SIGNUP` stays
+`false` until admin and customer roles are live.
 
 ### 4.4 AEO tables are not org-scoped
 
@@ -535,7 +542,8 @@ Rotate the `akmadmin` database password, as `DEPLOY.md` already instructs.
 
 ## 10. Admin
 
-Behind the existing login.
+Behind the existing login. Once customer accounts arrive, admin only
+(`customer-accounts-plan.md` §3.1).
 
 ### `/dashboard/aeo`
 
