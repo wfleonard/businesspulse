@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { normalizeDomain } from './domain'
 import { STATE_CODES } from './states'
 
-const required = (label: string, max: number) =>
+export const required = (label: string, max: number) =>
   z
     .string({ error: `${label} is required` })
     .trim()
@@ -21,7 +21,7 @@ const websiteField = z
     return domain
   })
 
-const emailField = z
+export const emailField = z
   .string({ error: 'Email is required' })
   .trim()
   .toLowerCase()

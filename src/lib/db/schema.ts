@@ -749,6 +749,31 @@ export const aeoScanRequest = pgTable(
   (t) => [index('aeo_scan_request_created_idx').on(t.createdAt)]
 )
 
+/**
+ * Requests for a BusinessPulse login, from /request-access. Every signed-in
+ * user can see every lead, so nobody gets in without an admin approving them.
+ * Approval creates the user and emails a link to set a password.
+ */
+export const accessRequestStatusEnum = pgEnum('access_request_status', ['pending', 'approved', 'declined'])
+
+export const accessRequest = pgTable(
+  'access_request',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    email: text('email').notNull(),
+    /** Why they need access, in their words. */
+    note: text('note').notNull().default(''),
+    status: accessRequestStatusEnum('status').notNull().default('pending'),
+    ipAddress: text('ip_address'),
+    notifiedAt: timestamp('notified_at'),
+    decidedAt: timestamp('decided_at'),
+    decidedBy: text('decided_by').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('access_request_status_created_idx').on(t.status, t.createdAt)]
+)
+
 export const schema = {
   user,
   session,
