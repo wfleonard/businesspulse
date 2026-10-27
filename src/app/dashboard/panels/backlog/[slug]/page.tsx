@@ -4,7 +4,7 @@ import { DraftForm, PublishForm } from '@/components/aeo/PanelForms'
 import { Card } from '@/components/ui/Card'
 import { getBacklogEntry } from '@/lib/aeo/panel-admin'
 import { validatePanelContent } from '@/lib/aeo/panel-content'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 import { setBacklogStatus } from '../../actions'
 
 export const dynamic = 'force-dynamic'
@@ -19,7 +19,7 @@ function formatDateTime(iso: string): string {
 }
 
 export default async function BacklogEntryPage({ params }: Props) {
-  await requireSession()
+  await requireAdmin()
   const { slug } = await params
   const entry = await getBacklogEntry(slug)
   if (!entry) notFound()

@@ -7,7 +7,7 @@ import { ReportViewBeacon } from '@/components/aeo/ReportViewBeacon'
 import { bookingUrl } from '@/lib/aeo/booking'
 import { MONITOR_PRICE_USD, MONITOR_QUESTIONS, offersMonitor } from '@/lib/aeo/monitor'
 import { Card } from '@/components/ui/Card'
-import { getSession } from '@/lib/session'
+import { getSession, isAdmin } from '@/lib/session'
 import { loadReport, siteList, type LoadedReport, type ReportSummary, type Verdict } from '@/lib/aeo/report'
 
 export const dynamic = 'force-dynamic'
@@ -262,8 +262,8 @@ function Report({ report, summary, full }: { report: LoadedReport; summary: Repo
 
 export default async function ReportPage({ params, searchParams }: Props) {
   const { publicId } = await params
-  // The full view is for us: signed in only. Anyone else asking for it gets the customer's report.
-  const full = (await searchParams).full === '1' && Boolean(await getSession())
+  // The full view is for us: admins only. Anyone else asking for it, customers included, gets the customer's report.
+  const full = (await searchParams).full === '1' && isAdmin(await getSession())
   const report = await loadReport(publicId, full ? 'full' : 'highlights')
   if (!report) notFound()
 

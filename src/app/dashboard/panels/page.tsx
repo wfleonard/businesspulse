@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { workerConfig } from '@/lib/aeo/config'
 import { listBacklog, listPanels, type BacklogRow } from '@/lib/aeo/panel-admin'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Panels | BusinessPulse' }
@@ -20,7 +20,7 @@ const STATUS: Record<'live' | BacklogRow['status'], { label: string; className: 
 }
 
 export default async function PanelsPage() {
-  await requireSession()
+  await requireAdmin()
   const [panels, backlog] = await Promise.all([listPanels(), listBacklog()])
   const liveCount = backlog.filter((b) => b.live).length
 

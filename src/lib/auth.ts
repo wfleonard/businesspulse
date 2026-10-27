@@ -53,6 +53,13 @@ export const auth = betterAuth({
         verify(hashed, password),
     },
   },
+  user: {
+    additionalFields: {
+      // On the session so every request can check it. input: false keeps
+      // sign-up from choosing its own role.
+      role: { type: 'string', required: false, defaultValue: 'customer', input: false },
+    },
+  },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // refresh once/day

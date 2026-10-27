@@ -17,7 +17,7 @@ import {
 import { applyPanelChanges, cleanDomains, validatePanelContent, type PanelContent } from '@/lib/aeo/panel-content'
 import { draftPanel, PanelDraftError } from '@/lib/aeo/panel-draft'
 import { recordAudit } from '@/lib/audit'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 /**
  * Admin actions for panels and the panel backlog. Each re-checks the session
@@ -38,7 +38,7 @@ function strings(formData: FormData, name: string): string[] {
 
 /** Apply the chosen "learn from runs" suggestions as one new version. */
 export async function applyPanelSuggestions(_previous: PanelFormState, formData: FormData): Promise<PanelFormState> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = z
     .object({ slug: slugSchema, version: z.coerce.number().int().positive(), note: z.string().max(500) })
     .safeParse({ slug: formData.get('slug'), version: formData.get('version'), note: formData.get('note') ?? '' })
@@ -110,7 +110,7 @@ export async function applyPanelSuggestions(_previous: PanelFormState, formData:
 
 /** Rename a live panel. The name is panel content, so this saves a new version. */
 export async function renamePanel(_previous: PanelFormState, formData: FormData): Promise<PanelFormState> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = z
     .object({ slug: slugSchema, version: z.coerce.number().int().positive(), name: z.string().trim().min(1).max(100) })
     .safeParse({ slug: formData.get('slug'), version: formData.get('version'), name: formData.get('name') })
@@ -142,7 +142,7 @@ export async function renamePanel(_previous: PanelFormState, formData: FormData)
 }
 
 export async function togglePanelActive(formData: FormData): Promise<void> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = z
     .object({ slug: slugSchema, active: z.enum(['true', 'false']) })
     .safeParse(Object.fromEntries(formData))
@@ -157,7 +157,7 @@ export async function togglePanelActive(formData: FormData): Promise<void> {
 
 /** Ask Claude for a draft of a backlog panel. Replaces any earlier draft. */
 export async function draftBacklogPanel(_previous: PanelFormState, formData: FormData): Promise<PanelFormState> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = z
     .object({ slug: slugSchema, guidance: z.string().max(2000) })
     .safeParse({ slug: formData.get('slug'), guidance: formData.get('guidance') ?? '' })
@@ -192,7 +192,7 @@ export async function draftBacklogPanel(_previous: PanelFormState, formData: For
 
 /** Publish the checked parts of a draft as a live panel. */
 export async function publishBacklogDraft(_previous: PanelFormState, formData: FormData): Promise<PanelFormState> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = z
     .object({ slug: slugSchema, name: z.string().trim().min(1).max(100) })
     .safeParse({ slug: formData.get('slug'), name: formData.get('name') })
@@ -226,7 +226,7 @@ export async function publishBacklogDraft(_previous: PanelFormState, formData: F
 }
 
 export async function setBacklogStatus(formData: FormData): Promise<void> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = z
     .object({ slug: slugSchema, status: z.enum(['planned', 'skipped']) })
     .safeParse(Object.fromEntries(formData))

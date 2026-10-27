@@ -11,7 +11,7 @@ import {
   sendPasswordLink,
 } from '@/lib/access/requests'
 import { recordAudit } from '@/lib/audit'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 /**
  * Admin actions for logins. Each re-checks the session itself: a server action
@@ -27,7 +27,7 @@ const requestId = z.object({ requestId: z.uuid() })
 const userId = z.object({ userId: z.string().min(1).max(64) })
 
 export async function approveRequest(formData: FormData): Promise<void> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = requestId.safeParse(Object.fromEntries(formData))
   if (!parsed.success) throw new Error('Invalid request')
 
@@ -38,7 +38,7 @@ export async function approveRequest(formData: FormData): Promise<void> {
 }
 
 export async function declineRequest(formData: FormData): Promise<void> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = requestId.safeParse(Object.fromEntries(formData))
   if (!parsed.success) throw new Error('Invalid request')
 
@@ -49,7 +49,7 @@ export async function declineRequest(formData: FormData): Promise<void> {
 }
 
 export async function resendPasswordLink(formData: FormData): Promise<void> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = userId.safeParse(Object.fromEntries(formData))
   if (!parsed.success) throw new Error('Invalid request')
 
@@ -61,7 +61,7 @@ export async function resendPasswordLink(formData: FormData): Promise<void> {
 }
 
 export async function removeAccess(formData: FormData): Promise<void> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = userId.safeParse(Object.fromEntries(formData))
   if (!parsed.success) throw new Error('Invalid request')
   if (parsed.data.userId === user.id) done("You can't remove your own login.", true)

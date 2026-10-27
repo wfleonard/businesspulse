@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { listTemplates } from '@/lib/aeo/outreach'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Email templates | BusinessPulse' }
 
 export default async function TemplatesPage() {
-  await requireSession()
+  await requireAdmin()
   const templates = await listTemplates()
 
   return (

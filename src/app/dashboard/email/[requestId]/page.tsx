@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { Composer } from '@/components/aeo/MailForms'
 import { Card } from '@/components/ui/Card'
 import { getEmailLead, leadFields, listTemplates, sendsForRequest } from '@/lib/aeo/outreach'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Email a lead | BusinessPulse' }
@@ -17,7 +17,7 @@ function formatDateTime(date: Date): string {
 }
 
 export default async function EmailLeadPage({ params }: Props) {
-  await requireSession()
+  await requireAdmin()
   const { requestId } = await params
   if (!UUID.test(requestId)) notFound()
 

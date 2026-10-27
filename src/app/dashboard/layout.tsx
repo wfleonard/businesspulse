@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 
 export default async function DashboardLayout({
@@ -7,7 +7,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
 
   return (
     <div className="min-h-screen">

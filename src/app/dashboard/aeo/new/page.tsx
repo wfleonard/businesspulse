@@ -3,7 +3,7 @@ import { ProspectForm } from '@/components/aeo/ProspectForm'
 import { Card } from '@/components/ui/Card'
 import { activePanels } from '@/lib/aeo/requests'
 import { stateOptions } from '@/lib/aeo/states'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Run a snapshot | BusinessPulse' }
@@ -15,7 +15,7 @@ const PREFILL = ['businessName', 'website', 'email', 'service', 'city', 'state']
 
 export default async function NewProspectSnapshotPage({ searchParams }: Props) {
   // Pages render in parallel with the layout, so each checks the session itself.
-  await requireSession()
+  await requireAdmin()
   const panels = await activePanels()
   const params = await searchParams
   const initialValues: Record<string, string> = {}

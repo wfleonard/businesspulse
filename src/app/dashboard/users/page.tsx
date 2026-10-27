@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { ConfirmSubmit } from '@/components/aeo/ConfirmSubmit'
 import { listAccessRequests, listUsers, type AccessRequestRow } from '@/lib/access/requests'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 import { approveRequest, declineRequest, removeAccess, resendPasswordLink } from './actions'
 
 export const dynamic = 'force-dynamic'
@@ -29,7 +29,7 @@ const STATUS_CLASS: Record<AccessRequestRow['status'], string> = {
 }
 
 export default async function UsersPage({ searchParams }: Props) {
-  const { user: me } = await requireSession()
+  const { user: me } = await requireAdmin()
   const params = await searchParams
   const notice = typeof params.notice === 'string' ? params.notice : null
   const error = typeof params.error === 'string' ? params.error : null
@@ -41,8 +41,8 @@ export default async function UsersPage({ searchParams }: Props) {
       <div>
         <h1 className="text-2xl font-bold text-dark">Users</h1>
         <p className="mt-1 text-sm text-text-secondary">
-          Everyone with a login sees every lead and report. People ask at /request-access; approving them emails a link
-          to set a password.
+          Admins see every lead and report; customers see only their own account. People ask for admin access at
+          /request-access, and approving them emails a link to set a password.
         </p>
         {notice && <p className="mt-4 rounded-md bg-success/10 px-3 py-2 text-sm text-success">{notice}</p>}
         {error && <p className="mt-4 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
@@ -117,6 +117,7 @@ export default async function UsersPage({ searchParams }: Props) {
             <thead className="border-b border-border bg-bg text-xs text-text-secondary">
               <tr>
                 <th className="px-3 py-2 font-medium">Person</th>
+                <th className="px-3 py-2 font-medium">Role</th>
                 <th className="px-3 py-2 font-medium">Since</th>
                 <th className="px-3 py-2 font-medium">Password</th>
                 <th className="px-3 py-2">
@@ -133,6 +134,9 @@ export default async function UsersPage({ searchParams }: Props) {
                       {u.id === me.id && <span className="ml-2 text-xs font-normal text-text-secondary">(you)</span>}
                     </div>
                     <div className="text-xs text-text-secondary">{u.email}</div>
+                  </td>
+                  <td className={`px-3 py-2 capitalize ${u.role === 'admin' ? 'text-dark' : 'text-text-secondary'}`}>
+                    {u.role}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-text-secondary">{formatDate(u.createdAt)}</td>
                   <td className="whitespace-nowrap px-3 py-2">

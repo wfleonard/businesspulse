@@ -13,7 +13,7 @@ import {
 } from '@/lib/aeo/admin'
 import { filtersToQuery, LEAD_STATUSES, parseLeadFilters } from '@/lib/aeo/lead-filters'
 import { listScanRequests, type ScanRequestRow } from '@/lib/aeo/scan-requests'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 import { deleteLead, deleteScanLead } from './actions'
 
 export const dynamic = 'force-dynamic'
@@ -153,7 +153,7 @@ function Funnel({ funnel }: { funnel: FunnelStats }) {
 export default async function LeadsPage({ searchParams }: Props) {
   // The layout's check isn't enough: layouts and pages render in parallel, so a
   // page that only relied on it could stream lead data before the redirect.
-  await requireSession()
+  await requireAdmin()
   const filters = parseLeadFilters(await searchParams)
   const [leads, stats, panels, generated, funnel] = await Promise.all([
     listLeads(filters),

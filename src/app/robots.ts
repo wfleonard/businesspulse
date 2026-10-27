@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 /** Private-by-link or signed-in pages. Reports, /book, and /monitor also send noindex headers. */
 export const PRIVATE_PATHS = [
   '/dashboard',
+  '/account',
   '/login',
   '/forgot-password',
   '/reset-password',

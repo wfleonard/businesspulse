@@ -5,7 +5,7 @@ import { RenameForm, SuggestionsForm } from '@/components/aeo/PanelForms'
 import { Card } from '@/components/ui/Card'
 import { getPanel, listPanelVersions, panelRunRows } from '@/lib/aeo/panel-admin'
 import { summarizePanelRuns } from '@/lib/aeo/panel-content'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 import { togglePanelActive } from '../actions'
 
 export const dynamic = 'force-dynamic'
@@ -18,7 +18,7 @@ function formatDateTime(date: Date): string {
 }
 
 export default async function PanelPage({ params }: Props) {
-  await requireSession()
+  await requireAdmin()
   const { slug } = await params
   const panel = await getPanel(slug)
   if (!panel) notFound()

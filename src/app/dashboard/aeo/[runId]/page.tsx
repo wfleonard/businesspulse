@@ -10,7 +10,7 @@ import { workerConfig } from '@/lib/aeo/config'
 import { describeRunState } from '@/lib/aeo/run-status'
 import { LEAD_STATUSES } from '@/lib/aeo/lead-filters'
 import { siteList, verdictOf, type Verdict } from '@/lib/aeo/report'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 import { deleteLead, rerunSnapshot, updateLeadStatus } from '../actions'
 
 export const dynamic = 'force-dynamic'
@@ -65,7 +65,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 export default async function RunDetailPage({ params, searchParams }: Props) {
   // Layouts and pages render in parallel, so the layout's session check alone
   // wouldn't stop this page from loading and streaming the run's data.
-  await requireSession()
+  await requireAdmin()
   const { runId } = await params
   const { started } = await searchParams
   const detail = await loadRunDetail(runId)

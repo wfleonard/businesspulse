@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { TemplateForm } from '@/components/aeo/MailForms'
 import { Card } from '@/components/ui/Card'
 import { getTemplate } from '@/lib/aeo/outreach'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Email template | BusinessPulse' }
@@ -13,7 +13,7 @@ type Props = { params: Promise<{ id: string }> }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export default async function TemplatePage({ params }: Props) {
-  await requireSession()
+  await requireAdmin()
   const { id } = await params
   const template = id === 'new' ? null : UUID.test(id) ? await getTemplate(id) : null
   if (id !== 'new' && !template) notFound()

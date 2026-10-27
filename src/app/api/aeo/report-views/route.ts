@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { isLikelyBot, isReportId, recordReportView } from '@/lib/aeo/report-views'
 import { clientIp, rateLimit } from '@/lib/rate-limit'
-import { getSession } from '@/lib/session'
+import { getSession, isAdmin } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,9 +23,10 @@ export async function POST(req: Request) {
   }
   if (!isReportId(publicId) || isLikelyBot(req.headers.get('user-agent'))) return noContent()
 
-  // A signed-in admin reviewing a report from the dashboard isn't the buyer.
+  // An admin reviewing a report from the dashboard isn't the buyer. A customer
+  // reading their own report is, so their views count.
   try {
-    if (await getSession()) return noContent()
+    if (isAdmin(await getSession())) return noContent()
   } catch {
     // Treat an unreadable session as signed out.
   }

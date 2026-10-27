@@ -1,6 +1,6 @@
 # BusinessPulse customer accounts — plan
 
-**Status:** approved October 26, 2026 · for Bill Leonard
+**Status:** approved October 26, 2026 · A1 (roles) built October 27 · for Bill Leonard
 **Replaces:** "no customer login" in `aeo-build-spec.md` §4.3 and `monitor-tier-plan.md` §3.1
 
 BusinessPulse moves toward SaaS: businesses get their own accounts. The free snapshot

@@ -3,7 +3,7 @@ import crypto from 'crypto'
 import { and, desc, eq, sql } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { accessRequest, account, user } from '@/lib/db/schema'
+import { accessRequest, account, user, type UserRole } from '@/lib/db/schema'
 import { sendEmail, type SendResult } from '@/lib/email/provider'
 import { adminAccessRequestEmail } from './emails'
 import type { AccessRequestInput } from './schema'
@@ -79,8 +79,8 @@ export async function sendPasswordLink(email: string): Promise<void> {
 export type DecisionResult = { ok: true; email: string } | { ok: false; error: string }
 
 /**
- * Approve: create the user if there isn't one (no password yet), mark the
- * request, and email a link to set a password.
+ * Approve: create the admin if there isn't one (no password yet), or make an
+ * existing customer an admin, mark the request, and email a password link.
  */
 export async function approveAccessRequest(id: string, adminId: string): Promise<DecisionResult> {
   const [request] = await db.select().from(accessRequest).where(eq(accessRequest.id, id)).limit(1)
@@ -88,7 +88,10 @@ export async function approveAccessRequest(id: string, adminId: string): Promise
   if (request.status !== 'pending') return { ok: false, error: `That request was already ${request.status}.` }
 
   const [existing] = await db.select({ id: user.id }).from(user).where(eq(user.email, request.email)).limit(1)
-  if (!existing) {
+  if (existing) {
+    // A customer who asked for admin access keeps their account and gains the role.
+    await db.update(user).set({ role: 'admin', updatedAt: new Date() }).where(eq(user.id, existing.id))
+  } else {
     const now = new Date()
     await db.insert(user).values({
       id: crypto.randomUUID(),
@@ -96,6 +99,7 @@ export async function approveAccessRequest(id: string, adminId: string): Promise
       email: request.email,
       // The emailed link proves the address before a password can be set.
       emailVerified: true,
+      role: 'admin',
       createdAt: now,
       updatedAt: now,
     })
@@ -117,7 +121,14 @@ export async function declineAccessRequest(id: string, adminId: string): Promise
   return row ? { ok: true, email: row.email } : { ok: false, error: 'That request was already decided.' }
 }
 
-export type UserRow = { id: string; name: string; email: string; createdAt: Date; hasPassword: boolean }
+export type UserRow = {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  createdAt: Date
+  hasPassword: boolean
+}
 
 export async function listUsers(): Promise<UserRow[]> {
   return db
@@ -125,12 +136,13 @@ export async function listUsers(): Promise<UserRow[]> {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
       createdAt: user.createdAt,
       // Spelled out: inside a subquery, ${user.id} would render as a bare "id" and match the account's own id.
       hasPassword: sql<boolean>`exists (select 1 from account a where a.user_id = "user"."id" and a.provider_id = 'credential' and a.password is not null)`,
     })
     .from(user)
-    .orderBy(user.createdAt)
+    .orderBy(user.role, user.createdAt)
 }
 
 export async function findUserEmail(id: string): Promise<string | null> {

@@ -8,12 +8,13 @@ import { NextResponse, type NextRequest } from 'next/server'
  *    tags) at build time, so a runtime nonce never matches — it blocks Next's
  *    own scripts and the page renders blank. Sources are still restricted to
  *    'self' (no third-party script/style hosts); dev also allows eval + ws.
- *  - Optimistic auth gate: redirects unauthenticated requests for /dashboard to
- *    /login based on session-cookie presence. Real enforcement is server-side
- *    via requireSession(); this is only a fast redirect.
+ *  - Optimistic auth gate: redirects unauthenticated requests for /dashboard and
+ *    /account to /login based on session-cookie presence. Real enforcement is
+ *    server-side via requireAdmin() and requireSession(); this is only a fast
+ *    redirect, and it can't tell an admin from a customer.
  */
 
-const PROTECTED_PREFIXES = ['/dashboard']
+const PROTECTED_PREFIXES = ['/dashboard', '/account']
 
 // Private-by-link pages: reports and email verification stay out of search.
 const NOINDEX_PREFIXES = ['/report/', '/check/', '/book', '/monitor']

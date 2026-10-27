@@ -9,7 +9,7 @@ import { LEAD_STATUSES } from '@/lib/aeo/lead-filters'
 import { fieldErrors, prospectRequestSchema } from '@/lib/aeo/request-schema'
 import { createProspectRequest } from '@/lib/aeo/requests'
 import { recordAudit } from '@/lib/audit'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 /**
  * Admin actions for AEO leads. Each re-checks the session itself: a server
@@ -19,7 +19,7 @@ import { requireSession } from '@/lib/session'
 const optionalRunId = z.union([z.uuid(), z.literal('')]).optional()
 
 export async function updateLeadStatus(formData: FormData): Promise<void> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = z
     .object({ requestId: z.uuid(), runId: optionalRunId, status: z.enum(LEAD_STATUSES) })
     .safeParse(Object.fromEntries(formData))
@@ -34,7 +34,7 @@ export async function updateLeadStatus(formData: FormData): Promise<void> {
 }
 
 export async function deleteLead(formData: FormData): Promise<void> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = z.object({ requestId: z.uuid() }).safeParse(Object.fromEntries(formData))
   if (!parsed.success) throw new Error('Invalid delete request')
 
@@ -53,7 +53,7 @@ export async function deleteLead(formData: FormData): Promise<void> {
 }
 
 export async function deleteScanLead(formData: FormData): Promise<void> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = z.object({ scanRequestId: z.uuid() }).safeParse(Object.fromEntries(formData))
   if (!parsed.success) throw new Error('Invalid delete request')
 
@@ -82,7 +82,7 @@ export async function createProspectSnapshot(
   _previous: ProspectFormState,
   formData: FormData
 ): Promise<ProspectFormState> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const values = Object.fromEntries(
     [...formData.entries()].filter((entry): entry is [string, string] => typeof entry[1] === 'string')
   )
@@ -104,7 +104,7 @@ export async function createProspectSnapshot(
 }
 
 export async function rerunSnapshot(formData: FormData): Promise<void> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = z.object({ runId: z.uuid() }).safeParse(Object.fromEntries(formData))
   if (!parsed.success) throw new Error('Invalid re-run request')
 

@@ -2,13 +2,13 @@ import { listLeads } from '@/lib/aeo/admin'
 import { toCsv } from '@/lib/aeo/csv'
 import { appUrl } from '@/lib/aeo/emails'
 import { parseLeadFilters } from '@/lib/aeo/lead-filters'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
 /** CSV of the lead list, with the same filters as /dashboard/aeo. */
 export async function GET(req: Request) {
-  await requireSession()
+  await requireAdmin()
 
   const url = new URL(req.url)
   const leads = await listLeads(parseLeadFilters(Object.fromEntries(url.searchParams)))

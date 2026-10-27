@@ -52,6 +52,7 @@ async function main() {
     name: email.split('@')[0],
     email,
     emailVerified: true,
+    role: 'admin',
     createdAt: now,
     updatedAt: now,
   })

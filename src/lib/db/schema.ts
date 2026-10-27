@@ -19,11 +19,21 @@ import { sql } from 'drizzle-orm'
 /* Field (property) names must match better-auth's model field names. */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Admins see every lead and the dashboard; customers see only their own
+ * account (docs/customer-accounts-plan.md). Sign-up makes customers; approving
+ * an access request makes admins.
+ */
+export const userRoleEnum = pgEnum('user_role', ['admin', 'customer'])
+
+export type UserRole = (typeof userRoleEnum.enumValues)[number]
+
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
+  role: userRoleEnum('role').notNull().default('customer'),
   image: text('image'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),

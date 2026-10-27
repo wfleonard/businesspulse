@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { listEmailLeads, outreachConfig, recentSends } from '@/lib/aeo/outreach'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Email | BusinessPulse' }
@@ -12,7 +12,7 @@ function formatDate(date: Date | null): string {
 }
 
 export default async function EmailPage() {
-  await requireSession()
+  await requireAdmin()
   const [leads, sends] = await Promise.all([listEmailLeads(), recentSends()])
   const config = outreachConfig()
 

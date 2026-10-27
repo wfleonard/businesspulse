@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { unknownFields } from '@/lib/aeo/mail-format'
 import { saveTemplate, sendFollowUp } from '@/lib/aeo/outreach'
 import { recordAudit } from '@/lib/audit'
-import { requireSession } from '@/lib/session'
+import { requireAdmin } from '@/lib/session'
 
 /**
  * Follow-up email actions. Each re-checks the session itself: a server action
@@ -24,7 +24,7 @@ const sendSchema = z.object({
 })
 
 export async function sendFollowUpAction(_previous: MailFormState, formData: FormData): Promise<MailFormState> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = sendSchema.safeParse({
     requestId: formData.get('requestId'),
     templateId: formData.get('templateId') ?? '',
@@ -65,7 +65,7 @@ const templateSchema = z.object({
 })
 
 export async function saveTemplateAction(_previous: MailFormState, formData: FormData): Promise<MailFormState> {
-  const { user } = await requireSession()
+  const { user } = await requireAdmin()
   const parsed = templateSchema.safeParse({
     id: formData.get('id') ?? '',
     name: formData.get('name'),
