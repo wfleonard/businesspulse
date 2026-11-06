@@ -13,8 +13,11 @@ export const metadata: Metadata = { title: 'Your account | BusinessPulse' }
  * A customer's own area. Placeholder until accounts milestone A4 adds their
  * reports, re-runs, and Monitor (docs/customer-accounts-plan.md §3.4).
  */
-export default async function AccountPage() {
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
+
+export default async function AccountPage({ searchParams }: Props) {
   const session = await requireSession()
+  const welcome = (await searchParams).welcome === '1'
   const { user } = session
 
   return (
@@ -30,6 +33,12 @@ export default async function AccountPage() {
           </div>
           <SignOutButton />
         </div>
+
+        {welcome && (
+          <p className="mt-6 rounded-md bg-success/10 px-3 py-2 text-sm text-success">
+            Your email is confirmed and your account is ready.
+          </p>
+        )}
 
         {isAdmin(session) && (
           <p className="mt-6 text-sm">

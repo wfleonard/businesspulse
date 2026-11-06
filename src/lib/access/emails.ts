@@ -1,4 +1,5 @@
 import { appUrl, escapeHtml, type EmailContent } from '@/lib/aeo/emails'
+import { VERIFY_LINK_HOURS } from './signup'
 
 /** Account access emails. Same plain style as the AEO emails; copy avoids em dashes. */
 
@@ -56,5 +57,20 @@ export function passwordLinkEmail(args: { name: string; url: string; isNew: bool
 <p style="margin:0 0 16px"><a href="${escapeHtml(args.url)}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:bold">${action}</a></p>
 <p style="margin:0;color:#64748b">${escapeHtml(after)}</p>`),
     text: [greeting, '', lead, '', `${action}: ${args.url}`, '', after].join('\n'),
+  }
+}
+
+/** Sent on sign-up, and again if they try to sign in before confirming. */
+export function verifyEmailEmail(args: { name: string; url: string }): EmailContent {
+  const greeting = `Hi ${args.name},`
+  const lead = 'Confirm your email to finish setting up your BusinessPulse account.'
+  const after = `The link works for ${VERIFY_LINK_HOURS} hours. If you didn't create an account, ignore this email.`
+  return {
+    subject: 'Confirm your BusinessPulse account',
+    html: page(`<p style="margin:0 0 12px">${escapeHtml(greeting)}</p>
+<p style="margin:0 0 16px">${lead}</p>
+<p style="margin:0 0 16px"><a href="${escapeHtml(args.url)}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:bold">Confirm my email</a></p>
+<p style="margin:0;color:#64748b">${escapeHtml(after)}</p>`),
+    text: [greeting, '', lead, '', `Confirm my email: ${args.url}`, '', after].join('\n'),
   }
 }

@@ -9,6 +9,8 @@ export const PRIVATE_PATHS = [
   '/dashboard',
   '/account',
   '/login',
+  '/signup',
+  '/email-verified',
   '/forgot-password',
   '/reset-password',
   '/request-access',

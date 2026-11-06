@@ -1,8 +1,10 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { captcha } from 'better-auth/plugins'
 import { hash, verify } from '@node-rs/argon2'
 import { and, eq, isNotNull } from 'drizzle-orm'
-import { passwordLinkEmail, PASSWORD_LINK_HOURS } from '@/lib/access/emails'
+import { passwordLinkEmail, PASSWORD_LINK_HOURS, verifyEmailEmail } from '@/lib/access/emails'
+import { signupOpen, VERIFY_LINK_HOURS } from '@/lib/access/signup'
 import { db } from '@/lib/db'
 import { account, schema } from '@/lib/db/schema'
 import { sendEmail } from '@/lib/email/provider'
@@ -16,12 +18,12 @@ const isProd = process.env.NODE_ENV === 'production'
  * - Secure, httpOnly, SameSite=Lax session cookies (Secure in prod).
  * - Drizzle adapter mapped to our Postgres schema.
  *
- * Sign-up is disabled: every signed-in user sees every lead, so people ask at
- * /request-access and an admin approves them (src/lib/access/requests.ts).
- * Approval and "forgot password" both use the reset flow below: a user with no
- * password yet gets a set-password email, everyone else a reset email. The
- * first user still comes from the seed script. BP_ALLOW_SIGNUP=true reopens
- * self-serve registration; leave it off in production.
+ * Sign-up at /signup makes customers (docs/pulse-plan.md), and only while
+ * BP_ALLOW_SIGNUP=true. A new account must confirm its email before it can sign
+ * in; signing in unconfirmed sends a fresh link. Turnstile guards sign-up only.
+ * Admins come from the seed script or an approved access request, and set
+ * their password through the reset flow below: a user with no password yet
+ * gets a set-password email, everyone else a reset email.
  */
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
@@ -29,7 +31,8 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg', schema }),
   emailAndPassword: {
     enabled: true,
-    disableSignUp: process.env.BP_ALLOW_SIGNUP !== 'true',
+    disableSignUp: !signupOpen(),
+    requireEmailVerification: true,
     minPasswordLength: 12,
     resetPasswordTokenExpiresIn: PASSWORD_LINK_HOURS * 60 * 60,
     revokeSessionsOnPasswordReset: true,
@@ -53,6 +56,31 @@ export const auth = betterAuth({
         verify(hashed, password),
     },
   },
+  emailVerification: {
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
+    expiresIn: VERIFY_LINK_HOURS * 60 * 60,
+    sendVerificationEmail: async ({ user, url }) => {
+      const result = await sendEmail({ to: user.email, ...verifyEmailEmail({ name: user.name, url }) })
+      if (!result.sent) {
+        console.error('verification link not emailed:', result.skipped ?? result.error)
+        if (!isProd) console.info(`verification link for ${user.email}: ${url}`)
+      }
+    },
+  },
+  // Without a secret the check is skipped in development and, in production,
+  // the plugin refuses every sign-up, so a missing key never opens it to bots.
+  plugins:
+    process.env.TURNSTILE_SECRET_KEY || isProd
+      ? [
+          captcha({
+            provider: 'cloudflare-turnstile',
+            secretKey: process.env.TURNSTILE_SECRET_KEY ?? '',
+            endpoints: ['/sign-up/email'],
+          }),
+        ]
+      : [],
   user: {
     additionalFields: {
       // On the session so every request can check it. input: false keeps

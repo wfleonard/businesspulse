@@ -1,6 +1,7 @@
 /** @jest-environment node */
-import { adminAccessRequestEmail, passwordLinkEmail } from '../emails'
+import { adminAccessRequestEmail, passwordLinkEmail, verifyEmailEmail } from '../emails'
 import { safeNext } from '../safe-next'
+import { signupOpen } from '../signup'
 import { accessRequestSchema } from '../schema'
 
 describe('accessRequestSchema', () => {
@@ -51,5 +52,30 @@ describe('safeNext', () => {
     for (const value of [null, '', 'https://evil.example', '//evil.example', '/\\evil.example', 'dashboard']) {
       expect(safeNext(value)).toBe('/dashboard')
     }
+  })
+})
+
+describe('sign-up', () => {
+  const saved = process.env.BP_ALLOW_SIGNUP
+  afterEach(() => {
+    process.env.BP_ALLOW_SIGNUP = saved
+  })
+
+  it('stays closed unless BP_ALLOW_SIGNUP is exactly true', () => {
+    for (const value of [undefined, '', 'false', '1', 'TRUE', 'yes']) {
+      if (value === undefined) delete process.env.BP_ALLOW_SIGNUP
+      else process.env.BP_ALLOW_SIGNUP = value
+      expect(signupOpen()).toBe(false)
+    }
+    process.env.BP_ALLOW_SIGNUP = 'true'
+    expect(signupOpen()).toBe(true)
+  })
+
+  it('sends a confirmation email with the link and no em dash', () => {
+    const email = verifyEmailEmail({ name: '<Pat>', url: 'https://businesspulse.app/api/auth/verify-email?token=t' })
+    expect(email.subject).toBe('Confirm your BusinessPulse account')
+    expect(email.text).toContain('Confirm my email: https://businesspulse.app/api/auth/verify-email?token=t')
+    expect(email.html).toContain('Hi &lt;Pat&gt;,')
+    expect(`${email.subject}${email.html}${email.text}`).not.toContain('—')
   })
 })
