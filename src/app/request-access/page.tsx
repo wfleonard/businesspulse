@@ -1,34 +1,12 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { AuthShell } from '@/components/auth/AuthShell'
-import { RequestAccessForm } from '@/components/auth/RequestAccessForm'
+import { notFound } from 'next/navigation'
 
-export const metadata: Metadata = { title: 'Request access | BusinessPulse' }
-
+/**
+ * Turned off November 6, 2026: the page answers 404 and nothing links to it.
+ * The backend stays (POST /api/access-requests, approval on /dashboard/users),
+ * and the form is still in src/components/auth/RequestAccessForm.tsx. To turn
+ * it back on, restore this page from git history (commit 8925065) and the
+ * "Request access" link on /login (removed in 4c78af2).
+ */
 export default function RequestAccessPage() {
-  return (
-    <AuthShell
-      title="Request access"
-      subtitle={
-        <>
-          A login opens every BusinessPulse lead and report, so each one is approved by hand. Looking for your own
-          report?{' '}
-          <Link href="/" className="text-primary hover:underline">
-            Get a free snapshot
-          </Link>{' '}
-          instead; no account needed.
-        </>
-      }
-      footer={
-        <p>
-          Already have a login?{' '}
-          <Link href="/login" className="text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
-      }
-    >
-      <RequestAccessForm />
-    </AuthShell>
-  )
+  notFound()
 }
