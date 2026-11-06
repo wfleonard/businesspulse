@@ -1,7 +1,7 @@
 /** @jest-environment node */
 import os from 'os'
 import path from 'path'
-import { workerConfig } from '../config'
+import { pulseEngineConcurrency, workerConfig } from '../config'
 
 describe('workerConfig', () => {
   it('uses defaults for an empty environment', () => {
@@ -20,6 +20,11 @@ describe('workerConfig', () => {
       recheckDays: 30,
       recheckMaxPerDay: 10,
       retentionDays: 120,
+      lane: 'snapshot',
+      pulseDailyCapUsd: 150,
+      pulseMaxQuestions: 104,
+      pulseJobTimeoutSeconds: 3600,
+      pulseConcurrency: 4,
       phpBin: 'php',
       panelScript: path.join('/app', 'panel', 'panel.php'),
       workDir: path.join(os.tmpdir(), 'aeo-worker'),
@@ -70,5 +75,19 @@ describe('workerConfig', () => {
     const config = workerConfig({ AEO_PANEL_CONCURRENCY: '50', AEO_LEASE_SECONDS: '7.9' }, '/app')
     expect(config.concurrency).toBe(10)
     expect(config.leaseSeconds).toBe(7)
+  })
+})
+
+describe('Pulse settings', () => {
+  it('runs the Pulse lane only when asked, with its own cap', () => {
+    expect(workerConfig({ AEO_WORKER_LANE: 'pulse' }, '/app').lane).toBe('pulse')
+    expect(workerConfig({ AEO_WORKER_LANE: 'other' }, '/app').lane).toBe('snapshot')
+    expect(workerConfig({ AEO_PAID_DAILY_CAP_USD: '75' }, '/app').pulseDailyCapUsd).toBe(75)
+  })
+
+  it('holds Perplexity to 2 at once and lets the others use the Pulse setting', () => {
+    expect(pulseEngineConcurrency('perplexity', { pulseConcurrency: 4 })).toBe(2)
+    expect(pulseEngineConcurrency('perplexity', { pulseConcurrency: 1 })).toBe(1)
+    expect(pulseEngineConcurrency('claude', { pulseConcurrency: 4 })).toBe(4)
   })
 })

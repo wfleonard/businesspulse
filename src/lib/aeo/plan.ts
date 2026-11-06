@@ -1,6 +1,6 @@
 import { asc, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { aeoPanel, aeoRequest, aeoRun, type AeoGeneratedPanel } from '@/lib/db/schema'
+import { aeoPanel, aeoRequest, aeoRun, business, type AeoGeneratedPanel } from '@/lib/db/schema'
 import { generatePanel, PanelGenerationError, type ModelCall } from './generate'
 import { COMMON_DIRECTORY_DOMAINS, COMMON_REFERENCE_DOMAINS } from './panels/common'
 import { fillSlots, sampleQuestions, type PanelQuestion } from './questions'
@@ -34,6 +34,8 @@ export type PlanTarget = {
   otherDomains?: string[]
   panelSource: 'canned' | 'generated'
   panelSlug: string | null
+  /** Pulse runs: questions are filled from this business's profile instead of a request. */
+  businessId?: string | null
   leaseToken: string
 }
 
@@ -180,7 +182,24 @@ async function generateForRun(
   return panel
 }
 
+/** A Pulse run's plan: the business's industry questions, filled from its profile. */
+async function planBusinessRun(run: PlanTarget & { businessId: string }, questionCount: number): Promise<RunPlan> {
+  const [owner] = await db.select().from(business).where(eq(business.id, run.businessId)).limit(1)
+  if (!owner) throw new PermanentRunError('the business for this run no longer exists')
+  if (run.panelSource !== 'canned' || !run.panelSlug) {
+    // Custom industries get an approved full question set first (docs/pulse-plan.md, P7).
+    throw new PermanentRunError('this business has no approved question set yet')
+  }
+  const [panel] = await db.select().from(aeoPanel).where(eq(aeoPanel.slug, run.panelSlug)).limit(1)
+  if (!panel) throw new PermanentRunError(`panel '${run.panelSlug}' does not exist`)
+
+  const profile = { businessName: owner.name, service: owner.service, city: owner.city, state: owner.state }
+  return { ...buildCannedPlan(panel, profile, run.domain, questionCount), otherDomains: run.otherDomains ?? [] }
+}
+
 export async function planRun(run: PlanTarget, questionCount: number, options: PlanOptions): Promise<RunPlan> {
+  if (run.businessId) return planBusinessRun({ ...run, businessId: run.businessId }, questionCount)
+
   const request = await firstRequest(run.id)
 
   if (run.panelSource === 'generated') {

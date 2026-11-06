@@ -29,7 +29,9 @@ export type ClaimedRun = {
   domain: string
   /** Other sites the business runs; citations of them count as its own. */
   otherDomains: string[]
-  tier: 'snapshot' | 'full'
+  tier: 'snapshot' | 'full' | 'pulse'
+  /** Pulse runs: the client business it belongs to. */
+  businessId: string | null
   engines: string[]
   panelSource: 'canned' | 'generated'
   panelSlug: string | null
@@ -39,12 +41,17 @@ export type ClaimedRun = {
 
 type Row = Record<string, unknown>
 
-/** Spend on runs started since midnight UTC. */
-export async function spentTodayUsd(): Promise<number> {
+export type WorkerLane = 'snapshot' | 'pulse'
+
+/** The runs a lane claims: Pulse runs, or everything else. */
+const laneFilter = (lane: WorkerLane) => (lane === 'pulse' ? sql`tier = 'pulse'` : sql`tier <> 'pulse'`)
+
+/** Spend on runs started since midnight UTC, in one lane. Each lane has its own cap. */
+export async function spentTodayUsd(lane: WorkerLane = 'snapshot'): Promise<number> {
   const result = await db.execute(sql`
     select coalesce(sum(cost_usd), 0)::float8 as spent
     from aeo_run
-    where started_at >= date_trunc('day', now())
+    where started_at >= date_trunc('day', now()) and ${laneFilter(lane)}
   `)
   return Number((result.rows[0] as Row | undefined)?.spent ?? 0)
 }
@@ -62,9 +69,12 @@ export async function claimNextRun(options: {
   maxAttempts: number
   /** Over the daily spend cap: claim only admin re-runs, which bypass it. */
   onlyBypassSpendCap?: boolean
+  /** Defaults to snapshot: every run except Pulse runs. */
+  lane?: WorkerLane
 }): Promise<ClaimedRun | null> {
   const { leaseSeconds, retryDelaySeconds, maxAttempts } = options
   const onlyBypass = options.onlyBypassSpendCap ?? false
+  const lane = options.lane ?? 'snapshot'
   const result = await db.execute(sql`
     update aeo_run
     set status = 'running',
@@ -75,6 +85,7 @@ export async function claimNextRun(options: {
     where id = (
       select id from aeo_run
       where attempts < ${maxAttempts}::int
+        and ${laneFilter(lane)}
         and (${onlyBypass}::boolean = false or bypass_spend_cap)
         and (
           (status = 'queued'
@@ -87,7 +98,7 @@ export async function claimNextRun(options: {
       for update skip locked
       limit 1
     )
-    returning id, public_id, domain, other_domains, tier, engines, panel_source, panel_slug, attempts, lease_token
+    returning id, public_id, domain, other_domains, tier, business_id, engines, panel_source, panel_slug, attempts, lease_token
   `)
 
   const row = result.rows[0] as Row | undefined
@@ -98,6 +109,7 @@ export async function claimNextRun(options: {
     domain: String(row.domain),
     otherDomains: (row.other_domains as string[] | null) ?? [],
     tier: row.tier as ClaimedRun['tier'],
+    businessId: (row.business_id as string | null) ?? null,
     engines: row.engines as string[],
     panelSource: row.panel_source as ClaimedRun['panelSource'],
     panelSlug: (row.panel_slug as string | null) ?? null,
@@ -192,6 +204,18 @@ export async function answeredQueries(runId: string): Promise<Set<string>> {
     select distinct query from aeo_result where run_id = ${runId} and error is null
   `)
   return new Set((result.rows as Row[]).map((row) => String(row.query)))
+}
+
+/** Answered question and assistant pairs, for runs that ask several assistants (see answerKey). */
+export async function answeredPairs(runId: string): Promise<Set<string>> {
+  const result = await db.execute(sql`
+    select distinct engine, query from aeo_result where run_id = ${runId} and error is null
+  `)
+  return new Set((result.rows as Row[]).map((row) => answerKey(String(row.engine), String(row.query))))
+}
+
+export function answerKey(engine: string, query: string): string {
+  return `${engine}\u0000${query}`
 }
 
 /**

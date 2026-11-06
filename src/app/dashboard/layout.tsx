@@ -21,6 +21,9 @@ export default async function DashboardLayout({
               <Link href="/dashboard/aeo" className="hover:text-dark">
                 Leads
               </Link>
+              <Link href="/dashboard/pulse" className="hover:text-dark">
+                Pulse
+              </Link>
               <Link href="/dashboard/panels" className="hover:text-dark">
                 Panels
               </Link>

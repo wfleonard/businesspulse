@@ -1,6 +1,6 @@
 # BusinessPulse Pulse — $100 report runs in a client account
 
-**Status:** plan approved November 6, 2026 · P2 (sign-up) and P3 (business profile and silo) built November 6 · for Bill Leonard
+**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · for Bill Leonard
 **Replaces:** the $49 Monitor plan (`monitor-tier-plan.md`). **Builds on:** customer
 accounts (`customer-accounts-plan.md`); roles (A1) are live.
 
@@ -113,6 +113,14 @@ The full audit runs on Bill's Mac today. It moves into the BusinessPulse worker.
   answers, the way `panel retry` does today.
 - **Admin start:** Bill can start a Pulse run for any business from the dashboard, free,
   for testing and for Core prospects.
+- **As built (P4):** a second worker service, `worker-pulse` (`AEO_WORKER_LANE=pulse`),
+  claims only Pulse runs, so a run of most of an hour never holds up a free snapshot.
+  Assistants run in order Perplexity, Gemini, ChatGPT, Claude, each as its own panel job
+  (`AEO_PULSE_JOB_TIMEOUT_SECONDS`, default 3600; `AEO_PULSE_CONCURRENCY`, default 4,
+  Perplexity held to 2), saved as it finishes. Retries ask only the missing question and
+  assistant pairs. `/dashboard/pulse` starts runs and shows answers per assistant, spend,
+  and time. Pulse report links are admin-only until P5. Businesses with a custom industry
+  can't start a run until P7.
 
 ### 4.4 The report and What to fix
 

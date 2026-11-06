@@ -1,11 +1,14 @@
 /**
- * AEO snapshot worker.
+ * AEO worker.
  *
  * Claims queued runs from Postgres, runs the PHP Visibility Panel on each, and
  * stores the results. One run at a time; request concurrency lives inside the
- * panel.
+ * panel. Two lanes (AEO_WORKER_LANE): `snapshot` (default) takes free snapshots
+ * and re-checks and runs the sweeps; `pulse` takes only Pulse runs, which take
+ * most of an hour, so they never hold up a snapshot.
  *
  *   npm run worker                            # local; reads .env.local
+ *   AEO_WORKER_LANE=pulse npm run worker      # the Pulse lane
  *   AEO_EXIT_WHEN_IDLE=true npm run worker    # drain the queue, then exit
  *
  * Crash safety: a claimed run carries a lease token and a heartbeat. If this
@@ -19,15 +22,17 @@
  * AEO_ADMIN_EMAIL.
  */
 import { closeDb } from '@/lib/db'
-import { workerConfig, type WorkerConfig } from '@/lib/aeo/config'
+import { pulseEngineConcurrency, workerConfig, type WorkerConfig } from '@/lib/aeo/config'
 import { buildJob, PanelAbortedError, PanelExitError, runPanelJob } from '@/lib/aeo/job'
 import { notifyRunFailed, sendPendingReportEmails } from '@/lib/aeo/notify'
 import { decideOutcome } from '@/lib/aeo/outcome'
 import { PermanentRunError, planRun } from '@/lib/aeo/plan'
+import { askPulseEngines, countAnswered } from '@/lib/aeo/pulse-run'
 import { sendRecheckEmails, startDueRechecks } from '@/lib/aeo/recheck'
 import { sweepExpiredContactDetails } from '@/lib/aeo/retention'
 import { sweepExpiredScanRequests } from '@/lib/aeo/scan-requests'
 import {
+  answeredPairs,
   answeredQueries,
   claimNextRun,
   completeRun,
@@ -123,6 +128,11 @@ async function processRun(run: ClaimedRun, config: WorkerConfig, shutdown: Abort
 
   let cost = 0
   try {
+    if (run.tier === 'pulse') {
+      await processPulseRun(run, config, job.signal)
+      return
+    }
+
     const questionCount =
       run.tier === 'full' ? Number.POSITIVE_INFINITY : config.snapshotQuestions
     const plan = await planRun(run, questionCount, { panelModel: config.panelModel })
@@ -216,25 +226,86 @@ async function processRun(run: ClaimedRun, config: WorkerConfig, shutdown: Abort
   }
 }
 
-/** One pass: sweep, check spend, claim and process at most one run. */
-async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worked' | 'idle'> {
-  await sweepReportEmails()
-  await sweepRechecks(config)
-  await sweepRetention(config)
+/**
+ * A Pulse run: every question in the business's set, on every assistant, one
+ * assistant at a time. Answers are saved as each assistant finishes, so a
+ * failed attempt is retried only for the pairs still missing.
+ */
+async function processPulseRun(run: ClaimedRun, config: WorkerConfig, signal: AbortSignal): Promise<void> {
+  const plan = await planRun(run, config.pulseMaxQuestions, { panelModel: config.panelModel })
+  const planQueries = plan.questions.map((q) => q.q)
+  const answered = await answeredPairs(run.id)
+  const total = plan.questions.length * run.engines.length
 
-  for (const id of await sweepAbandoned(config)) {
-    log('run_abandoned', { run: id })
-    await alertRunFailed(id, 'worker stopped responding on its final attempt')
+  log('run_started', {
+    run: run.id,
+    tier: run.tier,
+    attempt: run.attempts,
+    domain: run.domain,
+    questions: plan.questions.length,
+    engines: run.engines,
+    answeredBefore: countAnswered(plan, run.engines, answered),
+  })
+
+  const { errors, costUsd } = await askPulseEngines({
+    plan,
+    engines: run.engines,
+    answered,
+    runEngine: async (engine, questions) => {
+      const result = await runPanelJob({
+        job: buildJob({ ...plan, questions }, [engine], pulseEngineConcurrency(engine, config)),
+        runId: `${run.id}-${engine}`,
+        phpBin: config.phpBin,
+        panelScript: config.panelScript,
+        workDir: config.workDir,
+        timeoutMs: config.pulseJobTimeoutSeconds * 1000,
+        signal,
+      })
+      return { rows: result.results, costUsd: result.totals.cost_usd }
+    },
+    save: (rows, engineCost) => saveProgress(run, rows.filter((row) => !row.error), engineCost, planQueries),
+    log: (event, fields) => log(event, { run: run.id, ...fields }),
+  })
+
+  const done = countAnswered(plan, run.engines, answered)
+  const outcome = decideOutcome({ total, answered: done, attempt: run.attempts, maxAttempts: config.maxAttempts })
+
+  if (outcome === 'complete') {
+    // Answers and cost were saved per assistant; this only totals and closes the run.
+    const totals = await completeRun(run, [], 0, { panelVersion: plan.panelVersion, planQueries })
+    log('run_done', { run: run.id, tier: run.tier, answers: done, of: total, cited: totals.citedCount, costThisAttempt: costUsd })
+    return
   }
 
-  const spent = await spentTodayUsd()
-  const overCap = spent >= config.dailySpendCapUsd
+  const message = `${total - done} of ${total} answers missing: ${errors[0] ?? 'no answer'}`
+  const status = await failAttempt(run, message, { permanent: outcome === 'fail', maxAttempts: config.maxAttempts })
+  log('run_attempt_failed', { run: run.id, tier: run.tier, status, answers: done, of: total, errors })
+  if (status === 'failed') await alertRunFailed(run.id, message)
+}
+
+/** One pass: sweep, check spend, claim and process at most one run. */
+async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worked' | 'idle'> {
+  const { lane } = config
+  if (lane === 'snapshot') {
+    await sweepReportEmails()
+    await sweepRechecks(config)
+    await sweepRetention(config)
+
+    for (const id of await sweepAbandoned(config)) {
+      log('run_abandoned', { run: id })
+      await alertRunFailed(id, 'worker stopped responding on its final attempt')
+    }
+  }
+
+  const cap = lane === 'pulse' ? config.pulseDailyCapUsd : config.dailySpendCapUsd
+  const spent = await spentTodayUsd(lane)
+  const overCap = spent >= cap
 
   // Over the cap, only admin re-runs (which bypass it) are claimed; everything else waits.
-  const run = await claimNextRun({ ...config, onlyBypassSpendCap: overCap })
+  const run = await claimNextRun({ ...config, lane, onlyBypassSpendCap: overCap })
   if (!run) {
     if (!overCap) return 'idle'
-    log('spend_cap_reached', { spent, cap: config.dailySpendCapUsd })
+    log('spend_cap_reached', { lane, spent, cap })
     if (config.exitWhenIdle) return 'idle'
     await sleep(SPEND_CAP_WAIT_MS, shutdown)
     return 'worked'

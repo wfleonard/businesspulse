@@ -453,7 +453,8 @@ export const aeoLeadStatusEnum = pgEnum('aeo_lead_status', [
   'won',
   'ignored',
 ])
-export const aeoRunTierEnum = pgEnum('aeo_run_tier', ['snapshot', 'full'])
+/** snapshot: free, 20 questions on Perplexity. full: legacy. pulse: a client's paid run, every question on all four assistants. */
+export const aeoRunTierEnum = pgEnum('aeo_run_tier', ['snapshot', 'full', 'pulse'])
 export const aeoPanelSourceEnum = pgEnum('aeo_panel_source', ['canned', 'generated'])
 /** form: the public snapshot form. outbound: a prospect snapshot run from the dashboard. */
 export const aeoRequestSourceEnum = pgEnum('aeo_request_source', ['form', 'outbound'])

@@ -26,6 +26,20 @@ export type WorkerConfig = {
   recheckMaxPerDay: number
   /** Contact details are erased this many days after the request (4 months). */
   retentionDays: number
+  /**
+   * Which runs this worker claims. Pulse runs take most of an hour, so they get
+   * their own worker and never hold up a free snapshot. Only the snapshot lane
+   * runs the email, re-check, and retention sweeps.
+   */
+  lane: 'snapshot' | 'pulse'
+  /** Daily ceiling on Pulse spend, separate from the snapshot cap: stops a runaway bug at a known number. */
+  pulseDailyCapUsd: number
+  /** Most questions one Pulse run asks per assistant. */
+  pulseMaxQuestions: number
+  /** Time allowed for one assistant's share of a Pulse run. */
+  pulseJobTimeoutSeconds: number
+  /** Parallel questions per assistant on a Pulse run; Perplexity is held to PERPLEXITY_CONCURRENCY. */
+  pulseConcurrency: number
   phpBin: string
   panelScript: string
   workDir: string
@@ -65,9 +79,25 @@ export function workerConfig(env: Env = process.env, cwd: string = process.cwd()
     recheckDays: wholePositive(env, 'AEO_RECHECK_DAYS', 30),
     recheckMaxPerDay: wholePositive(env, 'AEO_RECHECK_MAX_PER_DAY', 10),
     retentionDays: wholePositive(env, 'AEO_RETENTION_DAYS', 120),
+    lane: env.AEO_WORKER_LANE?.trim() === 'pulse' ? 'pulse' : 'snapshot',
+    pulseDailyCapUsd: positive(env, 'AEO_PAID_DAILY_CAP_USD', 150),
+    pulseMaxQuestions: wholePositive(env, 'AEO_PULSE_MAX_QUESTIONS', 104),
+    pulseJobTimeoutSeconds: wholePositive(env, 'AEO_PULSE_JOB_TIMEOUT_SECONDS', 3600),
+    pulseConcurrency: Math.min(10, wholePositive(env, 'AEO_PULSE_CONCURRENCY', 4)),
     phpBin: env.AEO_PHP_BIN?.trim() || 'php',
     panelScript: env.AEO_PANEL_SCRIPT?.trim() || path.join(cwd, 'panel', 'panel.php'),
     workDir: env.AEO_WORK_DIR?.trim() || path.join(os.tmpdir(), 'aeo-worker'),
     exitWhenIdle: env.AEO_EXIT_WHEN_IDLE === 'true',
   }
+}
+
+/** The assistants a Pulse run asks, cheapest first so a broken run fails before the expensive ones. */
+export const PULSE_ENGINES = ['perplexity', 'gemini', 'openai', 'claude'] as const
+
+/** Perplexity rate-limits above this on a full question set (SaxonAEO visibility-panel README). */
+export const PERPLEXITY_CONCURRENCY = 2
+
+/** Concurrency for one assistant's share of a Pulse run. */
+export function pulseEngineConcurrency(engine: string, config: Pick<WorkerConfig, 'pulseConcurrency'>): number {
+  return engine === 'perplexity' ? Math.min(PERPLEXITY_CONCURRENCY, config.pulseConcurrency) : config.pulseConcurrency
 }

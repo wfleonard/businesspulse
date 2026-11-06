@@ -1,0 +1,1 @@
+ALTER TYPE "public"."aeo_run_tier" ADD VALUE 'pulse';

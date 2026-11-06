@@ -263,9 +263,12 @@ function Report({ report, summary, full }: { report: LoadedReport; summary: Repo
 export default async function ReportPage({ params, searchParams }: Props) {
   const { publicId } = await params
   // The full view is for us: admins only. Anyone else asking for it, customers included, gets the customer's report.
-  const full = (await searchParams).full === '1' && isAdmin(await getSession())
+  const admin = isAdmin(await getSession())
+  const full = (await searchParams).full === '1' && admin
   const report = await loadReport(publicId, full ? 'full' : 'highlights')
   if (!report) notFound()
+  // Pulse reports aren't public links: admins only until the client's account report (P5).
+  if (report.tier === 'pulse' && !admin) notFound()
 
   if (report.status === 'queued' || report.status === 'running') {
     return (

@@ -1,6 +1,6 @@
 import { asc, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { aeoPanel, aeoRequest, aeoResult, aeoRun, type AeoRival, type AeoSource } from '@/lib/db/schema'
+import { aeoPanel, aeoRequest, aeoResult, aeoRun, business, type AeoRival, type AeoSource } from '@/lib/db/schema'
 import { COMMON_DIRECTORY_DOMAINS } from './panels/common'
 
 /**
@@ -238,6 +238,8 @@ export type LoadedReport = {
   requestSource: (typeof aeoRequest.$inferSelect)['source'] | null
   status: (typeof aeoRun.$inferSelect)['status']
   panelSource: (typeof aeoRun.$inferSelect)['panelSource']
+  /** Pulse reports are private to the client account (admins only until P5). */
+  tier: (typeof aeoRun.$inferSelect)['tier']
   finishedAt: Date | null
   engines: { engine: string; model: string | null }[]
   summary: ReportSummary | null
@@ -269,8 +271,12 @@ export async function loadReport(publicId: string, detail: ReportDetail = 'highl
       panelSource: aeoRun.panelSource,
       panelSlug: aeoRun.panelSlug,
       finishedAt: aeoRun.finishedAt,
+      tier: aeoRun.tier,
+      // Pulse runs belong to a client business and carry its name.
+      clientName: business.name,
     })
     .from(aeoRun)
+    .leftJoin(business, eq(business.id, aeoRun.businessId))
     .where(eq(aeoRun.publicId, publicId))
     .limit(1)
   if (!run) return null
@@ -287,7 +293,8 @@ export async function loadReport(publicId: string, detail: ReportDetail = 'highl
     domain: run.domain,
     otherDomains: run.otherDomains,
     // Falls back to the domain once retention has erased the business name.
-    businessName: request?.businessName || run.domain,
+    businessName: run.clientName || request?.businessName || run.domain,
+    tier: run.tier,
     requestSource: request?.source ?? null,
     status: run.status,
     panelSource: run.panelSource,

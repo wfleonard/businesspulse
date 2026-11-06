@@ -38,6 +38,21 @@ services:
     volumes:
       - ./certs:/app/certs:ro # DB CA cert for verify-full
 
+  # Pulse worker: the same image, claiming only Pulse runs (all four assistants,
+  # most of an hour each), so a paid run never holds up a free snapshot.
+  worker-pulse:
+    build:
+      context: .
+      target: worker
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    env_file: .env
+    environment:
+      AEO_WORKER_LANE: pulse
+    volumes:
+      - ./certs:/app/certs:ro
+
   valkey:
     image: valkey/valkey:8-alpine
     restart: unless-stopped
