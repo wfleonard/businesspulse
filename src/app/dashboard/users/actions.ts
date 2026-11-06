@@ -69,5 +69,5 @@ export async function removeAccess(formData: FormData): Promise<void> {
   const email = await findUserEmail(parsed.data.userId)
   if (!email || !(await removeUser(parsed.data.userId))) done('That user no longer exists.', true)
   await recordAudit({ userId: user.id, action: 'access.user_removed', target: email })
-  done(`Removed ${email}. They're signed out everywhere.`)
+  done(`Removed ${email}, with their business and account reports. They're signed out everywhere.`)
 }

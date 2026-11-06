@@ -395,6 +395,39 @@ export const auditLog = pgTable(
 )
 
 /* ------------------------------------------------------------------ */
+/* Pulse client accounts (docs/pulse-plan.md). A customer has at most   */
+/* one business; everything they own hangs off it, and deleting the    */
+/* account deletes the business and all of it.                         */
+/* ------------------------------------------------------------------ */
+
+export const business = pgTable(
+  'business',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** Unique for now: one business per account. */
+    userId: text('user_id')
+      .notNull()
+      .unique()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    /** Main website, normalized like aeo_request.domain. */
+    domain: text('domain').notNull(),
+    /** Other sites the business runs; citations of these count as its own. */
+    otherDomains: jsonb('other_domains').$type<string[]>().notNull().default([]),
+    /** An active panel's slug, or null for "Something else" (a custom question set). */
+    panelSlug: text('panel_slug'),
+    /** What the business does, in their words, when no industry fits. */
+    customIndustry: text('custom_industry').notNull().default(''),
+    service: text('service').notNull(),
+    city: text('city').notNull(),
+    state: text('state').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('business_domain_idx').on(t.domain)]
+)
+
+/* ------------------------------------------------------------------ */
 /* AEO snapshots — public, pre-account submissions. Deliberately NOT   */
 /* org-scoped: these are Saxon's operational data, visible only to the */
 /* admin. See docs/aeo-build-spec.md, Section 6.                       */
@@ -531,6 +564,11 @@ export const aeoRun = pgTable(
     generatedPanel: jsonb('generated_panel').$type<AeoGeneratedPanel>(),
     /** Admin re-runs: claimed even when today's spend is over the cap. */
     bypassSpendCap: boolean('bypass_spend_cap').notNull().default(false),
+    /**
+     * Pulse runs only: the client business that owns this run. Snapshot runs stay
+     * null because one snapshot run can be shared by several requests.
+     */
+    businessId: uuid('business_id').references(() => business.id, { onDelete: 'cascade' }),
     /** Views of the finished report by visitors (not bots or signed-in admins), recorded by the report page. */
     reportViewCount: integer('report_view_count').notNull().default(0),
     reportFirstViewedAt: timestamp('report_first_viewed_at'),
@@ -557,6 +595,7 @@ export const aeoRun = pgTable(
   (t) => [
     index('aeo_run_status_created_idx').on(t.status, t.createdAt),
     index('aeo_run_domain_idx').on(t.domain),
+    index('aeo_run_business_idx').on(t.businessId),
   ]
 )
 
@@ -588,6 +627,12 @@ export const aeoRequest = pgTable(
     /** Set when the retention sweep erased the contact details (email, business name, IP). */
     anonymizedAt: timestamp('anonymized_at'),
     runId: uuid('run_id').references(() => aeoRun.id, { onDelete: 'set null' }),
+    /**
+     * The client account this snapshot belongs to: set when the account's
+     * confirmed email matches the email that verified the snapshot. Linked
+     * requests are kept past the retention sweep and deleted with the account.
+     */
+    businessId: uuid('business_id').references(() => business.id, { onDelete: 'cascade' }),
     /** When the "report ready" email went out. Null until then; the worker sweeps for these. */
     reportEmailedAt: timestamp('report_emailed_at'),
     reportEmailAttempts: integer('report_email_attempts').notNull().default(0),
@@ -598,6 +643,7 @@ export const aeoRequest = pgTable(
     index('aeo_request_domain_idx').on(t.domain),
     index('aeo_request_email_idx').on(t.email),
     index('aeo_request_created_idx').on(t.createdAt),
+    index('aeo_request_business_idx').on(t.businessId),
   ]
 )
 
@@ -802,6 +848,7 @@ export const schema = {
   recommendation,
   aiQuery,
   auditLog,
+  business,
   aeoPanel,
   aeoPanelVersion,
   aeoPanelBacklog,

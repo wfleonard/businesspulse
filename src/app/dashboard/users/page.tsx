@@ -158,7 +158,7 @@ export default async function UsersPage({ searchParams }: Props) {
                         <form action={removeAccess}>
                           <input type="hidden" name="userId" value={u.id} />
                           <ConfirmSubmit
-                            message={`Remove ${u.email}'s login? They'll be signed out and can't sign in again.`}
+                            message={`Remove ${u.email}'s login? They'll be signed out and can't sign in again. Their business profile and the reports in their account are deleted too. This can't be undone.`}
                             className="px-2 py-1 text-xs text-text-secondary hover:bg-danger/5 hover:text-danger"
                           >
                             Remove

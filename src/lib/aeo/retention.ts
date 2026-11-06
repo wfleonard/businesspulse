@@ -10,7 +10,9 @@ import { db } from '@/lib/db'
  *
  * The run and its answers stay, without anything naming a person, so reports
  * keep working and industry benchmarks keep their data. Leads marked "won"
- * are skipped: a client is a business record, not a stale enquiry. Deletion
+ * are skipped: a client is a business record, not a stale enquiry. So are
+ * snapshots linked to a client account: the account keeps them until it is
+ * deleted, and deleting it deletes them (aeo_request.business_id). Deletion
  * on request is separate and removes everything (see deleteRequest).
  */
 
@@ -25,6 +27,7 @@ export async function sweepExpiredContactDetails(retentionDays: number): Promise
         anonymized_at = now()
     where anonymized_at is null
       and lead_status <> 'won'
+      and business_id is null
       and created_at < now() - ${retentionDays}::int * interval '1 day'
     returning id
   `)

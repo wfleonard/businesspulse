@@ -3,22 +3,43 @@ import Link from 'next/link'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { PublicHeader } from '@/components/site/PublicHeader'
 import { Card } from '@/components/ui/Card'
+import { getBusiness, linkSnapshots, listReports, type AccountReport } from '@/lib/account/business'
+import { activePanels } from '@/lib/aeo/requests'
+import { stateInfo } from '@/lib/aeo/states'
 import { isAdmin, requireSession } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = { title: 'Your account | BusinessPulse' }
 
-/**
- * A customer's own area. Placeholder until accounts milestone A4 adds their
- * reports, re-runs, and Monitor (docs/customer-accounts-plan.md §3.4).
- */
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 
+const dateFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+function reportSummary(report: AccountReport): string {
+  if (report.status === 'queued' || report.status === 'running') return 'Running now'
+  if (report.status === 'failed') return 'Didn’t finish'
+  return `Cited on ${report.citedCount} of ${report.questionCount} questions`
+}
+
+/**
+ * A customer's own area: their business and every report it owns
+ * (docs/pulse-plan.md). Everything is loaded from the session user's id.
+ */
 export default async function AccountPage({ searchParams }: Props) {
   const session = await requireSession()
-  const welcome = (await searchParams).welcome === '1'
+  const params = await searchParams
   const { user } = session
+
+  const owned = await getBusiness(user.id)
+  // Picks up snapshots verified since the profile was saved.
+  if (owned) await linkSnapshots(owned.id, user.email)
+  const [reports, panels] = await Promise.all([listReports(user.id), owned ? activePanels() : []])
+  const industry = owned
+    ? owned.panelSlug
+      ? (panels.find((p) => p.slug === owned.panelSlug)?.name ?? owned.panelSlug)
+      : owned.customIndustry
+    : ''
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -31,13 +52,18 @@ export default async function AccountPage({ searchParams }: Props) {
               {user.name} · {user.email}
             </p>
           </div>
-          <SignOutButton />
+          <div className="shrink-0 whitespace-nowrap">
+            <SignOutButton />
+          </div>
         </div>
 
-        {welcome && (
+        {params.welcome === '1' && (
           <p className="mt-6 rounded-md bg-success/10 px-3 py-2 text-sm text-success">
             Your email is confirmed and your account is ready.
           </p>
+        )}
+        {params.saved === '1' && (
+          <p className="mt-6 rounded-md bg-success/10 px-3 py-2 text-sm text-success">Your business is saved.</p>
         )}
 
         {isAdmin(session) && (
@@ -49,18 +75,80 @@ export default async function AccountPage({ searchParams }: Props) {
           </p>
         )}
 
-        <Card className="mt-8">
+        {owned ? (
+          <Card className="mt-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-dark">{owned.name}</h2>
+                <p className="mt-1 text-sm text-text-secondary">
+                  {owned.domain}
+                  {owned.otherDomains.length > 0 && ` + ${owned.otherDomains.join(', ')}`}
+                </p>
+                <p className="mt-1 text-sm text-text-secondary">
+                  {industry} · {owned.service} · {owned.city}, {stateInfo(owned.state)?.name ?? owned.state}
+                </p>
+              </div>
+              <Link href="/account/business" className="shrink-0 text-sm font-medium text-primary hover:underline">
+                Edit
+              </Link>
+            </div>
+          </Card>
+        ) : (
+          <Card className="mt-8">
+            <h2 className="text-lg font-semibold text-dark">Set up your business</h2>
+            <p className="mt-2 text-sm text-text-secondary">
+              Tell us your website, industry, and service area. Your reports are built from it, and any free
+              snapshots you ran with {user.email} will show up here.
+            </p>
+            <Link
+              href="/account/business"
+              className="mt-4 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+            >
+              Set up your business
+            </Link>
+          </Card>
+        )}
+
+        <Card className="mt-6">
           <h2 className="text-lg font-semibold text-dark">Your reports</h2>
-          <p className="mt-2 text-sm text-text-secondary">
-            Your snapshots and 30-day re-checks will show here, so you can see how AI search answers change over time.
-            Until then, your report links arrive by email.
-          </p>
-          <Link
-            href="/"
-            className="mt-4 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
-          >
-            Get a free snapshot
-          </Link>
+          {reports.length > 0 ? (
+            <ul className="mt-4 divide-y divide-border">
+              {reports.map((report) => (
+                <li key={report.publicId} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-dark">
+                      {report.kind === 'recheck' ? '30-day re-check' : 'Free snapshot'} · {report.domain}
+                    </p>
+                    <p className="text-xs text-text-secondary">
+                      {dateFormat.format(report.createdAt)} · {reportSummary(report)}
+                    </p>
+                  </div>
+                  {report.status === 'done' && (
+                    <Link
+                      href={`/report/${report.publicId}`}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      View report
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-text-secondary">
+                {owned
+                  ? `No reports yet. Free snapshots you run with ${user.email} will show up here.`
+                  : 'Your reports will show up here once your business is set up.'}
+              </p>
+              <Link
+                href="/"
+                className="mt-4 inline-block rounded-md border border-border px-4 py-2 text-sm font-medium text-dark hover:bg-gray-50"
+              >
+                Get a free snapshot
+              </Link>
+            </>
+          )}
         </Card>
       </main>
     </div>

@@ -10,12 +10,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Privacy | BusinessPulse',
     description:
-      'What BusinessPulse collects when you request a snapshot or a scan, why, how long it keeps it, and how to have it deleted.',
+      'What BusinessPulse collects when you request a snapshot or a scan or create an account, why, how long it keeps it, and how to have it deleted.',
     alternates: { canonical: appUrl('/privacy') },
   }
 }
 
-const LAST_UPDATED = 'October 19, 2026'
+const LAST_UPDATED = 'November 6, 2026'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -46,6 +46,11 @@ export default function PrivacyPage() {
         <p>
           When you request a scan from our scan page: your business name, website, and email address, and the IP
           address the request came from.
+        </p>
+        <p>
+          When you create an account: your name, email address, and password, which is stored only as a one-way
+          hash we can&apos;t read. Your business profile adds your business name, websites, industry, main service,
+          and location.
         </p>
       </Section>
 
@@ -99,6 +104,12 @@ export default function PrivacyPage() {
           ) : (
             ' To delete yours, reply to any email we sent you and we’ll remove the request and its report.'
           )}
+        </p>
+        <p>
+          If you have an account, free snapshots you confirmed from the same email address are linked to it and kept
+          with your contact details for as long as the account exists. Deleting your account deletes your business
+          profile and every snapshot and report linked to it. To delete your account, email us from the address you
+          signed up with.
         </p>
       </Section>
       <GoogleAnalytics />

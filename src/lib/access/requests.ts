@@ -161,7 +161,33 @@ export async function hasPassword(userId: string): Promise<boolean> {
 }
 
 /** Deletes the user; their sessions and password go with them, and audit entries keep the action without the user. */
+/**
+ * Delete a login and everything its account owns. The business, its Pulse
+ * runs, and its linked snapshot requests go by cascade; the snapshot and
+ * re-check reports behind those requests are deleted too unless another
+ * request still uses them (30-day reuse), as deleteRequest does.
+ */
 export async function removeUser(id: string): Promise<boolean> {
-  const deleted = await db.delete(user).where(eq(user.id, id)).returning({ id: user.id })
-  return deleted.length > 0
+  return db.transaction(async (tx) => {
+    const owned = await tx.execute<{ run_id: string }>(sql`
+      select q.run_id from aeo_request q join business b on b.id = q.business_id
+      where b.user_id = ${id} and q.run_id is not null
+      union
+      select c.run_id from aeo_recheck c
+      join aeo_request q on q.id = c.request_id
+      join business b on b.id = q.business_id
+      where b.user_id = ${id}
+    `)
+    const deleted = await tx.delete(user).where(eq(user.id, id)).returning({ id: user.id })
+    const runIds = owned.rows.map((r) => r.run_id)
+    if (runIds.length) {
+      await tx.execute(sql`
+        delete from aeo_run r
+        where r.id in (${sql.join(runIds.map((runId) => sql`${runId}::uuid`), sql`, `)})
+          and not exists (select 1 from aeo_request q where q.run_id = r.id)
+          and not exists (select 1 from aeo_recheck c where c.run_id = r.id)
+      `)
+    }
+    return deleted.length > 0
+  })
 }

@@ -1,6 +1,6 @@
 # BusinessPulse Pulse — $100 report runs in a client account
 
-**Status:** plan approved November 6, 2026 · P2 (sign-up) built November 6 · for Bill Leonard
+**Status:** plan approved November 6, 2026 · P2 (sign-up) and P3 (business profile and silo) built November 6 · for Bill Leonard
 **Replaces:** the $49 Monitor plan (`monitor-tier-plan.md`). **Builds on:** customer
 accounts (`customer-accounts-plan.md`); roles (A1) are live.
 
@@ -79,6 +79,12 @@ assistants read and cite the site, not about Google rankings.
 - **Silo rule:** every customer page and action loads data only through the signed-in
   user's business. Tests check that one customer can never read another's runs, reports,
   orders, or fix requests, by page, action, or ID guessing.
+- **As built (P3):** `/account/business` sets up or edits the profile; "Something else" asks
+  what the business does (`business.custom_industry`, for the P7 draft). Snapshots link
+  when their email matches the account's (form snapshots only, never outbound
+  prospects), on save and on each visit to `/account`. Removing a login deletes its
+  business, linked requests, and the reports no other request uses. Self-serve account
+  deletion is by email for now.
 
 ### 4.2 Payment
 

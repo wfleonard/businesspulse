@@ -9,7 +9,7 @@ export const required = (label: string, max: number) =>
     .min(2, `${label} is required`)
     .max(max, `${label} is too long`)
 
-const websiteField = z
+export const websiteField = z
   .string({ error: 'Website is required' })
   .max(2048)
   .transform((value, ctx) => {
@@ -60,7 +60,7 @@ export type ScanRequestInput = z.infer<typeof scanRequestSchema>
 export const MAX_OTHER_DOMAINS = 10
 
 /** Other websites the business runs, as free text separated by commas, spaces, or new lines. */
-const otherDomains = z
+export const otherDomainsField = z
   .string()
   .max(2048, 'That is too many websites')
   .default('')
@@ -99,7 +99,7 @@ export const prospectRequestSchema = snapshotRequestSchema
       .max(254, 'Enter a valid email address')
       .refine((value) => value === '' || z.email().safeParse(value).success, 'Enter a valid email address')
       .default(''),
-    otherDomains,
+    otherDomains: otherDomainsField,
   })
   // The main website is already the business's own; listing it again changes nothing.
   .transform((value) => ({ ...value, otherDomains: value.otherDomains.filter((d) => d !== value.website) }))
