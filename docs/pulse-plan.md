@@ -117,7 +117,9 @@ The full audit runs on Bill's Mac today. It moves into the BusinessPulse worker.
   claims only Pulse runs, so a run of most of an hour never holds up a free snapshot.
   Assistants run in order Perplexity, Gemini, ChatGPT, Claude, each as its own panel job
   (`AEO_PULSE_JOB_TIMEOUT_SECONDS`, default 3600; `AEO_PULSE_CONCURRENCY`, default 4,
-  Perplexity held to 2), saved as it finishes. Retries ask only the missing question and
+  Perplexity held to 1), saved as it finishes. After a rate limit an assistant waits
+  `AEO_PULSE_RATE_LIMIT_PAUSE_SECONDS` (90) and re-asks its gaps, twice at most, in the same
+  attempt. Retries ask only the missing question and
   assistant pairs. `/dashboard/pulse` starts runs and shows answers per assistant, spend,
   and time. Pulse report links are admin-only until P5. Businesses with a custom industry
   can't start a run until P7.

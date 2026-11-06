@@ -23,48 +23,71 @@ export async function askPulseEngines(args: {
   answered: Set<string>
   runEngine: (engine: string, questions: PanelQuestion[]) => Promise<EngineResult>
   save: (rows: Row[], costUsd: number) => Promise<void>
+  /**
+   * When an assistant rate-limits, it gets up to this many more passes at its
+   * missing questions in the same attempt, after `pause`. Other errors wait for
+   * the next attempt.
+   */
+  rateLimitPasses?: number
+  pause?: (engine: string) => Promise<void>
   log?: (event: string, fields: Record<string, unknown>) => void
 }): Promise<{ errors: string[]; costUsd: number }> {
-  const { plan, engines, answered, runEngine, save, log = () => {} } = args
+  const { plan, engines, answered, runEngine, save, rateLimitPasses = 0, pause = async () => {}, log = () => {} } = args
   const errors: string[] = []
   let costUsd = 0
 
   for (const engine of engines) {
-    const toAsk = plan.questions.filter((q) => !answered.has(answerKey(engine, q.q)))
-    if (toAsk.length === 0) continue
+    let lastError: string | undefined
+    for (let pass = 0; pass <= rateLimitPasses; pass++) {
+      const toAsk = plan.questions.filter((q) => !answered.has(answerKey(engine, q.q)))
+      if (toAsk.length === 0) {
+        lastError = undefined
+        break
+      }
+      if (pass > 0) {
+        if (!lastError || !isRateLimit(lastError)) break
+        log('pulse_rate_limit_pause', { engine, missing: toAsk.length, pass })
+        await pause(engine)
+      }
 
-    const startedAt = Date.now()
-    let result: EngineResult
-    try {
-      result = await runEngine(engine, toAsk)
-    } catch (err) {
-      if (err instanceof PanelAbortedError || (err instanceof PanelExitError && err.code === 2)) throw err
-      const message = err instanceof Error ? err.message : String(err)
-      errors.push(`${engine}: ${message}`)
-      log('pulse_engine_failed', { engine, asked: toAsk.length, error: message })
-      continue
-    }
+      const startedAt = Date.now()
+      let result: EngineResult
+      try {
+        result = await runEngine(engine, toAsk)
+      } catch (err) {
+        if (err instanceof PanelAbortedError || (err instanceof PanelExitError && err.code === 2)) throw err
+        lastError = err instanceof Error ? err.message : String(err)
+        log('pulse_engine_failed', { engine, asked: toAsk.length, pass, error: lastError })
+        continue
+      }
 
-    await save(result.rows, result.costUsd)
-    costUsd += result.costUsd
-    let got = 0
-    for (const row of result.rows) {
-      if (row.error) continue
-      answered.add(answerKey(row.engine, row.query))
-      got++
+      await save(result.rows, result.costUsd)
+      costUsd += result.costUsd
+      let got = 0
+      for (const row of result.rows) {
+        if (row.error) continue
+        answered.add(answerKey(row.engine, row.query))
+        got++
+      }
+      lastError = result.rows.find((row) => row.error)?.error ?? undefined
+      log('pulse_engine_done', {
+        engine,
+        pass,
+        asked: toAsk.length,
+        answered: got,
+        costUsd: result.costUsd,
+        seconds: Math.round((Date.now() - startedAt) / 1000),
+      })
     }
-    const firstError = result.rows.find((row) => row.error)?.error
-    if (firstError) errors.push(`${engine}: ${firstError}`)
-    log('pulse_engine_done', {
-      engine,
-      asked: toAsk.length,
-      answered: got,
-      costUsd: result.costUsd,
-      seconds: Math.round((Date.now() - startedAt) / 1000),
-    })
+    if (lastError) errors.push(`${engine}: ${lastError}`)
   }
 
   return { errors, costUsd }
+}
+
+/** Provider rate limits, as the panel reports them. Quota exhaustion is not one: waiting won't fix it. */
+export function isRateLimit(message: string): boolean {
+  return /\b429\b|rate limit/i.test(message) && !/quota/i.test(message)
 }
 
 /** How many of the plan's question and assistant pairs have an answer. */

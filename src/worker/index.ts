@@ -22,7 +22,7 @@
  * AEO_ADMIN_EMAIL.
  */
 import { closeDb } from '@/lib/db'
-import { pulseEngineConcurrency, workerConfig, type WorkerConfig } from '@/lib/aeo/config'
+import { PULSE_RATE_LIMIT_PASSES, pulseEngineConcurrency, workerConfig, type WorkerConfig } from '@/lib/aeo/config'
 import { buildJob, PanelAbortedError, PanelExitError, runPanelJob } from '@/lib/aeo/job'
 import { notifyRunFailed, sendPendingReportEmails } from '@/lib/aeo/notify'
 import { decideOutcome } from '@/lib/aeo/outcome'
@@ -264,6 +264,8 @@ async function processPulseRun(run: ClaimedRun, config: WorkerConfig, signal: Ab
       return { rows: result.results, costUsd: result.totals.cost_usd }
     },
     save: (rows, engineCost) => saveProgress(run, rows.filter((row) => !row.error), engineCost, planQueries),
+    rateLimitPasses: PULSE_RATE_LIMIT_PASSES,
+    pause: () => sleep(config.pulseRateLimitPauseSeconds * 1000, signal),
     log: (event, fields) => log(event, { run: run.id, ...fields }),
   })
 

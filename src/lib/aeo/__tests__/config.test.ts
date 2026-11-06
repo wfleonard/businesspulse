@@ -25,6 +25,7 @@ describe('workerConfig', () => {
       pulseMaxQuestions: 104,
       pulseJobTimeoutSeconds: 3600,
       pulseConcurrency: 4,
+      pulseRateLimitPauseSeconds: 90,
       phpBin: 'php',
       panelScript: path.join('/app', 'panel', 'panel.php'),
       workDir: path.join(os.tmpdir(), 'aeo-worker'),
@@ -85,9 +86,8 @@ describe('Pulse settings', () => {
     expect(workerConfig({ AEO_PAID_DAILY_CAP_USD: '75' }, '/app').pulseDailyCapUsd).toBe(75)
   })
 
-  it('holds Perplexity to 2 at once and lets the others use the Pulse setting', () => {
-    expect(pulseEngineConcurrency('perplexity', { pulseConcurrency: 4 })).toBe(2)
-    expect(pulseEngineConcurrency('perplexity', { pulseConcurrency: 1 })).toBe(1)
+  it('holds Perplexity to 1 at once and lets the others use the Pulse setting', () => {
+    expect(pulseEngineConcurrency('perplexity', { pulseConcurrency: 4 })).toBe(1)
     expect(pulseEngineConcurrency('claude', { pulseConcurrency: 4 })).toBe(4)
   })
 })

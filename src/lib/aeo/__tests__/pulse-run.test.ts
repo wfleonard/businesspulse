@@ -2,7 +2,7 @@
 jest.mock('@/lib/db', () => ({ db: {} }))
 
 import { PanelAbortedError, PanelExitError } from '../job'
-import { askPulseEngines, countAnswered } from '../pulse-run'
+import { askPulseEngines, countAnswered, isRateLimit } from '../pulse-run'
 import { answerKey } from '../queue'
 
 const plan = { questions: [{ c: 'cost', q: 'q1' }, { c: 'cost', q: 'q2' }] }
@@ -96,5 +96,74 @@ describe('askPulseEngines', () => {
         })
       ).rejects.toBe(err)
     }
+  })
+})
+
+describe('rate limits', () => {
+  it('pauses and re-asks only the rate-limited questions, in the same attempt', async () => {
+    const calls: string[] = []
+    const pauses: string[] = []
+    const answered = new Set<string>()
+    let perplexityCalls = 0
+    const result = await askPulseEngines({
+      plan,
+      engines: ENGINES,
+      answered,
+      rateLimitPasses: 2,
+      pause: async (engine) => {
+        pauses.push(engine)
+      },
+      runEngine: async (engine, questions) => {
+        calls.push(`${engine}:${questions.map((q) => q.q).join(',')}`)
+        if (engine === 'perplexity' && perplexityCalls++ === 0) {
+          return { rows: [row(engine, 'q1'), row(engine, 'q2', 'HTTP 429: Request rate limit exceeded')], costUsd: 0.01 }
+        }
+        return { rows: questions.map((q) => row(engine, q.q)), costUsd: 0.01 }
+      },
+      save: async () => {},
+    })
+    expect(calls).toEqual(['perplexity:q1,q2', 'perplexity:q2', 'claude:q1,q2'])
+    expect(pauses).toEqual(['perplexity'])
+    expect(result.errors).toEqual([])
+    expect(countAnswered(plan, ENGINES, answered)).toBe(4)
+  })
+
+  it('gives up after the extra passes and leaves the rest to the next attempt', async () => {
+    const calls: string[] = []
+    const result = await askPulseEngines({
+      plan,
+      engines: ['perplexity'],
+      answered: new Set(),
+      rateLimitPasses: 2,
+      runEngine: async (engine, questions) => {
+        calls.push(engine)
+        return { rows: questions.map((q) => row(engine, q.q, 'HTTP 429')), costUsd: 0 }
+      },
+      save: async () => {},
+    })
+    expect(calls).toHaveLength(3)
+    expect(result.errors).toEqual(['perplexity: HTTP 429'])
+  })
+
+  it('does not wait out other errors', async () => {
+    const calls: string[] = []
+    await askPulseEngines({
+      plan,
+      engines: ['claude'],
+      answered: new Set(),
+      rateLimitPasses: 2,
+      runEngine: async (engine, questions) => {
+        calls.push(engine)
+        return { rows: questions.map((q) => row(engine, q.q, 'HTTP 500')), costUsd: 0 }
+      },
+      save: async () => {},
+    })
+    expect(calls).toHaveLength(1)
+  })
+
+  it('tells a rate limit from an exhausted quota', () => {
+    expect(isRateLimit('HTTP 429: Request rate limit exceeded, please try again later.')).toBe(true)
+    expect(isRateLimit('HTTP 429: You exceeded your current quota')).toBe(false)
+    expect(isRateLimit('HTTP 500')).toBe(false)
   })
 })

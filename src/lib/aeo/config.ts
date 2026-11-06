@@ -40,6 +40,8 @@ export type WorkerConfig = {
   pulseJobTimeoutSeconds: number
   /** Parallel questions per assistant on a Pulse run; Perplexity is held to PERPLEXITY_CONCURRENCY. */
   pulseConcurrency: number
+  /** After an assistant rate-limits a Pulse run, wait this long, then ask its missing questions again. */
+  pulseRateLimitPauseSeconds: number
   phpBin: string
   panelScript: string
   workDir: string
@@ -84,6 +86,7 @@ export function workerConfig(env: Env = process.env, cwd: string = process.cwd()
     pulseMaxQuestions: wholePositive(env, 'AEO_PULSE_MAX_QUESTIONS', 104),
     pulseJobTimeoutSeconds: wholePositive(env, 'AEO_PULSE_JOB_TIMEOUT_SECONDS', 3600),
     pulseConcurrency: Math.min(10, wholePositive(env, 'AEO_PULSE_CONCURRENCY', 4)),
+    pulseRateLimitPauseSeconds: wholePositive(env, 'AEO_PULSE_RATE_LIMIT_PAUSE_SECONDS', 90),
     phpBin: env.AEO_PHP_BIN?.trim() || 'php',
     panelScript: env.AEO_PANEL_SCRIPT?.trim() || path.join(cwd, 'panel', 'panel.php'),
     workDir: env.AEO_WORK_DIR?.trim() || path.join(os.tmpdir(), 'aeo-worker'),
@@ -94,8 +97,14 @@ export function workerConfig(env: Env = process.env, cwd: string = process.cwd()
 /** The assistants a Pulse run asks, cheapest first so a broken run fails before the expensive ones. */
 export const PULSE_ENGINES = ['perplexity', 'gemini', 'openai', 'claude'] as const
 
-/** Perplexity rate-limits above this on a full question set (SaxonAEO visibility-panel README). */
-export const PERPLEXITY_CONCURRENCY = 2
+/**
+ * Perplexity on a Pulse run, one question at a time. At 2 it still rate-limited
+ * 18 of 66 questions on the first live Primos Maternos run (November 6, 2026).
+ */
+export const PERPLEXITY_CONCURRENCY = 1
+
+/** Extra passes at an assistant's missing questions after a rate limit, within one attempt. */
+export const PULSE_RATE_LIMIT_PASSES = 2
 
 /** Concurrency for one assistant's share of a Pulse run. */
 export function pulseEngineConcurrency(engine: string, config: Pick<WorkerConfig, 'pulseConcurrency'>): number {
