@@ -1,5 +1,8 @@
 # BusinessPulse Monitor — $49/month build plan
 
+> **Replaced November 6, 2026** by the $100 Pulse run (`pulse-plan.md`). Kept for its
+> unit-cost work and design history; don't build from it.
+
 **Status:** approved October 1, 2026 · M0 live since October 1 · revised October 26, 2026
 (subscribers have accounts; see `customer-accounts-plan.md`) · for Bill Leonard
 

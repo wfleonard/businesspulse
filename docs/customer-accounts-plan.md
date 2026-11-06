@@ -3,6 +3,10 @@
 **Status:** approved October 26, 2026 · A1 (roles) built October 27 · for Bill Leonard
 **Replaces:** "no customer login" in `aeo-build-spec.md` §4.3 and `monitor-tier-plan.md` §3.1
 
+> **November 6, 2026:** the paid product is now the $100 Pulse run, not Monitor. A2 and A3
+> continue as Pulse milestones P2 and P3, and A4 becomes P5 (`pulse-plan.md`). Where this
+> plan says Monitor, read Pulse.
+
 BusinessPulse moves toward SaaS: businesses get their own accounts. The free snapshot
 stays exactly as it is, with no account needed, and an account is what turns one report into
 a history. Monitor ($49/mo) requires one.
