@@ -1,8 +1,10 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { captcha } from 'better-auth/plugins'
 import { hash, verify } from '@node-rs/argon2'
 import { and, eq, isNotNull } from 'drizzle-orm'
+import { COMPANY_EMAIL_MESSAGE, isFreeEmail } from '@/lib/access/free-email'
 import { passwordLinkEmail, PASSWORD_LINK_HOURS, verifyEmailEmail } from '@/lib/access/emails'
 import { signupOpen, VERIFY_LINK_HOURS } from '@/lib/access/signup'
 import { db } from '@/lib/db'
@@ -21,6 +23,7 @@ const isProd = process.env.NODE_ENV === 'production'
  * Sign-up at /signup makes customers (docs/pulse-plan.md), and only while
  * BP_ALLOW_SIGNUP=true. A new account must confirm its email before it can sign
  * in; signing in unconfirmed sends a fresh link. Turnstile guards sign-up only.
+ * Sign-up needs a company email: free and throwaway providers are refused.
  * Admins come from the seed script or an approved access request, and set
  * their password through the reset flow below: a user with no password yet
  * gets a set-password email, everyone else a reset email.
@@ -68,6 +71,15 @@ export const auth = betterAuth({
         if (!isProd) console.info(`verification link for ${user.email}: ${url}`)
       }
     },
+  },
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== '/sign-up/email') return
+      const email = (ctx.body as { email?: unknown } | undefined)?.email
+      if (typeof email === 'string' && isFreeEmail(email)) {
+        throw new APIError('BAD_REQUEST', { code: 'COMPANY_EMAIL_REQUIRED', message: COMPANY_EMAIL_MESSAGE })
+      }
+    }),
   },
   // Without a secret the check is skipped in development and, in production,
   // the plugin refuses every sign-up, so a missing key never opens it to bots.

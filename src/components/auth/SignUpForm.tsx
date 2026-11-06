@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { COMPANY_EMAIL_MESSAGE, isFreeEmail } from '@/lib/access/free-email'
 import { EMAIL_VERIFIED_PATH } from '@/lib/access/signup'
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/Button'
@@ -25,6 +26,7 @@ export function SignUpForm({ turnstileSiteKey }: { turnstileSiteKey: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    if (isFreeEmail(values.email)) return setError(COMPANY_EMAIL_MESSAGE)
     if (values.password.length < MIN_LENGTH) return setError(`Use at least ${MIN_LENGTH} characters for your password.`)
     setLoading(true)
     try {
@@ -87,7 +89,7 @@ export function SignUpForm({ turnstileSiteKey }: { turnstileSiteKey: string }) {
       <Field id="name" label="Your name">
         <input id="name" autoComplete="name" required value={values.name} onChange={set('name')} className={inputClass} />
       </Field>
-      <Field id="email" label="Work email">
+      <Field id="email" label="Company email">
         <input
           id="email"
           type="email"

@@ -1,5 +1,6 @@
 /** @jest-environment node */
 import { adminAccessRequestEmail, passwordLinkEmail, verifyEmailEmail } from '../emails'
+import { isFreeEmail } from '../free-email'
 import { safeNext } from '../safe-next'
 import { signupOpen } from '../signup'
 import { accessRequestSchema } from '../schema'
@@ -77,5 +78,39 @@ describe('sign-up', () => {
     expect(email.text).toContain('Confirm my email: https://businesspulse.app/api/auth/verify-email?token=t')
     expect(email.html).toContain('Hi &lt;Pat&gt;,')
     expect(`${email.subject}${email.html}${email.text}`).not.toContain('—')
+  })
+})
+
+describe('isFreeEmail', () => {
+
+  it('refuses free and throwaway providers, in any case and country ending', () => {
+    for (const email of [
+      'pat@gmail.com',
+      'Pat@YAHOO.com',
+      'pat@yahoo.co.uk',
+      'pat@hotmail.fr',
+      'pat@outlook.com',
+      'pat@aol.com',
+      'pat@msn.com',
+      'pat@me.com',
+      'pat@icloud.com',
+      'pat@comcast.net',
+      'pat@mailinator.com',
+      ' pat@gmail.com. ',
+    ]) {
+      expect(isFreeEmail(email)).toBe(true)
+    }
+  })
+
+  it('accepts company addresses, including company mail subdomains', () => {
+    for (const email of [
+      'wfleonard@saxonenterprises.net',
+      'pat@acme.com',
+      'pat@outlook.acme.com',
+      'pat@mail.acme.co.uk',
+      'pat@gmailer.com',
+    ]) {
+      expect(isFreeEmail(email)).toBe(false)
+    }
   })
 })
