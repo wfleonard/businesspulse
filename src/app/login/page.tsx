@@ -12,19 +12,9 @@ export default function LoginPage() {
       title="Sign in"
       subtitle="BusinessPulse leads, reports, and panels."
       footer={
-        <>
-          <p>
-            <Link href="/forgot-password" className="text-primary hover:underline">
-              Forgot your password?
-            </Link>
-          </p>
-          <p>
-            Need a login?{' '}
-            <Link href="/request-access" className="text-primary hover:underline">
-              Request access
-            </Link>
-          </p>
-        </>
+        <Link href="/forgot-password" className="text-primary hover:underline">
+          Forgot your password?
+        </Link>
       }
     >
       <Suspense fallback={null}>
