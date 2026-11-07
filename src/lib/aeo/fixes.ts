@@ -82,6 +82,7 @@ Write 4 to 8 fixes, most important first:
 - priority: "high" for fixes tied to many missed questions or a blocked crawler; "low" for nice-to-haves.
 - why: two or three sentences, in plain words, on what the evidence shows and why the fix should help AI assistants cite the site. Refer to numbers from the evidence.
 - steps: two to five short, concrete steps a web designer could follow.
+- When a fix adds or changes structured data (JSON-LD), end its steps with checking the page in the Schema.org validator at validator.schema.org.
 - effort: "small" (an hour or two), "medium" (a day or two), or "large" (more).
 - evidence_questions: copy up to 6 of the relevant questions exactly as given. evidence_checks: the ids of the relevant site checks. evidence_sites: the hosts cited instead that the fix responds to.
 
