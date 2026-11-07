@@ -267,7 +267,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
   const full = (await searchParams).full === '1' && admin
   const report = await loadReport(publicId, full ? 'full' : 'highlights')
   if (!report) notFound()
-  // Pulse reports aren't public links: admins only until the client's account report (P5).
+  // Pulse reports aren't public links: admins only until the client's account report (P7).
   if (report.tier === 'pulse' && !admin) notFound()
 
   if (report.status === 'queued' || report.status === 'running') {

@@ -210,7 +210,7 @@ export default async function PulsePage({ searchParams }: Props) {
           )}
         </Card>
         <p className="mt-2 text-xs text-text-secondary">
-          Spend over $40 on one run shows in red. The client account report arrives in P5; until then, Pulse reports
+          Spend over $40 on one run shows in red. The client account report arrives in P7; until then, Pulse reports
           open only for admins.
         </p>
       </section>

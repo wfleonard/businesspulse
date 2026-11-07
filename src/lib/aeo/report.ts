@@ -238,7 +238,7 @@ export type LoadedReport = {
   requestSource: (typeof aeoRequest.$inferSelect)['source'] | null
   status: (typeof aeoRun.$inferSelect)['status']
   panelSource: (typeof aeoRun.$inferSelect)['panelSource']
-  /** Pulse reports are private to the client account (admins only until P5). */
+  /** Pulse reports are private to the client account (admins only until P7). */
   tier: (typeof aeoRun.$inferSelect)['tier']
   finishedAt: Date | null
   engines: { engine: string; model: string | null }[]
