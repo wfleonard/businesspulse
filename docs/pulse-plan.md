@@ -1,6 +1,6 @@
 # BusinessPulse Pulse — $100 report runs in a client account
 
-**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · for Bill Leonard
+**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · for Bill Leonard
 **Replaces:** the $49 Monitor plan (`monitor-tier-plan.md`). **Builds on:** customer
 accounts (`customer-accounts-plan.md`); roles (A1) are live.
 
@@ -147,6 +147,10 @@ The full audit runs on Bill's Mac today. It moves into the BusinessPulse worker.
 
 ### 4.5 Question sets for new industries
 
+> **Replaced November 7, 2026** by business panels (`business-panel-plan.md`): every
+> client gets a panel built from its own website and approved by Bill, so a new industry
+> is part of the normal flow. The notes below are kept for history.
+
 - The generator that writes 20 questions for unknown industries grows into a **full-set
   draft** (60 to 100 questions across every question type), from the business's site and
   profile.
@@ -198,13 +202,16 @@ of each one whether to update the server and what to check.
 | **P2** | **Sign-up and verification** (A2) | A new customer signs up, verifies, signs in, and lands on `/account` | 1 day |
 | **P3** | **Business profile and silo** (A3) | A customer sets up their business; past snapshots for their email appear; silo tests pass | 1–2 days |
 | **P4** | **Pulse runs on the server.** `pulse` tier, four assistants, jobs per assistant, paid cap, admin start | Bill runs ECU and Primos from the dashboard; real cost and time are recorded | 2 days |
-| **P5** | **Report in the account, with What to fix v1** | The client reads the P4 runs in their account, with fixes that point to evidence; wording agreed with Bill | 2–3 days |
-| **P6** | **Stripe.** Checkout, tax, webhook, 30-day rule, terms page. Test mode end to end | A test card buys a run that starts and finishes; a second purchase inside 30 days is refused | 2 days |
-| **P7** | **New-industry question sets.** Full-set drafts, approval, client waiting state | A business in a new industry pays, Bill approves the draft, the run starts | 1–2 days |
-| **P8** | **$500 fix requests** | A client requests a fix, Bill sends the link, a test payment marks it paid | 1 day |
-| **P9** | **Launch.** Monitor offer replaced, copy updated, live Stripe keys, waitlist emailed | A real client can sign up, pay, and read their report | ½ day |
+| **P5** | **Business brief.** Site deep dive on profile save, brief with sources, client confirms or corrects it (`business-panel-plan.md`) | Primos Maternos and one multi-trade contractor get a brief the client would sign off | 2 days |
+| **P6** | **Business panels.** Draft from the brief and industry libraries, Bill's review and approval, versions; Pulse runs ask the approved panel | Primos re-runs on its own panel; Bill agrees every question fits; compared with the Nov 6 run | 2–3 days |
+| **P7** | **Report in the account, with What to fix v1** | The client reads their runs in their account, with fixes that point to evidence; wording agreed with Bill | 2–3 days |
+| **P8** | **Stripe.** Checkout, tax, webhook, 30-day rule, terms page, "questions being prepared" state. Test mode end to end | A test card buys a run that starts and finishes; a second purchase inside 30 days is refused | 2 days |
+| **P9** | **$500 fix requests** | A client requests a fix, Bill sends the link, a test payment marks it paid | 1 day |
+| **P10** | **Launch.** Monitor offer replaced, copy updated, live Stripe keys, waitlist emailed | A real client can sign up, pay, and read their report | ½ day |
 
-About two to three weeks of build in total.
+The old P7 (new-industry question sets) is replaced by P5 and P6.
+
+About three weeks of build in total.
 
 ## 6. Still open
 
