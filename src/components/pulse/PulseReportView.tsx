@@ -88,7 +88,11 @@ export function PulseReportView({ report }: { report: LoadedPulseReport }) {
             )}
           </p>
         )}
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <p className="mt-4 text-xs text-text-secondary">
+          Each assistant decides for itself whether to search the web. When it answers from memory, it links to no
+          website at all, yours or anyone else&apos;s.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {summary.engines.map((e) => {
             const before = trend?.engines.find((t) => t.engine === e.engine)?.before
             return (
@@ -103,6 +107,10 @@ export function PulseReportView({ report }: { report: LoadedPulseReport }) {
                 <div className="mt-1">
                   <Bar part={e.cited} whole={e.answered} />
                 </div>
+                <p className="mt-1 text-xs text-text-secondary">
+                  Searched the web on {e.searched} of {e.answered}
+                  {e.searched < e.answered && `; answered ${e.answered - e.searched} from memory`}
+                </p>
               </div>
             )
           })}

@@ -17,7 +17,15 @@ export const ENGINE_LABELS: Record<string, string> = {
 }
 const ENGINE_ORDER = ['openai', 'claude', 'perplexity', 'gemini']
 
-export type EngineAnswer = { engine: string; label: string; verdict: Verdict; answer: string; citedInstead: string[] }
+export type EngineAnswer = {
+  engine: string
+  label: string
+  verdict: Verdict
+  /** Whether the assistant searched the web for this question, rather than answering from memory. */
+  searched: boolean
+  answer: string
+  citedInstead: string[]
+}
 
 export type PulseQuestion = {
   query: string
@@ -39,7 +47,8 @@ export type PulseSummary = {
   citedCount: number
   /** Named by at least one assistant, cited by none. */
   namedCount: number
-  engines: { engine: string; label: string; answered: number; cited: number }[]
+  /** Per assistant: questions answered, cited, and searched (the rest were answered from memory). */
+  engines: { engine: string; label: string; answered: number; cited: number; searched: number }[]
   categories: { category: string; label: string; questions: number; cited: number }[]
   offerings: { offering: string; questions: number; cited: number }[]
   rivals: { host: string; questions: number; directory: boolean }[]
@@ -90,6 +99,7 @@ export function buildPulseReport(
         engine: row.engine,
         label: ENGINE_LABELS[row.engine] ?? row.engine,
         verdict: verdictOf(row),
+        searched: !row.error && row.searches > 0,
         answer: cleanAnswer(row.answer ?? '', Number.POSITIVE_INFINITY),
         citedInstead: [...new Set(row.rivals.filter((r) => r.cited && !/\.(gov|mil)$/.test(r.host)).map((r) => r.host))],
       }))
@@ -117,6 +127,7 @@ export function buildPulseReport(
       label: ENGINE_LABELS[engine] ?? engine,
       answered: own.filter((a) => a.verdict !== 'error').length,
       cited: own.filter((a) => a.verdict === 'cited').length,
+      searched: own.filter((a) => a.searched).length,
     }
   })
 

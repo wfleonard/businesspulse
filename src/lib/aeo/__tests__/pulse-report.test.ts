@@ -22,7 +22,10 @@ const results: PulseResultInput[] = [
   row('openai', 'where to buy a guadalupe canvas', 'service-geo', { ownCited: true }),
   row('claude', 'where to buy a guadalupe canvas', 'service-geo', { rivals: [{ host: 'ebay.com', title: '', cited: true }] }),
   row('openai', 'guadalupe canvas price', 'cost', { nameMentioned: true, rivals: [{ host: 'catholiccompany.com', title: '', cited: true }] }),
-  row('claude', 'guadalupe canvas price', 'cost', { rivals: [{ host: 'catholiccompany.com', title: '', cited: true }, { host: 'usccb.gov', title: '', cited: true }] }),
+  row('claude', 'guadalupe canvas price', 'cost', {
+    searches: 0,
+    rivals: [{ host: 'catholiccompany.com', title: '', cited: true }, { host: 'usccb.gov', title: '', cited: true }],
+  }),
   row('openai', 'bulk prints for a diocese', 'buyer-role', { error: 'HTTP 500', answer: null }),
   row('claude', 'bulk prints for a diocese', 'buyer-role', { error: 'HTTP 500', answer: null }),
 ]
@@ -49,8 +52,8 @@ describe('buildPulseReport', () => {
 
   it('counts by assistant, offering, and who is cited instead, without government sites', () => {
     expect(report.engines).toEqual([
-      { engine: 'openai', label: 'ChatGPT', answered: 2, cited: 1 },
-      { engine: 'claude', label: 'Claude', answered: 2, cited: 0 },
+      { engine: 'openai', label: 'ChatGPT', answered: 2, cited: 1, searched: 2 },
+      { engine: 'claude', label: 'Claude', answered: 2, cited: 0, searched: 1 },
     ])
     expect(report.offerings).toEqual([{ offering: 'Canvas prints', questions: 2, cited: 1 }])
     expect(report.rivals).toEqual([
@@ -174,6 +177,7 @@ describe('fixes', () => {
     })
     expect(text).toContain('- /parishes :: For parishes')
     expect(text).toContain('Cited on 1 of 2 questions')
+    expect(text).toContain('Claude cited 0 of 2, searched the web on 1 (answered the rest from memory)')
     expect(text).toContain('[faq-schema] FIX')
     expect(text).toContain('guadalupe canvas price :: named, not linked; cited instead: catholiccompany.com')
     expect(text).not.toContain('bulk prints for a diocese')

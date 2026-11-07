@@ -76,6 +76,7 @@ Write 4 to 8 fixes, most important first:
 - Each fix is a specific change to the business's own website or online presence that would help AI assistants find, read, and cite it for the questions it missed. Base every fix on the evidence given: the missed questions, the sites cited instead, and the failed site checks. Don't invent problems the evidence doesn't show.
 - The site's existing pages are listed. Never propose a page the site already has: when the evidence shows an existing page isn't being cited, say what to change on that page instead, and name it.
 - Prefer fixes that cover many missed questions, such as a page that answers a whole group of buyer questions the site doesn't answer, over one-off tweaks.
+- An assistant that answered a question from memory searched nothing, so no website could be cited there. Don't treat those as failures of the site, and don't promise a fix will change them.
 - Look at who is cited instead. If marketplaces or directories win, say so. If competitors win a type of question, say what their pages offer that this site doesn't, as far as the evidence shows.
 - title: what to do, under 12 words, starting with a verb.
 - priority: "high" for fixes tied to many missed questions or a blocked crawler; "low" for nice-to-haves.
@@ -111,7 +112,8 @@ export function buildFixUserContent(input: FixInput): string {
     `Summary: ${input.summary}`,
     '',
     `Cited on ${r.citedCount} of ${r.answeredCount} questions by at least one assistant. Named without a link on ${r.namedCount} more.`,
-    'By assistant: ' + r.engines.map((e) => `${e.label} ${e.cited} of ${e.answered}`).join(', '),
+    'By assistant: ' +
+      r.engines.map((e) => `${e.label} cited ${e.cited} of ${e.answered}, searched the web on ${e.searched} (answered the rest from memory)`).join('; '),
     'By type of question: ' + r.categories.map((c) => `${c.label} ${c.cited} of ${c.questions}`).join(', '),
     'By offering: ' + r.offerings.map((o) => `${o.offering} ${o.cited} of ${o.questions}`).join(', '),
     'Cited instead most often: ' + r.rivals.map((x) => `${x.host} (${x.questions} questions${x.directory ? ', marketplace or directory' : ''})`).join(', '),
