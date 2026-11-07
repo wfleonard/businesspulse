@@ -28,6 +28,7 @@ import { notifyRunFailed, sendPendingReportEmails } from '@/lib/aeo/notify'
 import { decideOutcome } from '@/lib/aeo/outcome'
 import { PermanentRunError, planRun } from '@/lib/aeo/plan'
 import { askPulseEngines, countAnswered } from '@/lib/aeo/pulse-run'
+import { briefSpentTodayUsd, claimNextBrief, processBrief, sweepAbandonedBriefs } from '@/lib/aeo/brief-jobs'
 import { sendRecheckEmails, startDueRechecks } from '@/lib/aeo/recheck'
 import { sweepExpiredContactDetails } from '@/lib/aeo/retention'
 import { sweepExpiredScanRequests } from '@/lib/aeo/scan-requests'
@@ -285,6 +286,29 @@ async function processPulseRun(run: ClaimedRun, config: WorkerConfig, signal: Ab
   if (status === 'failed') await alertRunFailed(run.id, message)
 }
 
+/**
+ * Site deep dives for client briefs. They run in the snapshot lane, after any
+ * waiting snapshot: a read takes a minute or two, while a Pulse run would hold
+ * a client's brief for most of an hour.
+ */
+async function workOneBrief(config: WorkerConfig): Promise<boolean> {
+  try {
+    const abandoned = await sweepAbandonedBriefs()
+    if (abandoned > 0) log('briefs_abandoned', { briefs: abandoned })
+    const spent = await briefSpentTodayUsd()
+    if (spent >= config.briefDailyCapUsd) return false
+    const job = await claimNextBrief()
+    if (!job) return false
+    log('brief_started', { brief: job.id, business: job.businessId, attempt: job.attempts })
+    const outcome = await processBrief(job, { model: config.briefModel })
+    log('brief_done', { brief: job.id, ...outcome })
+    return true
+  } catch (err) {
+    log('brief_error', { error: errorMessage(err) })
+    return false
+  }
+}
+
 /** One pass: sweep, check spend, claim and process at most one run. */
 async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worked' | 'idle'> {
   const { lane } = config
@@ -306,6 +330,7 @@ async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worke
   // Over the cap, only admin re-runs (which bypass it) are claimed; everything else waits.
   const run = await claimNextRun({ ...config, lane, onlyBypassSpendCap: overCap })
   if (!run) {
+    if (lane === 'snapshot' && (await workOneBrief(config))) return 'worked'
     if (!overCap) return 'idle'
     log('spend_cap_reached', { lane, spent, cap })
     if (config.exitWhenIdle) return 'idle'

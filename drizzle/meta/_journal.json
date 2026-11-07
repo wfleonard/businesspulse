@@ -162,6 +162,13 @@
       "when": 1793997660672,
       "tag": "0022_aromatic_selene",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794056958513,
+      "tag": "0023_careful_cobalt_man",
+      "breakpoints": true
     }
   ]
 }

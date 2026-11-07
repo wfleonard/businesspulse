@@ -115,11 +115,15 @@ export type FetchOptions = {
   lookup?: net.LookupFunction
   /** Tests only: allow a non-standard port (a local test server). */
   anyPort?: boolean
+  /** Content types to accept. Defaults to HTML pages; the crawler also reads robots.txt and sitemaps. */
+  contentTypes?: RegExp
 }
 
 export type FetchedPage = { url: string; html: string; truncated: boolean }
 
-const USER_AGENT = 'BusinessPulseBot/1.0 (+https://businesspulse.app; AI visibility snapshot)'
+export const USER_AGENT = 'BusinessPulseBot/1.0 (+https://businesspulse.app; AI visibility snapshot)'
+
+const HTML_TYPES = /text\/html|application\/xhtml\+xml/i
 
 /** Parse and vet a URL before connecting. Throws a blocked SiteFetchError when refused. */
 export function checkUrl(value: string, options: { anyPort?: boolean } = {}): URL {
@@ -161,7 +165,9 @@ function requestOnce(url: URL, deadline: number, options: FetchOptions): Promise
         lookup: options.lookup ?? guardedLookup(),
         headers: {
           'user-agent': USER_AGENT,
-          accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.1',
+          accept: options.contentTypes
+            ? 'text/plain,application/xml,text/xml,text/html;q=0.9,*/*;q=0.1'
+            : 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.1',
           'accept-encoding': 'identity',
         },
       },
@@ -176,7 +182,7 @@ function requestOnce(url: URL, deadline: number, options: FetchOptions): Promise
           return reject(new SiteFetchError(`HTTP ${status}`))
         }
         const type = String(res.headers['content-type'] ?? '')
-        if (!/text\/html|application\/xhtml\+xml/i.test(type)) {
+        if (!(options.contentTypes ?? HTML_TYPES).test(type)) {
           res.resume()
           return reject(new SiteFetchError(`not an HTML page (${type || 'no content type'})`))
         }

@@ -427,6 +427,54 @@ export const business = pgTable(
   (t) => [index('business_domain_idx').on(t.domain)]
 )
 
+/**
+ * queued: waiting for the worker. reading: the worker is reading the site.
+ * ready: the client should confirm it. confirmed: the client confirmed it.
+ * failed: it couldn't be written (the admin sees why).
+ */
+export const businessBriefStatusEnum = pgEnum('business_brief_status', ['queued', 'reading', 'ready', 'confirmed', 'failed'])
+
+/** What the client confirmed: the services, buyers, and area their questions are built on. */
+export type ConfirmedBrief = {
+  offerings: string[]
+  notOffered: string[]
+  buyers: string[]
+  scope: string
+  places: string[]
+  notes: string
+}
+
+/**
+ * A business's brief, from the site deep dive (docs/business-panel-plan.md).
+ * One per business; a new read replaces it. The worker claims queued rows with
+ * a lease, like runs.
+ */
+export const businessBrief = pgTable('business_brief', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  businessId: uuid('business_id')
+    .notNull()
+    .unique()
+    .references(() => business.id, { onDelete: 'cascade' }),
+  status: businessBriefStatusEnum('status').notNull().default('queued'),
+  /** The AI brief (src/lib/aeo/brief.ts BusinessBrief). */
+  brief: jsonb('brief').$type<import('@/lib/aeo/brief').BusinessBrief>(),
+  /** Pages read and how they were found, for the admin view. */
+  pages: jsonb('pages').$type<{ url: string; title: string }[]>().notNull().default([]),
+  crawlSource: text('crawl_source'),
+  confirmed: jsonb('confirmed').$type<ConfirmedBrief>(),
+  attempts: integer('attempts').notNull().default(0),
+  lockedAt: timestamp('locked_at'),
+  leaseToken: uuid('lease_token'),
+  costUsd: numeric('cost_usd').notNull().default('0'),
+  error: text('error'),
+  /** When this read was asked for; limits re-reads to one a day. */
+  requestedAt: timestamp('requested_at').notNull().defaultNow(),
+  readAt: timestamp('read_at'),
+  confirmedAt: timestamp('confirmed_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 /* ------------------------------------------------------------------ */
 /* AEO snapshots — public, pre-account submissions. Deliberately NOT   */
 /* org-scoped: these are Saxon's operational data, visible only to the */
@@ -850,6 +898,7 @@ export const schema = {
   aiQuery,
   auditLog,
   business,
+  businessBrief,
   aeoPanel,
   aeoPanelVersion,
   aeoPanelBacklog,

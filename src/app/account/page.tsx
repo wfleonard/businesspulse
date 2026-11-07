@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { PublicHeader } from '@/components/site/PublicHeader'
 import { Card } from '@/components/ui/Card'
+import { AutoRefresh } from '@/components/aeo/AutoRefresh'
+import { getBrief } from '@/lib/account/brief'
 import { getBusiness, linkSnapshots, listReports, type AccountReport } from '@/lib/account/business'
 import { activePanels } from '@/lib/aeo/requests'
 import { stateInfo } from '@/lib/aeo/states'
@@ -34,7 +36,12 @@ export default async function AccountPage({ searchParams }: Props) {
   const owned = await getBusiness(user.id)
   // Picks up snapshots verified since the profile was saved.
   if (owned) await linkSnapshots(owned.id, user.email)
-  const [reports, panels] = await Promise.all([listReports(user.id), owned ? activePanels() : []])
+  const [reports, panels, brief] = await Promise.all([
+    listReports(user.id),
+    owned ? activePanels() : [],
+    owned ? getBrief(user.id) : null,
+  ])
+  const reading = brief?.status === 'queued' || brief?.status === 'reading'
   const industry = owned
     ? owned.panelSlug
       ? (panels.find((p) => p.slug === owned.panelSlug)?.name ?? owned.panelSlug)
@@ -62,8 +69,14 @@ export default async function AccountPage({ searchParams }: Props) {
             Your email is confirmed and your account is ready.
           </p>
         )}
+        {reading && <AutoRefresh seconds={15} />}
         {params.saved === '1' && (
           <p className="mt-6 rounded-md bg-success/10 px-3 py-2 text-sm text-success">Your business is saved.</p>
+        )}
+        {params.confirmed === '1' && (
+          <p className="mt-6 rounded-md bg-success/10 px-3 py-2 text-sm text-success">
+            Thanks. We&apos;ll prepare your report questions from what you confirmed.
+          </p>
         )}
 
         {isAdmin(session) && (
@@ -93,7 +106,50 @@ export default async function AccountPage({ searchParams }: Props) {
               </Link>
             </div>
           </Card>
-        ) : (
+        ) : null}
+
+        {owned && brief && (
+          <Card className="mt-6">
+            <h2 className="text-lg font-semibold text-dark">What we found on your site</h2>
+            {reading && (
+              <p className="mt-2 text-sm text-text-secondary">
+                We&apos;re reading your website to learn what you sell and where you work. This usually takes a minute
+                or two, and this page updates on its own.
+              </p>
+            )}
+            {brief.status === 'ready' && (
+              <>
+                <p className="mt-2 text-sm text-text-secondary">
+                  Please check what we found. Your report questions are built from it.
+                </p>
+                <Link
+                  href="/account/brief"
+                  className="mt-4 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+                >
+                  Review and confirm
+                </Link>
+              </>
+            )}
+            {brief.status === 'confirmed' && brief.confirmed && (
+              <>
+                <p className="mt-2 text-sm text-text-secondary">
+                  Confirmed. We&apos;re preparing your report questions from it.
+                </p>
+                <p className="mt-2 text-sm text-dark">{brief.confirmed.offerings.slice(0, 6).join(' · ')}</p>
+                <Link href="/account/brief" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
+                  Make changes
+                </Link>
+              </>
+            )}
+            {brief.status === 'failed' && (
+              <p className="mt-2 text-sm text-text-secondary">
+                We couldn&apos;t finish reading your website. We&apos;ve been told and will follow up by email.
+              </p>
+            )}
+          </Card>
+        )}
+
+        {!owned && (
           <Card className="mt-8">
             <h2 className="text-lg font-semibold text-dark">Set up your business</h2>
             <p className="mt-2 text-sm text-text-secondary">

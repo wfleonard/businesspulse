@@ -42,6 +42,10 @@ export type WorkerConfig = {
   pulseConcurrency: number
   /** After an assistant rate-limits a Pulse run, wait this long, then ask its missing questions again. */
   pulseRateLimitPauseSeconds: number
+  /** Claude model that writes business briefs from a site deep dive. */
+  briefModel: string
+  /** Daily ceiling on brief spend (site deep dives). */
+  briefDailyCapUsd: number
   phpBin: string
   panelScript: string
   workDir: string
@@ -87,6 +91,8 @@ export function workerConfig(env: Env = process.env, cwd: string = process.cwd()
     pulseJobTimeoutSeconds: wholePositive(env, 'AEO_PULSE_JOB_TIMEOUT_SECONDS', 3600),
     pulseConcurrency: Math.min(10, wholePositive(env, 'AEO_PULSE_CONCURRENCY', 4)),
     pulseRateLimitPauseSeconds: wholePositive(env, 'AEO_PULSE_RATE_LIMIT_PAUSE_SECONDS', 90),
+    briefModel: env.AEO_BRIEF_MODEL?.trim() || 'claude-opus-5-5',
+    briefDailyCapUsd: positive(env, 'AEO_BRIEF_DAILY_CAP_USD', 25),
     phpBin: env.AEO_PHP_BIN?.trim() || 'php',
     panelScript: env.AEO_PANEL_SCRIPT?.trim() || path.join(cwd, 'panel', 'panel.php'),
     workDir: env.AEO_WORK_DIR?.trim() || path.join(os.tmpdir(), 'aeo-worker'),

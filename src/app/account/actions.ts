@@ -2,8 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { confirmBrief } from '@/lib/account/brief'
 import { saveBusiness } from '@/lib/account/business'
-import { businessProfileSchema } from '@/lib/account/schema'
+import { businessProfileSchema, confirmBriefSchema } from '@/lib/account/schema'
 import { fieldErrors } from '@/lib/aeo/request-schema'
 import { requireSession } from '@/lib/session'
 
@@ -31,4 +32,30 @@ export async function saveBusinessProfile(_prev: BusinessFormState, formData: Fo
 
   revalidatePath('/account')
   redirect('/account?saved=1')
+}
+
+export type BriefFormState = { errors: Record<string, string> } | null
+
+/**
+ * Confirm or correct the signed-in client's brief. Like every account action,
+ * it acts only on the session user's business; the form carries no ids.
+ */
+export async function confirmBriefAction(_prev: BriefFormState, formData: FormData): Promise<BriefFormState> {
+  const { user } = await requireSession()
+  const parsed = confirmBriefSchema.safeParse({
+    offerings: formData.getAll('offerings').map(String),
+    addedOfferings: String(formData.get('addedOfferings') ?? ''),
+    buyers: formData.getAll('buyers').map(String),
+    addedBuyers: String(formData.get('addedBuyers') ?? ''),
+    scope: String(formData.get('scope') ?? ''),
+    places: String(formData.get('places') ?? ''),
+    notes: String(formData.get('notes') ?? ''),
+  })
+  if (!parsed.success) return { errors: fieldErrors(parsed.error) }
+
+  const result = await confirmBrief(user.id, user.email, parsed.data)
+  if (!result.ok) return { errors: { form: result.error } }
+
+  revalidatePath('/account')
+  redirect('/account?confirmed=1')
 }

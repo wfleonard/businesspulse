@@ -1,6 +1,6 @@
 # BusinessPulse Pulse — $100 report runs in a client account
 
-**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · for Bill Leonard
+**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · P5 (business brief) built November 7 · for Bill Leonard
 **Replaces:** the $49 Monitor plan (`monitor-tier-plan.md`). **Builds on:** customer
 accounts (`customer-accounts-plan.md`); roles (A1) are live.
 

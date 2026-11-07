@@ -27,6 +27,14 @@ const STATUS: Record<PulseRunRow['status'], { label: string; className: string }
   failed: { label: 'Failed', className: 'bg-danger/10 text-danger' },
 }
 
+const BRIEF_LABEL: Record<string, string> = {
+  queued: 'Waiting to read',
+  reading: 'Reading site',
+  ready: 'Waiting for client',
+  confirmed: 'Confirmed',
+  failed: 'Failed',
+}
+
 function formatDate(date: Date | null): string {
   if (!date) return '-'
   return new Intl.DateTimeFormat('en-US', {
@@ -84,6 +92,7 @@ export default async function PulsePage({ searchParams }: Props) {
                   <th className="px-4 py-2 font-medium">Business</th>
                   <th className="px-4 py-2 font-medium">Account</th>
                   <th className="px-4 py-2 font-medium">Industry</th>
+                  <th className="px-4 py-2 font-medium">Brief</th>
                   <th className="px-4 py-2 font-medium">Runs</th>
                   <th className="px-4 py-2" />
                 </tr>
@@ -92,12 +101,19 @@ export default async function PulsePage({ searchParams }: Props) {
                 {businesses.map((b) => (
                   <tr key={b.id}>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-dark">{b.name}</p>
+                      <Link href={`/dashboard/pulse/${b.id}`} className="font-medium text-dark hover:underline">
+                        {b.name}
+                      </Link>
                       <p className="text-xs text-text-secondary">{b.domain}</p>
                     </td>
                     <td className="px-4 py-3 text-text-secondary">{b.ownerEmail}</td>
                     <td className="px-4 py-3 text-text-secondary">
                       {b.panelSlug ?? <span className="text-amber-800">Custom: {b.customIndustry}</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`/dashboard/pulse/${b.id}`} className="text-primary hover:underline">
+                        {b.briefStatus ? BRIEF_LABEL[b.briefStatus] : 'None'}
+                      </Link>
                     </td>
                     <td className="px-4 py-3 text-text-secondary">{b.runs}</td>
                     <td className="px-4 py-3 text-right">

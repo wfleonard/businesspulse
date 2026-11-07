@@ -1,7 +1,7 @@
 import 'server-only'
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { aeoPanel, aeoRun, business, user } from '@/lib/db/schema'
+import { aeoPanel, aeoRun, business, businessBrief, user } from '@/lib/db/schema'
 import { PULSE_ENGINES } from './config'
 import { newPublicId } from './tokens'
 
@@ -61,6 +61,7 @@ export type PulseBusiness = {
   ownerEmail: string
   runs: number
   activeRun: boolean
+  briefStatus: (typeof businessBrief.$inferSelect)['status'] | null
 }
 
 export async function listPulseBusinesses(): Promise<PulseBusiness[]> {
@@ -74,9 +75,11 @@ export async function listPulseBusinesses(): Promise<PulseBusiness[]> {
       ownerEmail: user.email,
       runs: sql<number>`(select count(*) from aeo_run r where r.business_id = ${business.id})::int`,
       activeRun: sql<boolean>`exists (select 1 from aeo_run r where r.business_id = ${business.id} and r.status in ('queued', 'running'))`,
+      briefStatus: businessBrief.status,
     })
     .from(business)
     .innerJoin(user, eq(user.id, business.userId))
+    .leftJoin(businessBrief, eq(businessBrief.businessId, business.id))
     .orderBy(business.name)
 }
 
@@ -136,4 +139,16 @@ export async function listPulseRuns(limit = 25): Promise<PulseRunRow[]> {
   }
 
   return runs.map((run) => ({ ...run, costUsd: Number(run.costUsd), answersByEngine: byRun.get(run.id) ?? {} }))
+}
+
+/** One business with its brief, for the admin review page. */
+export async function getPulseBusiness(businessId: string) {
+  const [row] = await db
+    .select({ business, ownerEmail: user.email, ownerName: user.name, brief: businessBrief })
+    .from(business)
+    .innerJoin(user, eq(user.id, business.userId))
+    .leftJoin(businessBrief, eq(businessBrief.businessId, business.id))
+    .where(eq(business.id, businessId))
+    .limit(1)
+  return row ?? null
 }

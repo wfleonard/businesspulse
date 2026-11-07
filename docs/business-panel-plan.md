@@ -88,8 +88,9 @@ plan already describes. Nobody pays for a run that can't start.
     questions with category, service, and reason, directory and reference domains, the
     industry panels used, model, cost, approved by and when, note.
   - `aeo_run.business_panel_id`.
-- **Worker jobs:** the deep dive and the panel draft run in the Pulse worker lane, so they
-  never delay snapshots.
+- **Worker jobs:** the deep dive and the panel draft run in the snapshot worker lane, after
+  any waiting snapshot. A read takes a minute or two; in the Pulse lane it could wait behind
+  an hour-long run. *(Changed while building P5.)*
   - Limits: one deep dive per business per day, plus a daily cap
     (`AEO_BRIEF_DAILY_CAP_USD`, start at $25).
   - Each job's cost is recorded.
@@ -127,7 +128,16 @@ Primos is the first test:
 
 Then repeat on one contractor whose site covers several trades.
 
-## 6. Costs
+## 6. Measured
+
+- **Primos Maternos, generic panel (November 6):** 66 questions on four assistants, all
+  264 answers, cited on 5 of 66, $9.80, 20 minutes. The P6 comparison baseline.
+- **Primos Maternos brief (November 7, local):** 25 pages from the sitemap, about 30
+  seconds, $0.24 on Claude Opus 5.5. It found the one image and its real sizes and prices,
+  what isn't sold (other images, hand-painted work, pickup), parishes, schools, dioceses,
+  and Spanish-speaking buyers, and national scope with no storefront.
+
+## 7. Costs
 
 - **Deep dive and draft:** about $1 to $3 per business, once, and again only when the
   business changes. Measure it on Primos.

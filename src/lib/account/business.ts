@@ -1,6 +1,7 @@
 import 'server-only'
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
+import { queueBrief } from '@/lib/aeo/brief-jobs'
 import { aeoPanel, aeoRecheck, aeoRequest, aeoRun, business } from '@/lib/db/schema'
 import { CUSTOM_INDUSTRY, type BusinessProfileInput } from './schema'
 
@@ -48,6 +49,7 @@ export async function saveBusiness(userId: string, email: string, input: Busines
     city: input.city,
     state: input.state,
   }
+  const before = await getBusiness(userId)
   const [row] = await db
     .insert(business)
     .values({ userId, ...values })
@@ -55,7 +57,23 @@ export async function saveBusiness(userId: string, email: string, input: Busines
     .returning()
 
   await linkSnapshots(row.id, email)
+  // A new business, or one whose site or line of work changed, gets its site read again.
+  if (!before || profileChanged(before, row)) await queueBrief(row.id)
   return { ok: true, business: row }
+}
+
+/** Changes that make the brief out of date. A new name or town alone doesn't. */
+export function profileChanged(
+  before: Pick<Business, 'domain' | 'otherDomains' | 'service' | 'panelSlug' | 'customIndustry'>,
+  after: Pick<Business, 'domain' | 'otherDomains' | 'service' | 'panelSlug' | 'customIndustry'>
+): boolean {
+  return (
+    before.domain !== after.domain ||
+    [...before.otherDomains].sort().join(',') !== [...after.otherDomains].sort().join(',') ||
+    before.service.trim().toLowerCase() !== after.service.trim().toLowerCase() ||
+    before.panelSlug !== after.panelSlug ||
+    before.customIndustry !== after.customIndustry
+  )
 }
 
 /**

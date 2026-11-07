@@ -26,6 +26,8 @@ describe('workerConfig', () => {
       pulseJobTimeoutSeconds: 3600,
       pulseConcurrency: 4,
       pulseRateLimitPauseSeconds: 90,
+      briefModel: 'claude-opus-5-5',
+      briefDailyCapUsd: 25,
       phpBin: 'php',
       panelScript: path.join('/app', 'panel', 'panel.php'),
       workDir: path.join(os.tmpdir(), 'aeo-worker'),

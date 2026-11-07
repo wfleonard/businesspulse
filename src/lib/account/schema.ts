@@ -37,3 +37,33 @@ export const businessProfileSchema = z
   }))
 
 export type BusinessProfileInput = z.infer<typeof businessProfileSchema>
+
+const list = (max: number, itemMax: number) =>
+  z
+    .array(z.string().trim().max(itemMax))
+    .max(max)
+    .transform((items) => [...new Set(items.filter(Boolean))])
+
+/** Free text, one per line (or separated by commas, unless `lines`), as a list. */
+const textList = (max: number, itemMax: number, separator: RegExp = /[\n,;]+/) =>
+  z
+    .string()
+    .max(4000)
+    .default('')
+    .transform((value) => [...new Set(value.split(separator).map((v) => v.trim()).filter(Boolean))])
+    .pipe(z.array(z.string().max(itemMax, `Keep each item under ${itemMax} characters`)).max(max, `List at most ${max}`))
+
+/** The brief confirmation form (/account/brief). */
+export const confirmBriefSchema = z.object({
+  /** Offering names from the brief that the client kept ticked. */
+  offerings: list(40, 120),
+  addedOfferings: textList(15, 120),
+  buyers: list(20, 120),
+  addedBuyers: textList(10, 120),
+  scope: z.enum(['local', 'regional', 'statewide', 'multi_state', 'national', 'international'], { error: 'Choose how far you serve' }),
+  // One per line: a place like "Tinton Falls, NJ" has a comma in it.
+  places: textList(30, 80, /[\n;]+/),
+  notes: z.string().trim().max(1000, 'Keep notes under 1,000 characters').default(''),
+})
+
+export type ConfirmBriefInput = z.infer<typeof confirmBriefSchema>

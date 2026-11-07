@@ -74,3 +74,31 @@ export function verifyEmailEmail(args: { name: string; url: string }): EmailCont
     text: [greeting, '', lead, '', `Confirm my email: ${args.url}`, '', after].join('\n'),
   }
 }
+
+/** The site deep dive is done: the client should confirm what we found. */
+export function briefReadyEmail(args: { name: string; businessName: string }): EmailContent {
+  const url = appUrl('/account/brief')
+  const greeting = `Hi ${args.name},`
+  const lead = `We've read ${args.businessName}'s website. Please check what we found: the services you sell, who buys, and where you work.`
+  const after = 'Your report questions are built from it, so fixing anything we got wrong now keeps your report accurate.'
+  return {
+    subject: `Please confirm what we found about ${args.businessName}`,
+    html: page(`<p style="margin:0 0 12px">${escapeHtml(greeting)}</p>
+<p style="margin:0 0 16px">${escapeHtml(lead)}</p>
+<p style="margin:0 0 16px"><a href="${escapeHtml(url)}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:bold">Review and confirm</a></p>
+<p style="margin:0;color:#64748b">${escapeHtml(after)}</p>`),
+    text: [greeting, '', lead, '', `Review and confirm: ${url}`, '', after].join('\n'),
+  }
+}
+
+/** For the admin: a client confirmed their brief, so their panel can be drafted. */
+export function adminBriefConfirmedEmail(args: { businessName: string; domain: string; email: string; businessId: string }): EmailContent {
+  const url = appUrl(`/dashboard/pulse/${args.businessId}`)
+  const lead = `${args.businessName} (${args.domain}, ${args.email}) confirmed their business brief.`
+  return {
+    subject: `[BusinessPulse] Brief confirmed: ${args.businessName}`,
+    html: page(`<p style="margin:0 0 16px">${escapeHtml(lead)}</p>
+<p style="margin:0"><a href="${escapeHtml(url)}" style="color:#2563eb">See the brief and their changes</a></p>`),
+    text: [lead, '', `See the brief and their changes: ${url}`].join('\n'),
+  }
+}

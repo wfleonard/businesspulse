@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'fs'
 import path from 'path'
 
 jest.mock('server-only', () => ({}))
+jest.mock('@/lib/aeo/brief-jobs', () => ({ queueBrief: jest.fn() }))
 jest.mock('@/lib/db', () => {
   const { drizzle } = jest.requireActual('drizzle-orm/node-postgres')
   return { db: drizzle.mock() }
@@ -10,7 +11,8 @@ jest.mock('@/lib/db', () => {
 
 // Imported after the mocks.
 import { linkSnapshotsQuery, snapshotReportsQuery } from '../business'
-import { businessProfileSchema, CUSTOM_INDUSTRY } from '../schema'
+import { profileChanged } from '../business'
+import { businessProfileSchema, confirmBriefSchema, CUSTOM_INDUSTRY } from '../schema'
 
 const valid = {
   name: 'Acme Roofing',
@@ -85,7 +87,7 @@ describe('silo: the customer area', () => {
 
   it('has pages and actions to check', () => {
     expect(files.some((f) => f.endsWith('actions.ts'))).toBe(true)
-    expect(files.filter((f) => f.endsWith('page.tsx')).length).toBeGreaterThanOrEqual(2)
+    expect(files.filter((f) => f.endsWith('page.tsx')).length).toBeGreaterThanOrEqual(3)
   })
 
   it.each(files.map((f) => [path.relative(root, f), f]))('%s checks the session and never queries the database itself', (_, file) => {
@@ -106,9 +108,42 @@ describe('silo: the customer area', () => {
   it('loads account data only by the session user', () => {
     for (const file of files) {
       const source = readFileSync(file, 'utf8')
-      for (const call of source.matchAll(/\b(getBusiness|listReports|saveBusiness)\(([^,)]*)/g)) {
+      for (const call of source.matchAll(/\b(getBusiness|listReports|saveBusiness|getBrief|confirmBrief)\(([^,)]*)/g)) {
         expect(call[2].trim()).toBe('user.id')
       }
     }
+  })
+})
+
+describe('brief confirmation form', () => {
+  it('splits added items on lines or commas, but places only on lines', () => {
+    const parsed = confirmBriefSchema.parse({
+      offerings: ['Canvas prints', ''],
+      addedOfferings: 'Framed prints, Rolled prints\nFramed prints',
+      buyers: [],
+      addedBuyers: '',
+      scope: 'national',
+      places: 'Tinton Falls, NJ\nMonmouth County, NJ',
+      notes: '',
+    })
+    expect(parsed.offerings).toEqual(['Canvas prints'])
+    expect(parsed.addedOfferings).toEqual(['Framed prints', 'Rolled prints'])
+    expect(parsed.places).toEqual(['Tinton Falls, NJ', 'Monmouth County, NJ'])
+  })
+
+  it('rejects an unknown service scope', () => {
+    expect(confirmBriefSchema.safeParse({ offerings: [], buyers: [], scope: 'galaxy' }).success).toBe(false)
+  })
+})
+
+describe('when the site is read again', () => {
+  const base = { domain: 'acme.com', otherDomains: ['b.com'], service: 'Roofing', panelSlug: 'residential-roofing', customIndustry: '' }
+
+  it('re-reads after a change to the site or line of work, not to the name or town', () => {
+    expect(profileChanged(base, { ...base })).toBe(false)
+    expect(profileChanged(base, { ...base, service: ' roofing ' })).toBe(false)
+    expect(profileChanged(base, { ...base, domain: 'acme.net' })).toBe(true)
+    expect(profileChanged(base, { ...base, otherDomains: ['c.com'] })).toBe(true)
+    expect(profileChanged(base, { ...base, panelSlug: 'siding' })).toBe(true)
   })
 })
