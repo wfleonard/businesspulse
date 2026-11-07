@@ -214,6 +214,8 @@ export default async function PulsePage({ searchParams }: Props) {
                       {run.status === 'done' && (
                         <Link
                           href={`/report/${run.publicId}?full=1`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-sm font-medium text-primary hover:underline"
                         >
                           Report

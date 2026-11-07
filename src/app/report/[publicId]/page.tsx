@@ -80,7 +80,24 @@ function callToAction(publicId: string): string | null {
  * `full` is the signed-in view: every question and its whole answer, without
  * the sales cards, and without counting as a customer's report view.
  */
-function Report({ report, summary, full }: { report: LoadedReport; summary: ReportSummary; full: boolean }) {
+/** Admins only: where this report is managed in the dashboard. */
+function dashboardLink(report: LoadedReport): { href: string; label: string } {
+  return report.tier === 'pulse'
+    ? { href: '/dashboard/pulse', label: 'Back to Pulse' }
+    : { href: '/dashboard/aeo', label: 'Back to leads' }
+}
+
+function Report({
+  report,
+  summary,
+  full,
+  admin,
+}: {
+  report: LoadedReport
+  summary: ReportSummary
+  full: boolean
+  admin: boolean
+}) {
   const engineNames = report.engines.map((e) => ENGINE_NAMES[e.engine] ?? e.engine)
   const assistants = engineNames.length ? engineNames.join(', ') : 'AI search'
   // Scores count only answered questions: one AI search never answered isn't a miss.
@@ -90,16 +107,29 @@ function Report({ report, summary, full }: { report: LoadedReport; summary: Repo
 
   return (
     <Shell>
-      {full ? (
-        <p className="mt-6 rounded-md border border-border bg-white px-3 py-2 text-xs text-text-secondary">
-          Full report: every question, visible only when signed in.{' '}
-          <Link href={`/report/${report.publicId}`} className="text-primary hover:underline">
-            Customer view
+      {admin && (
+        <p className="mt-6 flex flex-wrap gap-x-4 gap-y-1 rounded-md border border-border bg-white px-3 py-2 text-xs text-text-secondary">
+          <Link href={dashboardLink(report).href} className="font-medium text-primary hover:underline">
+            {dashboardLink(report).label}
           </Link>
+          {full ? (
+            <span>
+              Full report: every question, visible only when signed in.{' '}
+              <Link href={'/report/' + report.publicId} className="text-primary hover:underline">
+                Customer view
+              </Link>
+            </span>
+          ) : (
+            <span>
+              Customer view.{' '}
+              <Link href={'/report/' + report.publicId + '?full=1'} className="text-primary hover:underline">
+                Full report
+              </Link>
+            </span>
+          )}
         </p>
-      ) : (
-        <ReportViewBeacon publicId={report.publicId} />
       )}
+      {!full && <ReportViewBeacon publicId={report.publicId} />}
       <h1 className="mt-5 text-3xl font-bold tracking-tight text-dark sm:text-4xl">
         AI visibility snapshot for {report.businessName}
       </h1>
@@ -299,5 +329,5 @@ export default async function ReportPage({ params, searchParams }: Props) {
     )
   }
 
-  return <Report report={report} summary={report.summary} full={full} />
+  return <Report report={report} summary={report.summary} full={full} admin={admin} />
 }

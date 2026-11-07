@@ -142,6 +142,9 @@ Then repeat on one contractor whose site covers several trades.
   questions (47 from the library, 32 new), including diocese-by-name, purchase-order,
   bulk-pricing, and Spanish-language questions; no statues, commissions, Etsy, or local
   store questions. Estimated run cost about $12.
+- **Primos Maternos run on its own panel (November 7, server):** 75 approved questions on
+  four assistants, every answer on the first attempt (Perplexity one at a time), cited on
+  **20 of 75 (27%)** against 5 of 66 (8%) on the generic panel, $12.35, 25 minutes.
 - **As built (P6):** confirming or changing a brief queues a draft version; the snapshot
   worker drafts it (briefs and drafts share `AEO_BRIEF_DAILY_CAP_USD`); Bill reviews it on
   `/dashboard/pulse/[business]` (edit, drop, add, domain lists, note, estimated cost) and
