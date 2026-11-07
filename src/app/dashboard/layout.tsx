@@ -36,6 +36,9 @@ export default async function DashboardLayout({
             </nav>
           </div>
           <div className="flex items-center gap-4 text-sm">
+            <Link href="/account" className="text-text-secondary hover:text-dark">
+              Your account
+            </Link>
             <span className="text-text-secondary">{user.email}</span>
             <SignOutButton />
           </div>

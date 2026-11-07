@@ -207,7 +207,7 @@ of each one whether to update the server and what to check.
 | **P7** | **Report in the account, with What to fix v1** | The client reads their runs in their account, with fixes that point to evidence; wording agreed with Bill | 2–3 days |
 | **P8** | **Stripe.** Checkout, tax, webhook, 30-day rule, terms page, "questions being prepared" state. Test mode end to end | A test card buys a run that starts and finishes; a second purchase inside 30 days is refused | 2 days |
 | **P9** | **$500 fix requests** | A client requests a fix, Bill sends the link, a test payment marks it paid | 1 day |
-| **P10** | **Launch.** Monitor offer replaced, copy updated, live Stripe keys, waitlist emailed | A real client can sign up, pay, and read their report | ½ day |
+| **P10** | **Launch.** Monitor offer replaced, copy updated, "Sign in" / "Your account" link on public pages, live Stripe keys, waitlist emailed | A real client can sign up, pay, and read their report | ½ day |
 
 The old P7 (new-industry question sets) is replaced by P5 and P6.
 
