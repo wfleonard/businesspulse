@@ -29,7 +29,7 @@ export type CrawlResult = {
 
 type Fetcher = (url: string, options?: FetchOptions) => Promise<{ url: string; html: string }>
 
-const TEXT_TYPES = /text\/plain|text\/xml|application\/xml|application\/[a-z.+-]*xml|text\/html/i
+const TEXT_TYPES = /text\/plain|text\/markdown|text\/xml|application\/xml|application\/[a-z.+-]*xml|text\/html/i
 
 /** The hosts that count as the business's own site: the domain and its www form. */
 export function ownHosts(domains: readonly string[]): Set<string> {
@@ -46,10 +46,12 @@ export function ownHosts(domains: readonly string[]): Set<string> {
 export type RobotsRules = { allow: string[]; disallow: string[]; sitemaps: string[] }
 
 /**
- * The rules that apply to us: a group naming BusinessPulseBot if there is
- * one, otherwise the `*` group. Sitemap lines apply to everyone.
+ * The rules that apply to one crawler (BusinessPulseBot unless named): a
+ * group naming it if there is one, otherwise the `*` group. Sitemap lines
+ * apply to everyone.
  */
-export function parseRobots(text: string): RobotsRules {
+export function parseRobots(text: string, agent = 'businesspulsebot'): RobotsRules {
+  const token = agent.toLowerCase()
   type Group = { agents: string[]; allow: string[]; disallow: string[] }
   const groups: Group[] = []
   const sitemaps: string[] = []
@@ -81,7 +83,7 @@ export function parseRobots(text: string): RobotsRules {
     if (field === 'disallow' && value) current.disallow.push(value)
   }
 
-  const ours = groups.find((g) => g.agents.some((a) => a !== '*' && 'businesspulsebot'.includes(a)))
+  const ours = groups.find((g) => g.agents.some((a) => a !== '*' && a === token))
   const any = groups.find((g) => g.agents.includes('*'))
   const group = ours ?? any
   return { allow: group?.allow ?? [], disallow: group?.disallow ?? [], sitemaps }

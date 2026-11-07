@@ -176,6 +176,13 @@
       "when": 1794058638732,
       "tag": "0024_smooth_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794062326838,
+      "tag": "0025_fine_nuke",
+      "breakpoints": true
     }
   ]
 }

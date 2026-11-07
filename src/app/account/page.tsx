@@ -177,7 +177,8 @@ export default async function AccountPage({ searchParams }: Props) {
                 <li key={report.publicId} className="flex flex-wrap items-center justify-between gap-2 py-3">
                   <div>
                     <p className="text-sm font-medium text-dark">
-                      {report.kind === 'recheck' ? '30-day re-check' : 'Free snapshot'} · {report.domain}
+                      {report.kind === 'pulse' ? 'Pulse report' : report.kind === 'recheck' ? '30-day re-check' : 'Free snapshot'} ·{' '}
+                      {report.domain}
                     </p>
                     <p className="text-xs text-text-secondary">
                       {dateFormat.format(report.createdAt)} · {reportSummary(report)}
@@ -185,7 +186,7 @@ export default async function AccountPage({ searchParams }: Props) {
                   </div>
                   {report.status === 'done' && (
                     <Link
-                      href={`/report/${report.publicId}`}
+                      href={report.kind === 'pulse' ? `/account/reports/${report.publicId}` : `/report/${report.publicId}`}
                       className="text-sm font-medium text-primary hover:underline"
                     >
                       View report

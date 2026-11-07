@@ -114,3 +114,19 @@ export function adminPanelDraftEmail(args: { businessName: string; businessId: s
     text: [lead, '', `Review and approve it: ${url}`].join('\n'),
   }
 }
+
+/** A client's Pulse report, with What to fix, is ready in their account. */
+export function pulseReportReadyEmail(args: { name: string; businessName: string; publicId: string; cited: number; questions: number }): EmailContent {
+  const url = appUrl(`/account/reports/${args.publicId}`)
+  const greeting = `Hi ${args.name},`
+  const lead = `Your AI search report for ${args.businessName} is ready. ChatGPT, Claude, Perplexity, or Gemini cited your website on ${args.cited} of ${args.questions} questions your buyers ask.`
+  const after = 'The report shows every question and answer, who was cited instead, and what to fix first.'
+  return {
+    subject: `Your AI search report for ${args.businessName} is ready`,
+    html: page(`<p style="margin:0 0 12px">${escapeHtml(greeting)}</p>
+<p style="margin:0 0 16px">${escapeHtml(lead)}</p>
+<p style="margin:0 0 16px"><a href="${escapeHtml(url)}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:bold">Read your report</a></p>
+<p style="margin:0;color:#64748b">${escapeHtml(after)} Sign in with this email address to open it.</p>`),
+    text: [greeting, '', lead, '', `Read your report: ${url}`, '', `${after} Sign in with this email address to open it.`].join('\n'),
+  }
+}

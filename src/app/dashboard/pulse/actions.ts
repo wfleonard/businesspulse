@@ -10,6 +10,7 @@ import { MAX_BUSINESS_QUESTIONS } from '@/lib/aeo/business-panel'
 import { cleanDomains, MAX_QUESTION_LENGTH } from '@/lib/aeo/panel-content'
 import { DRAFT_CATEGORIES } from '@/lib/aeo/panel-draft'
 import { startPulseRun } from '@/lib/aeo/pulse'
+import { queuePulseReport } from '@/lib/aeo/pulse-report-jobs'
 import { requireAdmin } from '@/lib/session'
 
 function done(notice: string, isError = false): never {
@@ -131,4 +132,18 @@ export async function saveBusinessPanel(formData: FormData): Promise<void> {
     backTo(bizId, `Approved with ${questions.length} questions. Pulse runs for this business now ask this panel.`)
   }
   backTo(bizId, saved.panelId === panelId ? 'Saved.' : 'Saved as a new draft version. Approve it to use it.')
+}
+
+const rewriteSchema = z.object({ runId: z.uuid(), publicId: z.string().min(10).max(64) })
+
+/** Check the site again and rewrite a Pulse report's fix list. Admins only. */
+export async function rewriteFixes(formData: FormData): Promise<void> {
+  const { user } = await requireAdmin()
+  const parsed = rewriteSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) throw new Error('Invalid request')
+  await queuePulseReport(parsed.data.runId)
+  await recordAudit({ userId: user.id, action: 'pulse.fixes_rewrite', target: parsed.data.runId })
+  const path = `/dashboard/pulse/report/${parsed.data.publicId}`
+  revalidatePath(path)
+  redirect(`${path}?${new URLSearchParams({ notice: 'Queued. The new fix list is written after any run in progress.' })}`)
 }

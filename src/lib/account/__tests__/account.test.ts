@@ -10,7 +10,7 @@ jest.mock('@/lib/db', () => {
 })
 
 // Imported after the mocks.
-import { linkSnapshotsQuery, snapshotReportsQuery } from '../business'
+import { linkSnapshotsQuery, ownedPulseRunQuery, snapshotReportsQuery } from '../business'
 import { profileChanged } from '../business'
 import { businessProfileSchema, confirmBriefSchema, CUSTOM_INDUSTRY } from '../schema'
 
@@ -65,6 +65,13 @@ describe('silo: queries are scoped to one business', () => {
     expect(params).toEqual(expect.arrayContaining(['b-1', 'form', 'pat@acme.com']))
   })
 
+  it('finds a Pulse report by its URL id only within the signed-in user\'s business', () => {
+    const { sql, params } = ownedPulseRunQuery('user-1', 'pub-1').toSQL()
+    expect(sql).toContain('"business"."user_id" = $1')
+    expect(sql).toContain('"aeo_run"."public_id" = $2')
+    expect(params).toEqual(expect.arrayContaining(['user-1', 'pub-1', 'pulse']))
+  })
+
   it('lists reports only through the business id', () => {
     const { sql, params } = snapshotReportsQuery('b-1').toSQL()
     expect(sql).toMatch(/where "aeo_request"."business_id" = \$1/)
@@ -108,7 +115,7 @@ describe('silo: the customer area', () => {
   it('loads account data only by the session user', () => {
     for (const file of files) {
       const source = readFileSync(file, 'utf8')
-      for (const call of source.matchAll(/\b(getBusiness|listReports|saveBusiness|getBrief|confirmBrief)\(([^,)]*)/g)) {
+      for (const call of source.matchAll(/\b(getBusiness|listReports|saveBusiness|getBrief|confirmBrief|findOwnedPulseRun)\(([^,)]*)/g)) {
         expect(call[2].trim()).toBe('user.id')
       }
     }

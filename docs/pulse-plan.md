@@ -1,6 +1,6 @@
 # BusinessPulse Pulse — $100 report runs in a client account
 
-**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · P5 (business brief) and P6 (business panels) built November 7 · for Bill Leonard
+**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · P5 (business brief), P6 (business panels), and P7 (report and What to fix) built November 7 · for Bill Leonard
 **Replaces:** the $49 Monitor plan (`monitor-tier-plan.md`). **Builds on:** customer
 accounts (`customer-accounts-plan.md`); roles (A1) are live.
 
@@ -142,7 +142,16 @@ The full audit runs on Bill's Mac today. It moves into the BusinessPulse worker.
     images or scripts.
   - Claude turns the evidence into a short, prioritized list: each issue, why it matters
     to AI search, and what fixing it involves. Every item points to its evidence.
-- We design the report's wording and layout together as the account area is built (P5).
+- We design the report's wording and layout together as the account area is built (P7).
+- **As built (P7):** after each Pulse run the Pulse worker checks the live site (AI crawlers
+  in robots.txt, sitemap, business, FAQ, and product or service structured data, text in the
+  HTML, places named for local businesses, meta description, llms.txt) and Claude Opus 5.5
+  writes 4 to 8 fixes from the answers, the checks, and the site's existing pages, each
+  with its evidence (about $0.15). The client reads it at `/account/reports/[id]`: the
+  headline and per-assistant counts, trend against the last run, What to fix, the checks,
+  by question type and by offering, who is cited instead, and every question with every
+  assistant's answer. The client is emailed when it's ready. Bill sees the same page at
+  `/dashboard/pulse/report/[id]` with Rewrite fix list.
 - **Email** when the report is ready, with a link to sign in.
 
 ### 4.5 Question sets for new industries

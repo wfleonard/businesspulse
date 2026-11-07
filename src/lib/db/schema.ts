@@ -763,6 +763,34 @@ export const aeoRequest = pgTable(
   ]
 )
 
+export const pulseReportStatusEnum = pgEnum('pulse_report_status', ['queued', 'writing', 'ready', 'failed'])
+
+/**
+ * What to fix for one Pulse run (docs/pulse-plan.md §4.4): site checks read
+ * from the live site and the prioritized fixes Claude wrote from them and the
+ * answers. One per run; the worker writes it after the run finishes.
+ */
+export const pulseReport = pgTable('pulse_report', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  runId: uuid('run_id')
+    .notNull()
+    .unique()
+    .references(() => aeoRun.id, { onDelete: 'cascade' }),
+  status: pulseReportStatusEnum('status').notNull().default('queued'),
+  checks: jsonb('checks').$type<import('@/lib/aeo/site-checks').SiteCheck[]>().notNull().default([]),
+  fixes: jsonb('fixes').$type<import('@/lib/aeo/fixes').FixItem[]>().notNull().default([]),
+  model: text('model'),
+  costUsd: numeric('cost_usd').notNull().default('0'),
+  error: text('error'),
+  attempts: integer('attempts').notNull().default(0),
+  lockedAt: timestamp('locked_at'),
+  leaseToken: uuid('lease_token'),
+  /** When the client was told the report is ready. */
+  emailedAt: timestamp('emailed_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 /** One row per question × engine, as written by `panel.php job`. */
 export const aeoResult = pgTable(
   'aeo_result',
@@ -967,6 +995,7 @@ export const schema = {
   business,
   businessBrief,
   businessPanel,
+  pulseReport,
   aeoPanel,
   aeoPanelVersion,
   aeoPanelBacklog,

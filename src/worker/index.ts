@@ -28,6 +28,7 @@ import { notifyRunFailed, sendPendingReportEmails } from '@/lib/aeo/notify'
 import { decideOutcome } from '@/lib/aeo/outcome'
 import { PermanentRunError, planRun } from '@/lib/aeo/plan'
 import { askPulseEngines, countAnswered } from '@/lib/aeo/pulse-run'
+import { claimNextPulseReport, processPulseReport, queuePulseReport } from '@/lib/aeo/pulse-report-jobs'
 import { briefSpentTodayUsd, claimNextBrief, processBrief, sweepAbandonedBriefs } from '@/lib/aeo/brief-jobs'
 import {
   claimNextPanelDraft,
@@ -283,6 +284,8 @@ async function processPulseRun(run: ClaimedRun, config: WorkerConfig, signal: Ab
     // Answers and cost were saved per assistant; this only totals and closes the run.
     const totals = await completeRun(run, [], 0, { panelVersion: plan.panelVersion, planQueries })
     log('run_done', { run: run.id, tier: run.tier, answers: done, of: total, cited: totals.citedCount, costThisAttempt: costUsd })
+    // What to fix is written next by this lane, before it claims another run.
+    await queuePulseReport(run.id)
     return
   }
 
@@ -326,6 +329,21 @@ async function workOneBrief(config: WorkerConfig): Promise<boolean> {
   }
 }
 
+/** "What to fix" for a finished Pulse run: site checks plus Claude's prioritized fixes. */
+async function workOnePulseReport(config: WorkerConfig): Promise<boolean> {
+  try {
+    const job = await claimNextPulseReport()
+    if (!job) return false
+    log('pulse_report_started', { report: job.id, run: job.runId, attempt: job.attempts })
+    const outcome = await processPulseReport(job, { model: config.briefModel })
+    log('pulse_report_done', { report: job.id, run: job.runId, ...outcome })
+    return true
+  } catch (err) {
+    log('pulse_report_error', { error: errorMessage(err) })
+    return false
+  }
+}
+
 /** One pass: sweep, check spend, claim and process at most one run. */
 async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worked' | 'idle'> {
   const { lane } = config
@@ -339,6 +357,8 @@ async function tick(config: WorkerConfig, shutdown: AbortSignal): Promise<'worke
       await alertRunFailed(id, 'worker stopped responding on its final attempt')
     }
   }
+
+  if (lane === 'pulse' && (await workOnePulseReport(config))) return 'worked'
 
   const cap = lane === 'pulse' ? config.pulseDailyCapUsd : config.dailySpendCapUsd
   const spent = await spentTodayUsd(lane)

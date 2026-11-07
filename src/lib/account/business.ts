@@ -103,7 +103,7 @@ export async function linkSnapshots(businessId: string, email: string): Promise<
 
 export type AccountReport = {
   publicId: string
-  kind: 'snapshot' | 'recheck'
+  kind: 'snapshot' | 'recheck' | 'pulse'
   domain: string
   status: 'queued' | 'running' | 'done' | 'failed'
   questionCount: number
@@ -129,6 +129,40 @@ export function snapshotReportsQuery(businessId: string) {
     .orderBy(desc(aeoRun.createdAt))
 }
 
+/** The business's Pulse runs. */
+export function pulseReportsQuery(businessId: string) {
+  return db
+    .select({
+      publicId: aeoRun.publicId,
+      domain: aeoRun.domain,
+      status: aeoRun.status,
+      questionCount: aeoRun.questionCount,
+      citedCount: aeoRun.citedCount,
+      createdAt: aeoRun.createdAt,
+    })
+    .from(aeoRun)
+    .where(and(eq(aeoRun.businessId, businessId), eq(aeoRun.tier, 'pulse')))
+}
+
+/**
+ * A Pulse run of the signed-in user's business, by its public id, or null.
+ * The id comes from the URL, so ownership is part of the query: another
+ * business's id finds nothing.
+ */
+export function ownedPulseRunQuery(userId: string, publicId: string) {
+  return db
+    .select({ id: aeoRun.id })
+    .from(aeoRun)
+    .innerJoin(business, eq(business.id, aeoRun.businessId))
+    .where(and(eq(business.userId, userId), eq(aeoRun.publicId, publicId), eq(aeoRun.tier, 'pulse')))
+    .limit(1)
+}
+
+export async function findOwnedPulseRun(userId: string, publicId: string): Promise<string | null> {
+  const [row] = await ownedPulseRunQuery(userId, publicId)
+  return row?.id ?? null
+}
+
 /** Every report the signed-in user's business owns, newest first. */
 export async function listReports(userId: string): Promise<AccountReport[]> {
   const owned = await getBusiness(userId)
@@ -151,10 +185,13 @@ export async function listReports(userId: string): Promise<AccountReport[]> {
         .where(inArray(aeoRecheck.requestId, requestIds))
     : []
 
+  const pulses = await pulseReportsQuery(owned.id)
+
   // Several requests can share one run (30-day reuse); list each report once.
   const seen = new Set<string>()
   const reports: AccountReport[] = []
   for (const [kind, rows] of [
+    ['pulse', pulses],
     ['snapshot', snapshots],
     ['recheck', rechecks],
   ] as const) {
