@@ -102,3 +102,15 @@ export function adminBriefConfirmedEmail(args: { businessName: string; domain: s
     text: [lead, '', `See the brief and their changes: ${url}`].join('\n'),
   }
 }
+
+/** For the admin: a business panel draft is ready to review. */
+export function adminPanelDraftEmail(args: { businessName: string; businessId: string; version: number; questions: number }): EmailContent {
+  const url = appUrl(`/dashboard/pulse/${args.businessId}`)
+  const lead = `A ${args.questions}-question panel (version ${args.version}) is drafted for ${args.businessName} and waiting for your review.`
+  return {
+    subject: `[BusinessPulse] Panel to review: ${args.businessName}`,
+    html: page(`<p style="margin:0 0 16px">${escapeHtml(lead)}</p>
+<p style="margin:0"><a href="${escapeHtml(url)}" style="color:#2563eb">Review and approve it</a></p>`),
+    text: [lead, '', `Review and approve it: ${url}`].join('\n'),
+  }
+}

@@ -137,6 +137,17 @@ Then repeat on one contractor whose site covers several trades.
   what isn't sold (other images, hand-painted work, pickup), parishes, schools, dioceses,
   and Spanish-speaking buyers, and national scope with no storefront.
 
+- **Primos Maternos panel v1 (November 7, local):** drafted in about 70 seconds for
+  $0.20 on Claude Opus 5.5, from the confirmed brief and the religious-art library: 79
+  questions (47 from the library, 32 new), including diocese-by-name, purchase-order,
+  bulk-pricing, and Spanish-language questions; no statues, commissions, Etsy, or local
+  store questions. Estimated run cost about $12.
+- **As built (P6):** confirming or changing a brief queues a draft version; the snapshot
+  worker drafts it (briefs and drafts share `AEO_BRIEF_DAILY_CAP_USD`); Bill reviews it on
+  `/dashboard/pulse/[business]` (edit, drop, add, domain lists, note, estimated cost) and
+  approves it. Editing the approved version saves a new draft version. A Pulse run needs
+  an approved panel and records the version it asked (`aeo_run.business_panel_id`).
+
 ## 7. Costs
 
 - **Deep dive and draft:** about $1 to $3 per business, once, and again only when the

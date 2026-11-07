@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { adminBriefConfirmedEmail } from '@/lib/access/emails'
 import { db } from '@/lib/db'
 import { business, businessBrief, type ConfirmedBrief } from '@/lib/db/schema'
+import { queuePanelDraft } from '@/lib/aeo/business-panel-jobs'
 import { sendEmail } from '@/lib/email/provider'
 import type { ConfirmBriefInput } from './schema'
 
@@ -52,10 +53,13 @@ export async function confirmBrief(userId: string, userEmail: string, input: Con
   if (confirmed.offerings.length === 0) return { ok: false, error: 'Keep or add at least one thing you sell.' }
 
   const firstConfirm = current.status !== 'confirmed'
+  const changed = JSON.stringify(current.confirmed) !== JSON.stringify(confirmed)
   await db
     .update(businessBrief)
     .set({ status: 'confirmed', confirmed, confirmedAt: new Date(), updatedAt: new Date() })
     .where(eq(businessBrief.id, current.id))
+  // A first confirmation, or a change to it, means the questions need drafting again.
+  if (firstConfirm || changed) await queuePanelDraft(current.businessId)
 
   const admin = process.env.AEO_ADMIN_EMAIL
   if (admin && firstConfirm) {

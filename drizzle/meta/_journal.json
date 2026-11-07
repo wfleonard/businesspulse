@@ -169,6 +169,13 @@
       "when": 1794056958513,
       "tag": "0023_careful_cobalt_man",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794058638732,
+      "tag": "0024_smooth_bishop",
+      "breakpoints": true
     }
   ]
 }

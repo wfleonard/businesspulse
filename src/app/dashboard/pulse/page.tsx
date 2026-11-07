@@ -2,8 +2,9 @@ import Link from 'next/link'
 import { AutoRefresh } from '@/components/aeo/AutoRefresh'
 import { ConfirmSubmit } from '@/components/aeo/ConfirmSubmit'
 import { Card } from '@/components/ui/Card'
+import { estimateRunCostUsd } from '@/lib/aeo/business-panel'
 import { PULSE_ENGINES, workerConfig } from '@/lib/aeo/config'
-import { listPulseBusinesses, listPulseRuns, type PulseRunRow } from '@/lib/aeo/pulse'
+import { listPulseBusinesses, listPulseRuns, type PulseBusiness, type PulseRunRow } from '@/lib/aeo/pulse'
 import { spentTodayUsd } from '@/lib/aeo/queue'
 import { requireAdmin } from '@/lib/session'
 import { startFreePulseRun } from './actions'
@@ -33,6 +34,19 @@ const BRIEF_LABEL: Record<string, string> = {
   ready: 'Waiting for client',
   confirmed: 'Confirmed',
   failed: 'Failed',
+}
+
+function panelLabel(b: PulseBusiness): string {
+  if (b.approvedVersion) return 'Panel v' + b.approvedVersion + ', ' + b.approvedQuestions + ' questions'
+  return b.draftWaiting ? 'Panel draft waiting' : 'No approved panel'
+}
+
+function startMessage(b: PulseBusiness): string {
+  const questions = b.approvedQuestions ?? 0
+  return (
+    'Start a free Pulse run for ' + b.name + '? It asks the ' + questions +
+    ' approved questions on all four assistants, about $' + estimateRunCostUsd(questions).toFixed(0) + ' in AI spend.'
+  )
 }
 
 function formatDate(date: Date | null): string {
@@ -70,8 +84,8 @@ export default async function PulsePage({ searchParams }: Props) {
       <div>
         <h1 className="text-2xl font-bold text-dark">Pulse</h1>
         <p className="mt-1 text-text-secondary">
-          Client businesses and their full reports: every question in the industry set (up to{' '}
-          {config.pulseMaxQuestions}) on ChatGPT, Claude, Perplexity, and Gemini. Pulse spend today: $
+          Client businesses and their full reports: each business&apos;s own approved question panel (up to{' '}
+          {config.pulseMaxQuestions} questions) on ChatGPT, Claude, Perplexity, and Gemini. Pulse spend today: $
           {spent.toFixed(2)} of the ${config.pulseDailyCapUsd.toFixed(0)} daily cap.
         </p>
         {notice && <p className="mt-4 rounded-md bg-success/10 px-3 py-2 text-sm text-success">{notice}</p>}
@@ -109,6 +123,7 @@ export default async function PulsePage({ searchParams }: Props) {
                     <td className="px-4 py-3 text-text-secondary">{b.ownerEmail}</td>
                     <td className="px-4 py-3 text-text-secondary">
                       {b.panelSlug ?? <span className="text-amber-800">Custom: {b.customIndustry}</span>}
+                      <p className="text-xs">{panelLabel(b)}</p>
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/dashboard/pulse/${b.id}`} className="text-primary hover:underline">
@@ -119,18 +134,20 @@ export default async function PulsePage({ searchParams }: Props) {
                     <td className="px-4 py-3 text-right">
                       {b.activeRun ? (
                         <span className="text-xs text-text-secondary">Run in progress</span>
-                      ) : b.panelSlug ? (
+                      ) : b.approvedVersion ? (
                         <form action={startFreePulseRun}>
                           <input type="hidden" name="businessId" value={b.id} />
                           <ConfirmSubmit
-                            message={`Start a free Pulse run for ${b.name}? It asks every question on all four assistants and costs roughly $25 to $30 in AI spend.`}
+                            message={startMessage(b)}
                             className="bg-primary text-white hover:bg-primary/90"
                           >
                             Start Pulse run
                           </ConfirmSubmit>
                         </form>
                       ) : (
-                        <span className="text-xs text-text-secondary">Needs a question set</span>
+                        <Link href={'/dashboard/pulse/' + b.id} className="text-xs text-primary hover:underline">
+                          {b.draftWaiting ? 'Panel to review' : 'Needs an approved panel'}
+                        </Link>
                       )}
                     </td>
                   </tr>

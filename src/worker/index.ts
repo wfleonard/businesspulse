@@ -29,6 +29,12 @@ import { decideOutcome } from '@/lib/aeo/outcome'
 import { PermanentRunError, planRun } from '@/lib/aeo/plan'
 import { askPulseEngines, countAnswered } from '@/lib/aeo/pulse-run'
 import { briefSpentTodayUsd, claimNextBrief, processBrief, sweepAbandonedBriefs } from '@/lib/aeo/brief-jobs'
+import {
+  claimNextPanelDraft,
+  panelDraftSpentTodayUsd,
+  processPanelDraft,
+  sweepAbandonedPanelDrafts,
+} from '@/lib/aeo/business-panel-jobs'
 import { sendRecheckEmails, startDueRechecks } from '@/lib/aeo/recheck'
 import { sweepExpiredContactDetails } from '@/lib/aeo/retention'
 import { sweepExpiredScanRequests } from '@/lib/aeo/scan-requests'
@@ -295,13 +301,24 @@ async function workOneBrief(config: WorkerConfig): Promise<boolean> {
   try {
     const abandoned = await sweepAbandonedBriefs()
     if (abandoned > 0) log('briefs_abandoned', { briefs: abandoned })
-    const spent = await briefSpentTodayUsd()
+    const abandonedPanels = await sweepAbandonedPanelDrafts()
+    if (abandonedPanels > 0) log('panel_drafts_abandoned', { panels: abandonedPanels })
+    // Briefs and panel drafts share one daily cap.
+    const spent = (await briefSpentTodayUsd()) + (await panelDraftSpentTodayUsd())
     if (spent >= config.briefDailyCapUsd) return false
+
     const job = await claimNextBrief()
-    if (!job) return false
-    log('brief_started', { brief: job.id, business: job.businessId, attempt: job.attempts })
-    const outcome = await processBrief(job, { model: config.briefModel })
-    log('brief_done', { brief: job.id, ...outcome })
+    if (job) {
+      log('brief_started', { brief: job.id, business: job.businessId, attempt: job.attempts })
+      const outcome = await processBrief(job, { model: config.briefModel })
+      log('brief_done', { brief: job.id, ...outcome })
+      return true
+    }
+    const panel = await claimNextPanelDraft()
+    if (!panel) return false
+    log('panel_draft_started', { panel: panel.id, business: panel.businessId, version: panel.version, attempt: panel.attempts })
+    const outcome = await processPanelDraft(panel, { model: config.briefModel })
+    log('panel_draft_done', { panel: panel.id, ...outcome })
     return true
   } catch (err) {
     log('brief_error', { error: errorMessage(err) })

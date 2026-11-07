@@ -1,6 +1,6 @@
 import { asc, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { aeoPanel, aeoRequest, aeoRun, business, type AeoGeneratedPanel } from '@/lib/db/schema'
+import { aeoPanel, aeoRequest, aeoRun, business, businessPanel, type AeoGeneratedPanel } from '@/lib/db/schema'
 import { generatePanel, PanelGenerationError, type ModelCall } from './generate'
 import { COMMON_DIRECTORY_DOMAINS, COMMON_REFERENCE_DOMAINS } from './panels/common'
 import { fillSlots, sampleQuestions, type PanelQuestion } from './questions'
@@ -32,10 +32,12 @@ export type PlanTarget = {
   domain: string
   /** Absent on runs claimed before the column existed; treated as none. */
   otherDomains?: string[]
-  panelSource: 'canned' | 'generated'
+  panelSource: 'canned' | 'generated' | 'business'
   panelSlug: string | null
   /** Pulse runs: questions are filled from this business's profile instead of a request. */
   businessId?: string | null
+  /** Pulse runs on a business panel: the approved version to ask. */
+  businessPanelId?: string | null
   leaseToken: string
 }
 
@@ -186,6 +188,25 @@ async function generateForRun(
 async function planBusinessRun(run: PlanTarget & { businessId: string }, questionCount: number): Promise<RunPlan> {
   const [owner] = await db.select().from(business).where(eq(business.id, run.businessId)).limit(1)
   if (!owner) throw new PermanentRunError('the business for this run no longer exists')
+
+  if (run.panelSource === 'business') {
+    // The business's own panel: questions are already written for it, with no slots.
+    if (!run.businessPanelId) throw new PermanentRunError('this run has no business panel')
+    const [panel] = await db.select().from(businessPanel).where(eq(businessPanel.id, run.businessPanelId)).limit(1)
+    if (!panel) throw new PermanentRunError('the business panel for this run no longer exists')
+    const questions = panel.questions.slice(0, questionCount).map(({ c, q }) => ({ c, q }))
+    if (questions.length === 0) throw new PermanentRunError('the business panel has no questions')
+    return {
+      businessName: owner.name,
+      domain: run.domain,
+      otherDomains: run.otherDomains ?? [],
+      directoryDomains: panel.directoryDomains,
+      referenceDomains: panel.referenceDomains,
+      questions,
+      panelVersion: panel.version,
+    }
+  }
+
   if (run.panelSource !== 'canned' || !run.panelSlug) {
     // Custom industries get an approved full question set first (docs/pulse-plan.md, P7).
     throw new PermanentRunError('this business has no approved question set yet')

@@ -1,6 +1,6 @@
 import { asc, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { aeoPanel, aeoRequest, aeoResult, aeoRun, business, type AeoRival, type AeoSource } from '@/lib/db/schema'
+import { aeoPanel, aeoRequest, aeoResult, aeoRun, business, businessPanel, type AeoRival, type AeoSource } from '@/lib/db/schema'
 import { COMMON_DIRECTORY_DOMAINS } from './panels/common'
 
 /**
@@ -272,6 +272,7 @@ export async function loadReport(publicId: string, detail: ReportDetail = 'highl
       panelSlug: aeoRun.panelSlug,
       finishedAt: aeoRun.finishedAt,
       tier: aeoRun.tier,
+      businessPanelId: aeoRun.businessPanelId,
       // Pulse runs belong to a client business and carry its name.
       clientName: business.name,
     })
@@ -320,13 +321,19 @@ export async function loadReport(publicId: string, detail: ReportDetail = 'highl
       })
       .from(aeoResult)
       .where(eq(aeoResult.runId, run.id)),
-    run.panelSlug
+    run.businessPanelId
       ? db
-          .select({ directoryDomains: aeoPanel.directoryDomains })
-          .from(aeoPanel)
-          .where(eq(aeoPanel.slug, run.panelSlug))
+          .select({ directoryDomains: businessPanel.directoryDomains })
+          .from(businessPanel)
+          .where(eq(businessPanel.id, run.businessPanelId))
           .limit(1)
-      : Promise.resolve([] as { directoryDomains: string[] }[]),
+      : run.panelSlug
+        ? db
+            .select({ directoryDomains: aeoPanel.directoryDomains })
+            .from(aeoPanel)
+            .where(eq(aeoPanel.slug, run.panelSlug))
+            .limit(1)
+        : Promise.resolve([] as { directoryDomains: string[] }[]),
   ])
 
   const engines = [...new Map(results.map((r) => [`${r.engine}|${r.model}`, { engine: r.engine, model: r.model }])).values()]

@@ -3,11 +3,16 @@ import { notFound } from 'next/navigation'
 import { AutoRefresh } from '@/components/aeo/AutoRefresh'
 import { ConfirmSubmit } from '@/components/aeo/ConfirmSubmit'
 import { Card } from '@/components/ui/Card'
+import { BusinessPanelEditor } from '@/components/aeo/BusinessPanelEditor'
 import { SCOPE_LABEL, type ServiceScope } from '@/lib/aeo/brief'
+import { PULSE_COST_PER_QUESTION_USD } from '@/lib/aeo/business-panel'
+import { listBusinessPanels } from '@/lib/aeo/business-panel-jobs'
+import { DRAFT_CATEGORIES } from '@/lib/aeo/panel-draft'
+import { categoryLabel } from '@/lib/aeo/report'
 import { getPulseBusiness } from '@/lib/aeo/pulse'
 import { stateInfo } from '@/lib/aeo/states'
 import { requireAdmin } from '@/lib/session'
-import { rereadSite } from '../actions'
+import { redraftPanel, rereadSite, saveBusinessPanel } from '../actions'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Business | Pulse | BusinessPulse' }
@@ -23,6 +28,27 @@ function scopeLabel(scope: string): string {
   return SCOPE_LABEL[scope as ServiceScope] ?? scope
 }
 
+type PanelRow = Awaited<ReturnType<typeof listBusinessPanels>>[number]
+
+function panelSummary(drafting: boolean, editable: PanelRow | null, briefStatus: string | undefined): string {
+  if (drafting) return 'Drafting a new version from the confirmed brief. This page updates on its own.'
+  if (!editable) return briefStatus === 'confirmed' ? 'No panel yet.' : 'Drafted once the client confirms their brief.'
+  const parts = [
+    'Version ' + editable.version + ', ' + (editable.status === 'draft' ? 'waiting for your review' : 'approved'),
+  ]
+  if (editable.sourcePanels.length) parts.push('library: ' + editable.sourcePanels.join(', '))
+  if (editable.model) parts.push(editable.model)
+  parts.push('drafting cost $' + Number(editable.costUsd).toFixed(2))
+  return parts.join(' · ')
+}
+
+function versionLabel(p: PanelRow): string {
+  let label = 'v' + p.version + ' ' + p.status
+  if (p.status === 'approved' && p.approvedAt) label += ' ' + p.approvedAt.toLocaleDateString('en-US')
+  if (p.error) label += ' (' + p.error + ')'
+  return label
+}
+
 function Sources({ urls }: { urls: string[] }) {
   if (urls.length === 0) return <span className="text-xs text-amber-700"> (no page cited)</span>
   return (
@@ -35,7 +61,7 @@ function Sources({ urls }: { urls: string[] }) {
 
 /**
  * One client business for the admin: profile, the brief from its site, and
- * what the client changed when confirming. The panel review lands here in P6.
+ * what the client changed when confirming, and its question panel to review and approve.
  */
 export default async function PulseBusinessPage({ params, searchParams }: Props) {
   await requireAdmin()
@@ -43,8 +69,14 @@ export default async function PulseBusinessPage({ params, searchParams }: Props)
   if (!UUID.test(businessId)) notFound()
   const row = await getPulseBusiness(businessId)
   if (!row) notFound()
-  const notice = (await searchParams).notice
+  const query = await searchParams
+  const notice = query.notice
+  const error = query.error
   const { business: biz, brief: briefRow } = row
+  const panels = await listBusinessPanels(biz.id)
+  // The version to review: a draft if one waits, else the approved one.
+  const editable = panels.find((p) => p.status === 'draft') ?? panels.find((p) => p.status === 'approved') ?? null
+  const drafting = panels.some((p) => p.status === 'queued' || p.status === 'drafting')
   const brief = briefRow?.brief ?? null
   const confirmed = briefRow?.confirmed ?? null
   const reading = briefRow?.status === 'queued' || briefRow?.status === 'reading'
@@ -54,7 +86,7 @@ export default async function PulseBusinessPage({ params, searchParams }: Props)
 
   return (
     <div className="space-y-8">
-      {reading && <AutoRefresh seconds={15} />}
+      {(reading || drafting) && <AutoRefresh seconds={15} />}
       <div>
         <Link href="/dashboard/pulse" className="text-sm text-primary hover:underline">
           Pulse
@@ -69,7 +101,51 @@ export default async function PulseBusinessPage({ params, searchParams }: Props)
         {typeof notice === 'string' && (
           <p className="mt-4 rounded-md bg-success/10 px-3 py-2 text-sm text-success">{notice}</p>
         )}
+        {typeof error === 'string' && <p className="mt-4 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
       </div>
+
+      <Card>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-dark">Question panel</h2>
+            <p className="mt-1 text-sm text-text-secondary">{panelSummary(drafting, editable, briefRow?.status)}</p>
+            {panels.length > 0 && (
+              <p className="mt-1 text-xs text-text-secondary">
+                Versions: {panels.map((p) => versionLabel(p)).join(' · ')}
+              </p>
+            )}
+          </div>
+          {briefRow?.status === 'confirmed' && !drafting && (
+            <form action={redraftPanel}>
+              <input type="hidden" name="businessId" value={biz.id} />
+              <ConfirmSubmit
+                message="Draft a new panel from the confirmed brief? Your edits to an unapproved draft are replaced. About $0.50 in AI spend."
+                className="border border-border bg-white text-dark hover:bg-gray-50"
+              >
+                {editable ? 'Draft again' : 'Draft panel'}
+              </ConfirmSubmit>
+            </form>
+          )}
+        </div>
+        {editable && !drafting && (
+          <div className="mt-6">
+            <BusinessPanelEditor
+              key={editable.id + '-' + editable.updatedAt.getTime()}
+              businessId={biz.id}
+              panelId={editable.id}
+              status={editable.status}
+              questions={editable.questions}
+              directoryDomains={editable.directoryDomains}
+              referenceDomains={editable.referenceDomains}
+              note={editable.note}
+              categories={DRAFT_CATEGORIES.map((value) => ({ value, label: categoryLabel(value) }))}
+              offerings={briefRow?.confirmed?.offerings ?? []}
+              costPerQuestion={PULSE_COST_PER_QUESTION_USD}
+              action={saveBusinessPanel}
+            />
+          </div>
+        )}
+      </Card>
 
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-4">

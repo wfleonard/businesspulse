@@ -475,6 +475,70 @@ export const businessBrief = pgTable('business_brief', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+/**
+ * queued/drafting: Claude is writing it. draft: waiting for the admin.
+ * approved: the version Pulse runs ask. retired: replaced by a newer approved
+ * version. failed: the draft couldn't be written.
+ */
+export const businessPanelStatusEnum = pgEnum('business_panel_status', [
+  'queued',
+  'drafting',
+  'draft',
+  'approved',
+  'retired',
+  'failed',
+])
+
+/** One question in a business panel, with what it tests and why it's there. */
+export type BusinessPanelQuestion = {
+  c: string
+  q: string
+  /** The confirmed offering it tests, or "general". */
+  offering: string
+  why: string
+  /** Taken from an industry panel, or written for this business. */
+  origin: 'library' | 'new' | 'admin'
+}
+
+/**
+ * A client's own question panel (docs/business-panel-plan.md): drafted from
+ * the confirmed brief, approved by the admin, and versioned so reports
+ * compare like with like.
+ */
+export const businessPanel = pgTable(
+  'business_panel',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => business.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull(),
+    status: businessPanelStatusEnum('status').notNull().default('queued'),
+    questions: jsonb('questions').$type<BusinessPanelQuestion[]>().notNull().default([]),
+    directoryDomains: jsonb('directory_domains').$type<string[]>().notNull().default([]),
+    referenceDomains: jsonb('reference_domains').$type<string[]>().notNull().default([]),
+    /** Industry panels used as the question library. */
+    sourcePanels: jsonb('source_panels').$type<string[]>().notNull().default([]),
+    model: text('model'),
+    costUsd: numeric('cost_usd').notNull().default('0'),
+    error: text('error'),
+    /** The admin's note on what changed in this version. */
+    note: text('note').notNull().default(''),
+    attempts: integer('attempts').notNull().default(0),
+    lockedAt: timestamp('locked_at'),
+    leaseToken: uuid('lease_token'),
+    approvedBy: text('approved_by').references(() => user.id, { onDelete: 'set null' }),
+    approvedAt: timestamp('approved_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('business_panel_version_uq').on(t.businessId, t.version),
+    // At most one approved version per business.
+    uniqueIndex('business_panel_approved_uq').on(t.businessId).where(sql`status = 'approved'`),
+  ]
+)
+
 /* ------------------------------------------------------------------ */
 /* AEO snapshots — public, pre-account submissions. Deliberately NOT   */
 /* org-scoped: these are Saxon's operational data, visible only to the */
@@ -503,7 +567,8 @@ export const aeoLeadStatusEnum = pgEnum('aeo_lead_status', [
 ])
 /** snapshot: free, 20 questions on Perplexity. full: legacy. pulse: a client's paid run, every question on all four assistants. */
 export const aeoRunTierEnum = pgEnum('aeo_run_tier', ['snapshot', 'full', 'pulse'])
-export const aeoPanelSourceEnum = pgEnum('aeo_panel_source', ['canned', 'generated'])
+/** canned: an industry panel. generated: written for one snapshot. business: a client's approved business panel. */
+export const aeoPanelSourceEnum = pgEnum('aeo_panel_source', ['canned', 'generated', 'business'])
 /** form: the public snapshot form. outbound: a prospect snapshot run from the dashboard. */
 export const aeoRequestSourceEnum = pgEnum('aeo_request_source', ['form', 'outbound'])
 export const aeoRunStatusEnum = pgEnum('aeo_run_status', ['queued', 'running', 'done', 'failed'])
@@ -618,6 +683,8 @@ export const aeoRun = pgTable(
      * null because one snapshot run can be shared by several requests.
      */
     businessId: uuid('business_id').references(() => business.id, { onDelete: 'cascade' }),
+    /** Pulse runs on a business panel: the version they asked. */
+    businessPanelId: uuid('business_panel_id').references(() => businessPanel.id, { onDelete: 'set null' }),
     /** Views of the finished report by visitors (not bots or signed-in admins), recorded by the report page. */
     reportViewCount: integer('report_view_count').notNull().default(0),
     reportFirstViewedAt: timestamp('report_first_viewed_at'),
@@ -899,6 +966,7 @@ export const schema = {
   auditLog,
   business,
   businessBrief,
+  businessPanel,
   aeoPanel,
   aeoPanelVersion,
   aeoPanelBacklog,

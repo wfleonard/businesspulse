@@ -1,7 +1,7 @@
 import 'server-only'
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { aeoPanel, aeoRun, business, businessBrief, user } from '@/lib/db/schema'
+import { aeoRun, business, businessBrief, businessPanel, user } from '@/lib/db/schema'
 import { PULSE_ENGINES } from './config'
 import { newPublicId } from './tokens'
 
@@ -18,15 +18,13 @@ export async function startPulseRun(businessId: string): Promise<StartResult> {
   return db.transaction(async (tx) => {
     const [owner] = await tx.select().from(business).where(eq(business.id, businessId)).for('update').limit(1)
     if (!owner) return { ok: false, error: 'That business no longer exists.' }
-    if (!owner.panelSlug) {
-      return { ok: false, error: `${owner.name} has no approved question set yet ("${owner.customIndustry}").` }
-    }
+    // Runs ask only the business's own approved panel (docs/business-panel-plan.md).
     const [panel] = await tx
-      .select({ slug: aeoPanel.slug })
-      .from(aeoPanel)
-      .where(and(eq(aeoPanel.slug, owner.panelSlug), eq(aeoPanel.isActive, true)))
+      .select({ id: businessPanel.id, questions: businessPanel.questions })
+      .from(businessPanel)
+      .where(and(eq(businessPanel.businessId, owner.id), eq(businessPanel.status, 'approved')))
       .limit(1)
-    if (!panel) return { ok: false, error: `The ${owner.panelSlug} question set is switched off.` }
+    if (!panel) return { ok: false, error: `${owner.name} has no approved question panel yet.` }
 
     const [active] = await tx
       .select({ id: aeoRun.id })
@@ -43,9 +41,10 @@ export async function startPulseRun(businessId: string): Promise<StartResult> {
         otherDomains: owner.otherDomains,
         tier: 'pulse',
         engines: [...PULSE_ENGINES],
-        panelSource: 'canned',
-        panelSlug: owner.panelSlug,
+        panelSource: 'business',
+        panelSlug: null,
         businessId: owner.id,
+        businessPanelId: panel.id,
       })
       .returning({ publicId: aeoRun.publicId })
     return { ok: true, publicId: run.publicId }
@@ -62,6 +61,10 @@ export type PulseBusiness = {
   runs: number
   activeRun: boolean
   briefStatus: (typeof businessBrief.$inferSelect)['status'] | null
+  /** Approved panel version and size, if any; and whether a draft waits for review. */
+  approvedVersion: number | null
+  approvedQuestions: number | null
+  draftWaiting: boolean
 }
 
 export async function listPulseBusinesses(): Promise<PulseBusiness[]> {
@@ -76,6 +79,9 @@ export async function listPulseBusinesses(): Promise<PulseBusiness[]> {
       runs: sql<number>`(select count(*) from aeo_run r where r.business_id = ${business.id})::int`,
       activeRun: sql<boolean>`exists (select 1 from aeo_run r where r.business_id = ${business.id} and r.status in ('queued', 'running'))`,
       briefStatus: businessBrief.status,
+      approvedVersion: sql<number | null>`(select p.version from business_panel p where p.business_id = ${business.id} and p.status = 'approved')`,
+      approvedQuestions: sql<number | null>`(select jsonb_array_length(p.questions) from business_panel p where p.business_id = ${business.id} and p.status = 'approved')`,
+      draftWaiting: sql<boolean>`exists (select 1 from business_panel p where p.business_id = ${business.id} and p.status = 'draft')`,
     })
     .from(business)
     .innerJoin(user, eq(user.id, business.userId))

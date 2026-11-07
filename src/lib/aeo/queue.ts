@@ -32,8 +32,10 @@ export type ClaimedRun = {
   tier: 'snapshot' | 'full' | 'pulse'
   /** Pulse runs: the client business it belongs to. */
   businessId: string | null
+  /** Pulse runs: the approved business panel version it asks. */
+  businessPanelId: string | null
   engines: string[]
-  panelSource: 'canned' | 'generated'
+  panelSource: 'canned' | 'generated' | 'business'
   panelSlug: string | null
   attempts: number
   leaseToken: string
@@ -98,7 +100,7 @@ export async function claimNextRun(options: {
       for update skip locked
       limit 1
     )
-    returning id, public_id, domain, other_domains, tier, business_id, engines, panel_source, panel_slug, attempts, lease_token
+    returning id, public_id, domain, other_domains, tier, business_id, business_panel_id, engines, panel_source, panel_slug, attempts, lease_token
   `)
 
   const row = result.rows[0] as Row | undefined
@@ -110,6 +112,7 @@ export async function claimNextRun(options: {
     otherDomains: (row.other_domains as string[] | null) ?? [],
     tier: row.tier as ClaimedRun['tier'],
     businessId: (row.business_id as string | null) ?? null,
+    businessPanelId: (row.business_panel_id as string | null) ?? null,
     engines: row.engines as string[],
     panelSource: row.panel_source as ClaimedRun['panelSource'],
     panelSlug: (row.panel_slug as string | null) ?? null,

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { AutoRefresh } from '@/components/aeo/AutoRefresh'
 import { getBrief } from '@/lib/account/brief'
 import { getBusiness, linkSnapshots, listReports, type AccountReport } from '@/lib/account/business'
+import { approvedBusinessPanel } from '@/lib/aeo/business-panel-jobs'
 import { activePanels } from '@/lib/aeo/requests'
 import { stateInfo } from '@/lib/aeo/states'
 import { isAdmin, requireSession } from '@/lib/session'
@@ -36,10 +37,11 @@ export default async function AccountPage({ searchParams }: Props) {
   const owned = await getBusiness(user.id)
   // Picks up snapshots verified since the profile was saved.
   if (owned) await linkSnapshots(owned.id, user.email)
-  const [reports, panels, brief] = await Promise.all([
+  const [reports, panels, brief, questionSet] = await Promise.all([
     listReports(user.id),
     owned ? activePanels() : [],
     owned ? getBrief(user.id) : null,
+    owned ? approvedBusinessPanel(owned.id) : null,
   ])
   const reading = brief?.status === 'queued' || brief?.status === 'reading'
   const industry = owned
@@ -133,7 +135,9 @@ export default async function AccountPage({ searchParams }: Props) {
             {brief.status === 'confirmed' && brief.confirmed && (
               <>
                 <p className="mt-2 text-sm text-text-secondary">
-                  Confirmed. We&apos;re preparing your report questions from it.
+                  {questionSet
+                    ? `Confirmed. Your report asks ${questionSet.questions.length} questions written for your business.`
+                    : 'Confirmed. We’re preparing your report questions from it.'}
                 </p>
                 <p className="mt-2 text-sm text-dark">{brief.confirmed.offerings.slice(0, 6).join(' · ')}</p>
                 <Link href="/account/brief" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
