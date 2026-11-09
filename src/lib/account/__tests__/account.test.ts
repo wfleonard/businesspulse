@@ -123,10 +123,10 @@ describe('silo: the customer area', () => {
 })
 
 describe('brief confirmation form', () => {
-  it('splits added items on lines or commas, but places only on lines', () => {
+  it('splits added items and places on lines only, so a comma stays inside one entry', () => {
     const parsed = confirmBriefSchema.parse({
       offerings: ['Canvas prints', ''],
-      addedOfferings: 'Framed prints, Rolled prints\nFramed prints',
+      addedOfferings: 'Framed prints, in gold or silver\nRolled prints\nRolled prints',
       buyers: [],
       addedBuyers: '',
       scope: 'national',
@@ -134,8 +134,26 @@ describe('brief confirmation form', () => {
       notes: '',
     })
     expect(parsed.offerings).toEqual(['Canvas prints'])
-    expect(parsed.addedOfferings).toEqual(['Framed prints', 'Rolled prints'])
+    expect(parsed.addedOfferings).toEqual(['Framed prints, in gold or silver', 'Rolled prints'])
     expect(parsed.places).toEqual(['Tinton Falls, NJ', 'Monmouth County, NJ'])
+  })
+
+  it('accepts a long line someone types to describe what was missed', () => {
+    const line = 'We also do commercial roofing for warehouses, churches, and schools across Monmouth and Ocean counties'
+    expect(confirmBriefSchema.parse({ offerings: [], buyers: [], scope: 'regional', addedOfferings: line }).addedOfferings).toEqual([line])
+  })
+
+  it('keeps answers to the open questions and drops blank ones', () => {
+    const parsed = confirmBriefSchema.parse({
+      offerings: [],
+      buyers: [],
+      scope: 'regional',
+      answers: [
+        { question: 'Do you do commercial work?', answer: ' Yes, warehouses and churches. ' },
+        { question: 'Do you offer financing?', answer: '' },
+      ],
+    })
+    expect(parsed.answers).toEqual([{ question: 'Do you do commercial work?', answer: 'Yes, warehouses and churches.' }])
   })
 
   it('rejects an unknown service scope', () => {

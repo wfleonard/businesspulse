@@ -51,6 +51,7 @@ const input: PanelDraftInput = {
     scope: 'national',
     places: ['United States'],
     notes: 'Bulk orders matter most.',
+    answers: [{ question: 'Do you sell wholesale?', answer: 'Yes, to parish gift shops.' }],
   },
   library,
 }
@@ -72,6 +73,7 @@ describe('buildPanelUserContent', () => {
     expect(text).toContain('- Guadalupe canvas prints: 24x36 rolled')
     expect(text).toContain('Not offered:\n- Statues')
     expect(text).toContain('Owner notes:\nBulk orders matter most.')
+    expect(text).toContain('- Q: Do you sell wholesale?\n  A: Yes, to parish gift shops.')
     expect(text).toContain('<library panel="religious-art" name="Religious art & gifts" fit="primary">')
     expect(text).toContain('[cost] how much does a hand carved wooden statue of Mary cost')
   })

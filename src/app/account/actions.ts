@@ -37,7 +37,19 @@ export async function saveBusinessProfile(_prev: BusinessFormState, formData: Fo
   redirect('/account?saved=1')
 }
 
-export type BriefFormState = { errors: Record<string, string> } | null
+/** What the client entered, sent back with errors so the form keeps it (React resets a form after its action). */
+export type BriefFormValues = {
+  offerings: string[]
+  addedOfferings: string
+  buyers: string[]
+  addedBuyers: string
+  scope: string
+  places: string
+  notes: string
+  answers: { question: string; answer: string }[]
+}
+
+export type BriefFormState = { errors: Record<string, string>; values: BriefFormValues } | null
 
 /**
  * Confirm or correct the signed-in client's brief. Like every account action,
@@ -45,7 +57,7 @@ export type BriefFormState = { errors: Record<string, string> } | null
  */
 export async function confirmBriefAction(_prev: BriefFormState, formData: FormData): Promise<BriefFormState> {
   const { user } = await requireSession()
-  const parsed = confirmBriefSchema.safeParse({
+  const values: BriefFormValues = {
     offerings: formData.getAll('offerings').map(String),
     addedOfferings: String(formData.get('addedOfferings') ?? ''),
     buyers: formData.getAll('buyers').map(String),
@@ -53,11 +65,19 @@ export async function confirmBriefAction(_prev: BriefFormState, formData: FormDa
     scope: String(formData.get('scope') ?? ''),
     places: String(formData.get('places') ?? ''),
     notes: String(formData.get('notes') ?? ''),
-  })
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) }
+    // Paired fields: each question rides along with its answer box.
+    answers: formData
+      .getAll('gapQuestion')
+      .map((question, i) => ({ question: String(question), answer: String(formData.getAll('gapAnswer')[i] ?? '') })),
+  }
+  const parsed = confirmBriefSchema.safeParse(values)
+  if (!parsed.success) {
+    console.warn(JSON.stringify({ at: new Date().toISOString(), event: 'brief_confirm_invalid', issues: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) }))
+    return { errors: fieldErrors(parsed.error), values }
+  }
 
   const result = await confirmBrief(user.id, user.email, parsed.data)
-  if (!result.ok) return { errors: { form: result.error } }
+  if (!result.ok) return { errors: { form: result.error }, values }
 
   revalidatePath('/account')
   redirect('/account?confirmed=1')

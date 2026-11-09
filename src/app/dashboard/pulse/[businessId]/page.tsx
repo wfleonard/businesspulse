@@ -281,10 +281,18 @@ export default async function PulseBusinessPage({ params, searchParams }: Props)
             {brief.gaps.length > 0 && (
               <div>
                 <h3 className="font-semibold text-dark">Asked the client</h3>
-                <ul className="mt-1 list-disc space-y-1 pl-5 text-dark">
-                  {brief.gaps.map((g) => (
-                    <li key={g}>{g}</li>
-                  ))}
+                <ul className="mt-1 list-disc space-y-2 pl-5 text-dark">
+                  {brief.gaps.map((g) => {
+                    const answer = confirmed?.answers?.find((a) => a.question === g)?.answer
+                    return (
+                      <li key={g}>
+                        {g}
+                        <p className={answer ? 'mt-0.5 whitespace-pre-wrap text-success' : 'mt-0.5 text-text-secondary'}>
+                          {answer ? 'Client: ' + answer : confirmed ? 'Not answered' : 'Waiting for the client to confirm'}
+                        </p>
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
             )}

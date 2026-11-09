@@ -17,6 +17,8 @@ type Props = {
   scopes: { value: string; label: string }[]
   places: string
   gaps: string[]
+  /** The client's answers to the gap questions, by question. */
+  answers: Record<string, string>
   notes: string
   confirmed: boolean
 }
@@ -60,12 +62,28 @@ function Checklist({ name, items }: { name: string; items: Item[] }) {
   )
 }
 
-export function BriefForm(props: Props) {
+export function BriefForm(initial: Props) {
   const [state, formAction, pending] = useActionState<BriefFormState, FormData>(confirmBriefAction, null)
   const errors = state?.errors ?? {}
+  // After a failed save, show what the client entered, not the starting values.
+  const sent = state?.values
+  const props: Props = sent
+    ? {
+        ...initial,
+        offerings: initial.offerings.map((o) => ({ ...o, checked: sent.offerings.includes(o.name) })),
+        buyers: initial.buyers.map((b) => ({ ...b, checked: sent.buyers.includes(b.name) })),
+        addedOfferings: sent.addedOfferings,
+        addedBuyers: sent.addedBuyers,
+        scope: sent.scope || initial.scope,
+        places: sent.places,
+        notes: sent.notes,
+        answers: Object.fromEntries(sent.answers.map((a) => [a.question, a.answer])),
+      }
+    : initial
 
   return (
-    <form action={formAction} className="space-y-8">
+    // Keyed on the returned state so the fields remount with what was entered.
+    <form key={JSON.stringify(sent ?? null)} action={formAction} className="space-y-8">
       <section>
         <h2 className="text-lg font-semibold text-dark">What you sell</h2>
         <p className="mt-1 text-sm text-text-secondary">Untick anything you don&apos;t actually sell.</p>
@@ -107,6 +125,9 @@ export function BriefForm(props: Props) {
           Other kinds of customers? (one per line)
         </label>
         <textarea id="addedBuyers" name="addedBuyers" rows={2} defaultValue={props.addedBuyers} className={`mt-1 ${inputClass}`} />
+        {(errors.buyers || errors.addedBuyers) && (
+          <p className="mt-1 text-xs text-danger">{errors.buyers ?? errors.addedBuyers}</p>
+        )}
       </section>
 
       <section>
@@ -129,18 +150,36 @@ export function BriefForm(props: Props) {
         {errors.places && <p className="mt-1 text-xs text-danger">{errors.places}</p>}
       </section>
 
+      {props.gaps.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-dark">A few questions</h2>
+          <p className="mt-1 text-sm text-text-secondary">
+            Your site didn&apos;t make these clear. A line or two each helps us write the right questions. Skip any that
+            don&apos;t apply.
+          </p>
+          <div className="mt-3 space-y-4">
+            {props.gaps.map((question, i) => (
+              <div key={question}>
+                <label htmlFor={'gap-' + i} className="block text-sm font-medium text-dark">
+                  {question}
+                </label>
+                <input type="hidden" name="gapQuestion" value={question} />
+                <textarea
+                  id={'gap-' + i}
+                  name="gapAnswer"
+                  rows={2}
+                  defaultValue={props.answers[question] ?? ''}
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+            ))}
+          </div>
+          {errors.answers && <p className="mt-1 text-xs text-danger">{errors.answers}</p>}
+        </section>
+      )}
+
       <section>
         <h2 className="text-lg font-semibold text-dark">Anything else?</h2>
-        {props.gaps.length > 0 && (
-          <>
-            <p className="mt-1 text-sm text-text-secondary">Your site didn&apos;t make these clear. A line or two helps:</p>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-dark">
-              {props.gaps.map((g) => (
-                <li key={g}>{g}</li>
-              ))}
-            </ul>
-          </>
-        )}
         <textarea
           id="notes"
           name="notes"
@@ -153,7 +192,17 @@ export function BriefForm(props: Props) {
         {errors.notes && <p className="mt-1 text-xs text-danger">{errors.notes}</p>}
       </section>
 
-      {errors.form && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{errors.form}</p>}
+      {/* Every problem, next to the button: field messages sit higher up, often off screen. */}
+      {Object.keys(errors).length > 0 && (
+        <div className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
+          <p className="font-medium">Nothing was saved yet. Please fix:</p>
+          <ul className="mt-1 list-disc pl-5">
+            {[...new Set(Object.values(errors))].map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <Button type="submit" disabled={pending}>
         {pending ? 'Saving…' : props.confirmed ? 'Save changes' : 'This looks right'}
       </Button>

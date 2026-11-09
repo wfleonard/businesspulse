@@ -57,13 +57,25 @@ const textList = (max: number, itemMax: number, separator: RegExp = /[\n,;]+/) =
 export const confirmBriefSchema = z.object({
   /** Offering names from the brief that the client kept ticked. */
   offerings: list(40, 120),
-  addedOfferings: textList(15, 120),
+  // One per line, as the form says: a line like "roofing, gutters, and siding" stays one entry.
+  addedOfferings: textList(15, 200, /\n+/),
   buyers: list(20, 120),
-  addedBuyers: textList(10, 120),
+  addedBuyers: textList(10, 200, /\n+/),
   scope: z.enum(['local', 'regional', 'statewide', 'multi_state', 'national', 'international'], { error: 'Choose how far you serve' }),
   // One per line: a place like "Tinton Falls, NJ" has a comma in it.
-  places: textList(30, 80, /[\n;]+/),
-  notes: z.string().trim().max(1000, 'Keep notes under 1,000 characters').default(''),
+  places: textList(40, 120, /[\n;]+/),
+  notes: z.string().trim().max(2000, 'Keep notes under 2,000 characters').default(''),
+  /** Answers to the questions the site left open. Blank answers are dropped. */
+  answers: z
+    .array(
+      z.object({
+        question: z.string().trim().max(300),
+        answer: z.string().trim().max(1000, 'Keep each answer under 1,000 characters'),
+      })
+    )
+    .max(20)
+    .default([])
+    .transform((list) => list.filter((a) => a.question && a.answer)),
 })
 
 export type ConfirmBriefInput = z.infer<typeof confirmBriefSchema>

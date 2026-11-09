@@ -120,6 +120,9 @@ export function buildPanelUserContent(input: PanelDraftInput): string {
     `Places: ${input.confirmed.places.join('; ') || '(none named)'}`,
     `Sells online: ${input.brief.serviceArea.sellsOnline ? 'yes' : 'no'}. Visits customers: ${input.brief.serviceArea.visitsCustomers ? 'yes' : 'no'}. Storefront: ${input.brief.serviceArea.hasStorefront ? 'yes' : 'no'}.`,
     ...(input.brief.differentiators.length ? ['Sets it apart:', ...input.brief.differentiators.map((d) => `- ${d.text}`)] : []),
+    ...((input.confirmed.answers ?? []).length
+      ? ['Owner’s answers to open questions:', ...(input.confirmed.answers ?? []).map((a) => `- Q: ${a.question}\n  A: ${a.answer}`)]
+      : []),
     ...(input.confirmed.notes ? ['Owner notes:', input.confirmed.notes] : []),
     '</confirmed_brief>',
     '',

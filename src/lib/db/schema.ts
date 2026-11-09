@@ -442,6 +442,8 @@ export type ConfirmedBrief = {
   scope: string
   places: string[]
   notes: string
+  /** The client's answers to the brief's open questions (added November 9; older briefs have none). */
+  answers?: { question: string; answer: string }[]
 }
 
 /**

@@ -61,6 +61,7 @@ export default async function BriefPage() {
             scopes={SERVICE_SCOPES.map((value) => ({ value, label: SCOPE_LABEL[value] }))}
             places={(confirmed?.places ?? brief.serviceArea.places).join('\n')}
             gaps={brief.gaps}
+            answers={Object.fromEntries((confirmed?.answers ?? []).map((a) => [a.question, a.answer]))}
             notes={confirmed?.notes ?? ''}
             confirmed={current.status === 'confirmed'}
           />

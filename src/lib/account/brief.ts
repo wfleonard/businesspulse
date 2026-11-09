@@ -49,6 +49,7 @@ export async function confirmBrief(userId: string, userEmail: string, input: Con
     scope: input.scope,
     places: input.places,
     notes: input.notes,
+    answers: input.answers,
   }
   if (confirmed.offerings.length === 0) return { ok: false, error: 'Keep or add at least one thing you sell.' }
 
