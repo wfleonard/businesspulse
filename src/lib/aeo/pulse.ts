@@ -11,7 +11,7 @@ import { newPublicId } from './tokens'
  * Paid runs from Stripe arrive in P6 and use the same startPulseRun.
  */
 
-export type StartResult = { ok: true; publicId: string } | { ok: false; error: string }
+export type StartResult = { ok: true; publicId: string; runId: string } | { ok: false; error: string }
 
 /** Queue a Pulse run for a business. Refused while one is already queued or running. */
 export async function startPulseRun(businessId: string): Promise<StartResult> {
@@ -46,8 +46,8 @@ export async function startPulseRun(businessId: string): Promise<StartResult> {
         businessId: owner.id,
         businessPanelId: panel.id,
       })
-      .returning({ publicId: aeoRun.publicId })
-    return { ok: true, publicId: run.publicId }
+      .returning({ publicId: aeoRun.publicId, id: aeoRun.id })
+    return { ok: true, publicId: run.publicId, runId: run.id }
   })
 }
 

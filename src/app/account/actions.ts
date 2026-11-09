@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { confirmBrief } from '@/lib/account/brief'
 import { saveBusiness } from '@/lib/account/business'
 import { businessProfileSchema, confirmBriefSchema } from '@/lib/account/schema'
+import { createPulseCheckout } from '@/lib/aeo/payments'
 import { fieldErrors } from '@/lib/aeo/request-schema'
 import { requireSession } from '@/lib/session'
 
@@ -58,4 +59,16 @@ export async function confirmBriefAction(_prev: BriefFormState, formData: FormDa
 
   revalidatePath('/account')
   redirect('/account?confirmed=1')
+}
+
+/**
+ * Buy a Pulse run: sends the signed-in client to Stripe Checkout. Eligibility
+ * (approved questions, no run in progress, the 30-day rule) is checked from
+ * the session user's own business; the form carries nothing.
+ */
+export async function buyPulseRun(): Promise<void> {
+  const { user } = await requireSession()
+  const result = await createPulseCheckout({ userId: user.id, email: user.email })
+  if (!result.ok) redirect('/account?' + new URLSearchParams({ error: result.error }).toString())
+  redirect(result.url)
 }

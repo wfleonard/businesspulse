@@ -1,6 +1,6 @@
 # BusinessPulse Pulse — $100 report runs in a client account
 
-**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · P5 (business brief), P6 (business panels), and P7 (report and What to fix) built November 7 · for Bill Leonard
+**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · P5 (business brief), P6 (business panels), and P7 (report and What to fix) built November 7 · P8 (Stripe) built November 9 · for Bill Leonard
 **Replaces:** the $49 Monitor plan (`monitor-tier-plan.md`). **Builds on:** customer
 accounts (`customer-accounts-plan.md`); roles (A1) are live.
 
@@ -98,6 +98,14 @@ assistants read and cite the site, not about Google rankings.
 - **Receipts** come from Stripe. A **terms of service page** (Stripe requires it) states
   the policy: no refunds once a report is delivered; a run that fails is re-run free.
 - **30-day rule:** counted from the start of the business's last paid run.
+- **As built (P8):** `pulse_order` (migration 0026); the Buy button on `/account` opens
+  Stripe Checkout at $100 (`PULSE_PRICE_CENTS`), tax exclusive, Stripe Tax on, billing
+  address required. The signed webhook marks the order paid and starts the run; Stripe
+  retries are idempotent; a payment that can't start a run is refunded automatically with
+  the reason; `charge.refunded` marks refunds. Free admin runs don't count toward the 30
+  days. `/terms` is live. Orders and this month's revenue and NJ tax show on
+  `/dashboard/pulse`. Payments stay off until `STRIPE_SECRET_KEY` and
+  `STRIPE_WEBHOOK_SECRET` are both set.
 
 ### 4.3 The run on the server
 

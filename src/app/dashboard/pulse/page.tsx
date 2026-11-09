@@ -4,6 +4,7 @@ import { ConfirmSubmit } from '@/components/aeo/ConfirmSubmit'
 import { Card } from '@/components/ui/Card'
 import { estimateRunCostUsd } from '@/lib/aeo/business-panel'
 import { PULSE_ENGINES, workerConfig } from '@/lib/aeo/config'
+import { listOrders, revenueSince, stripeConfigured } from '@/lib/aeo/payments'
 import { listPulseBusinesses, listPulseRuns, type PulseBusiness, type PulseRunRow } from '@/lib/aeo/pulse'
 import { spentTodayUsd } from '@/lib/aeo/queue'
 import { requireAdmin } from '@/lib/session'
@@ -75,7 +76,14 @@ export default async function PulsePage({ searchParams }: Props) {
   const notice = typeof params.notice === 'string' ? params.notice : null
   const error = typeof params.error === 'string' ? params.error : null
   const config = workerConfig()
-  const [businesses, runs, spent] = await Promise.all([listPulseBusinesses(), listPulseRuns(), spentTodayUsd('pulse')])
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  const [businesses, runs, spent, orders, month] = await Promise.all([
+    listPulseBusinesses(),
+    listPulseRuns(),
+    spentTodayUsd('pulse'),
+    listOrders(),
+    revenueSince(monthStart),
+  ])
   const active = runs.some((r) => r.status === 'queued' || r.status === 'running')
 
   return (
@@ -229,10 +237,69 @@ export default async function PulsePage({ searchParams }: Props) {
           )}
         </Card>
         <p className="mt-2 text-xs text-text-secondary">
-          Spend over $40 on one run shows in red. The client account report arrives in P7; until then, Pulse reports
-          open only for admins.
+          Spend over $40 on one run shows in red. Report opens the client&apos;s view of the report.
         </p>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold text-dark">Orders</h2>
+        <p className="mt-1 text-sm text-text-secondary">
+          {stripeConfigured()
+            ? 'This month: ' + month.orders + ' paid, ' + money(month.netCents) + ' before tax, ' + money(month.taxCents) + ' NJ sales tax collected.'
+            : 'Payments are off: STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET are not both set, so clients see "Payments open soon".'}
+        </p>
+        <Card className="mt-3 overflow-x-auto p-0">
+          {orders.length === 0 ? (
+            <p className="p-4 text-sm text-text-secondary">No paid orders yet.</p>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-border bg-gray-50 text-xs text-text-secondary">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Paid</th>
+                  <th className="px-4 py-2 font-medium">Business</th>
+                  <th className="px-4 py-2 font-medium">Amount</th>
+                  <th className="px-4 py-2 font-medium">Tax</th>
+                  <th className="px-4 py-2 font-medium">Status</th>
+                  <th className="px-4 py-2" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {orders.map(({ order, businessName, runPublicId }) => (
+                  <tr key={order.id} className="align-top">
+                    <td className="px-4 py-3 text-text-secondary">{formatDate(order.paidAt ?? order.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <p className="text-dark">{businessName ?? '(deleted)'}</p>
+                      <p className="text-xs text-text-secondary">{order.customerEmail}</p>
+                    </td>
+                    <td className="px-4 py-3 text-text-secondary">{money(order.amountTotal)}</td>
+                    <td className="px-4 py-3 text-text-secondary">{money(order.amountTax)}</td>
+                    <td className="px-4 py-3">
+                      <span className={order.status === 'paid' ? 'text-success' : 'text-danger'}>{order.status}</span>
+                      {order.note && <p className="max-w-xs text-xs text-text-secondary">{order.note}</p>}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {runPublicId && (
+                        <Link
+                          href={'/dashboard/pulse/report/' + runPublicId}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          Report
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Card>
       </section>
     </div>
   )
+}
+
+function money(cents: number): string {
+  return '$' + (cents / 100).toFixed(2)
 }

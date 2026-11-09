@@ -791,6 +791,38 @@ export const pulseReport = pgTable('pulse_report', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+export const pulseOrderStatusEnum = pgEnum('pulse_order_status', ['pending', 'paid', 'expired', 'refunded'])
+
+/**
+ * One $100 Pulse purchase through Stripe Checkout (docs/pulse-plan.md §4.2).
+ * Kept when the business is deleted (business_id set null): it's a financial
+ * record. Amounts are in cents, as Stripe reports them.
+ */
+export const pulseOrder = pgTable(
+  'pulse_order',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id').references(() => business.id, { onDelete: 'set null' }),
+    status: pulseOrderStatusEnum('status').notNull().default('pending'),
+    checkoutSessionId: text('checkout_session_id').unique(),
+    paymentIntentId: text('payment_intent_id'),
+    currency: text('currency').notNull().default('usd'),
+    amountSubtotal: integer('amount_subtotal').notNull().default(0),
+    amountTax: integer('amount_tax').notNull().default(0),
+    amountTotal: integer('amount_total').notNull().default(0),
+    customerEmail: text('customer_email'),
+    /** The run this payment started. */
+    runId: uuid('run_id').references(() => aeoRun.id, { onDelete: 'set null' }),
+    /** Why an order was refunded automatically, or anything else worth knowing. */
+    note: text('note'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    paidAt: timestamp('paid_at'),
+    refundedAt: timestamp('refunded_at'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('pulse_order_business_idx').on(t.businessId, t.createdAt), index('pulse_order_payment_intent_idx').on(t.paymentIntentId)]
+)
+
 /** One row per question × engine, as written by `panel.php job`. */
 export const aeoResult = pgTable(
   'aeo_result',
@@ -996,6 +1028,7 @@ export const schema = {
   businessBrief,
   businessPanel,
   pulseReport,
+  pulseOrder,
   aeoPanel,
   aeoPanelVersion,
   aeoPanelBacklog,

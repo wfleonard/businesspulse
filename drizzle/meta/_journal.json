@@ -183,6 +183,13 @@
       "when": 1794062326838,
       "tag": "0025_fine_nuke",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794236607484,
+      "tag": "0026_sticky_talkback",
+      "breakpoints": true
     }
   ]
 }

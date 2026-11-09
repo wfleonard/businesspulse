@@ -30,6 +30,9 @@ function hasSessionCookie(req: NextRequest): boolean {
 // and renders its challenge in an iframe from this origin.
 const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
 
+// Stripe Checkout, where the Pulse purchase form hands off to pay.
+const STRIPE_CHECKOUT_ORIGIN = 'https://checkout.stripe.com'
+
 // Google Analytics (GA4) on public pages; hosts per Google's CSP guidance for GA4.
 const GA_SCRIPT = 'https://*.googletagmanager.com'
 const GA_CONNECT = 'https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
@@ -58,7 +61,8 @@ export function buildCsp(isProd: boolean, options: { googleFonts?: boolean } = {
     `frame-src ${TURNSTILE_ORIGIN}`,
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    // Stripe Checkout: the Pulse purchase redirects there after the form posts.
+    `form-action 'self' ${STRIPE_CHECKOUT_ORIGIN}`,
     "frame-ancestors 'none'",
   ]
   if (isProd) directives.push('upgrade-insecure-requests')
