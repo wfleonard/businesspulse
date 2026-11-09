@@ -87,7 +87,7 @@ export async function askPulseEngines(args: {
 
 /** Provider rate limits, as the panel reports them. Quota exhaustion is not one: waiting won't fix it. */
 export function isRateLimit(message: string): boolean {
-  return /\b429\b|rate limit/i.test(message) && !/quota/i.test(message)
+  return /\b429\b|rate limit|too_many_requests/i.test(message) && !/quota/i.test(message)
 }
 
 /** How many of the plan's question and assistant pairs have an answer. */

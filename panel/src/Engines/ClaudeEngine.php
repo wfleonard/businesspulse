@@ -146,6 +146,7 @@ final class ClaudeEngine implements Engine
         // urls keyed by url => ['title'=>..,'cited'=>bool]. Surfaced first, then
         // upgraded to cited when a text block actually attributes to them.
         $urls = [];
+        $searchError = null;
 
         foreach ($json['content'] ?? [] as $block) {
             $type = $block['type'] ?? '';
@@ -173,7 +174,9 @@ final class ClaudeEngine implements Engine
                 $content = $block['content'] ?? [];
                 // Errors arrive as a single object, successes as a list.
                 if (isset($content['type']) && $content['type'] === 'web_search_tool_result_error') {
-                    $out['error'] = 'search error: ' . ($content['error_code'] ?? 'unknown');
+                    // One failed search (a malformed query, a rate limit) is usually followed by
+                    // another search and a full answer. It only fails the row if no answer comes.
+                    $searchError ??= 'search error: ' . ($content['error_code'] ?? 'unknown');
                     continue;
                 }
                 foreach ($content as $res) {
@@ -191,6 +194,10 @@ final class ClaudeEngine implements Engine
                 'title' => $meta['title'],
                 'cited' => $meta['cited'],
             ];
+        }
+
+        if ($searchError !== null && trim($out['answer']) === '') {
+            $out['error'] = $searchError;
         }
 
         return $out;

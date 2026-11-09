@@ -106,6 +106,30 @@ $check('no error', $c['error'], null);
 $check('search counted', $c['searches'], 1);
 $check('2 sources', count($c['sources']), 2);
 $check('one cited', count(array_filter($c['sources'], fn($s) => $s['cited'])), 1);
+$recovered = $claude->parse(json_encode([
+    'stop_reason' => 'end_turn',
+    'usage' => ['input_tokens' => 9000, 'output_tokens' => 400],
+    'content' => [
+        ['type' => 'server_tool_use', 'name' => 'web_search', 'input' => ['query' => '']],
+        ['type' => 'web_search_tool_result', 'content' => ['type' => 'web_search_tool_result_error', 'error_code' => 'invalid_tool_input']],
+        ['type' => 'server_tool_use', 'name' => 'web_search', 'input' => ['query' => 'nj contractors']],
+        ['type' => 'web_search_tool_result', 'content' => [
+            ['type' => 'web_search_result', 'url' => 'https://boringcontractors.com/nj', 'title' => 'BC'],
+        ]],
+        ['type' => 'text', 'text' => 'Boring Contractors serves NJ.'],
+    ],
+]), 200);
+$check('failed search then an answer: no error', $recovered['error'], null);
+$check('failed search then an answer: both searches counted', $recovered['searches'], 2);
+$noAnswer = $claude->parse(json_encode([
+    'stop_reason' => 'end_turn',
+    'usage' => ['input_tokens' => 900, 'output_tokens' => 10],
+    'content' => [
+        ['type' => 'server_tool_use', 'name' => 'web_search', 'input' => ['query' => '']],
+        ['type' => 'web_search_tool_result', 'content' => ['type' => 'web_search_tool_result_error', 'error_code' => 'too_many_requests']],
+    ],
+]), 200);
+$check('failed search and no answer: error kept', $noAnswer['error'], 'search error: too_many_requests');
 $check('refusal handled', (new ClaudeEngine('claude-sonnet-5', 5, 'medium', 'k'))
     ->parse(json_encode(['stop_reason' => 'refusal',
         'stop_details' => ['category' => 'cyber'], 'usage' => []]), 200)['error'] !== null, true);

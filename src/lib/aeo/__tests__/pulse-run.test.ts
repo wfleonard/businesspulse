@@ -164,6 +164,8 @@ describe('rate limits', () => {
   it('tells a rate limit from an exhausted quota', () => {
     expect(isRateLimit('HTTP 429: Request rate limit exceeded, please try again later.')).toBe(true)
     expect(isRateLimit('HTTP 429: You exceeded your current quota')).toBe(false)
+    expect(isRateLimit('search error: too_many_requests')).toBe(true)
+    expect(isRateLimit('search error: invalid_tool_input')).toBe(false)
     expect(isRateLimit('HTTP 500')).toBe(false)
   })
 })
