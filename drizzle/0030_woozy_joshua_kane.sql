@@ -1,0 +1,1 @@
+ALTER TABLE "aeo_panel_backlog" ADD COLUMN "request_domains" jsonb DEFAULT '[]'::jsonb NOT NULL;

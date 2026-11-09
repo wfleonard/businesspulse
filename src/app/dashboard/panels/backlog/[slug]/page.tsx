@@ -41,6 +41,12 @@ export default async function BacklogEntryPage({ params }: Props) {
             </h1>
             <p className="mt-1 text-text-secondary">{entry.buyers}</p>
             <p className="mt-1 text-sm text-text-secondary">{entry.rationale}</p>
+            {entry.requestCount > 0 && (
+              <p className="mt-1 text-sm text-dark">
+                Asked for by {entry.requestCount} free {entry.requestCount === 1 ? 'snapshot' : 'snapshots'}:{' '}
+                <span className="text-text-secondary">{entry.requestDomains.join(', ')}</span>
+              </p>
+            )}
           </div>
           <form action={setBacklogStatus}>
             <input type="hidden" name="slug" value={entry.slug} />

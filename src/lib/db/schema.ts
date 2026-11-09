@@ -555,8 +555,10 @@ export type AeoGeneratedPanel = {
   questions: { c: string; q: string }[]
   referenceDomains: string[]
   model: string
-  /** False when the homepage couldn't be read and questions came from the form alone. */
+  /** False when the site couldn't be read and questions came from the form alone. */
   siteRead: boolean
+  /** The industry the generator named, for the panel backlog (runs from November 9, 2026). */
+  industry?: string
   costUsd: number
   generatedAt: string
 }
@@ -650,6 +652,17 @@ export const aeoPanelBacklog = pgTable('aeo_panel_backlog', {
   guidance: text('guidance').notNull().default(''),
   status: aeoPanelBacklogStatusEnum('status').notNull().default('planned'),
   draft: jsonb('draft').$type<AeoPanelDraft>(),
+  /**
+   * Free snapshots that needed questions written on the spot for this industry
+   * ("Something else" on the form). Entries with demand but no seed come from
+   * snapshots themselves.
+   */
+  requestCount: integer('request_count').notNull().default(0),
+  /** The websites behind requestCount, so a re-check or a repeat snapshot of one business counts once. */
+  requestDomains: jsonb('request_domains').$type<string[]>().notNull().default([]),
+  lastRequestedAt: timestamp('last_requested_at'),
+  /** Set once the admin is emailed that demand crossed the threshold, so it's sent once. */
+  demandNotifiedAt: timestamp('demand_notified_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })

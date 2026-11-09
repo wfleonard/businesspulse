@@ -73,7 +73,7 @@ export default async function PanelsPage() {
       <div>
         <h2 className="text-xl font-bold text-dark">Backlog</h2>
         <p className="mt-1 text-text-secondary">
-          {backlog.length} industries worth a panel, ranked by likely demand. {liveCount} live. Open one to have Claude
+          {backlog.length} industries worth a panel: the ones free snapshots asked for first, then the rest ranked by likely demand. {liveCount} live. Open one to have Claude
           draft it, then review and publish.
         </p>
       </div>
@@ -85,6 +85,7 @@ export default async function PanelsPage() {
               <th className="px-4 py-2 text-right font-medium">#</th>
               <th className="px-4 py-2 font-medium">Industry</th>
               <th className="px-4 py-2 font-medium">Why</th>
+              <th className="px-4 py-2 text-right font-medium">Snapshots</th>
               <th className="px-4 py-2 font-medium">Status</th>
             </tr>
           </thead>
@@ -93,7 +94,7 @@ export default async function PanelsPage() {
               const status = STATUS[b.live ? 'live' : b.status]
               return (
                 <tr key={b.slug} className="border-b border-border align-top last:border-0">
-                  <td className="px-4 py-2 text-right text-text-secondary">{b.rank}</td>
+                  <td className="px-4 py-2 text-right text-text-secondary">{b.rank < 1000 ? b.rank : '-'}</td>
                   <td className="px-4 py-2">
                     <Link
                       href={b.live ? `/dashboard/panels/${b.slug}` : `/dashboard/panels/backlog/${b.slug}`}
@@ -104,6 +105,12 @@ export default async function PanelsPage() {
                     <p className="text-xs text-text-secondary">{b.buyers}</p>
                   </td>
                   <td className="max-w-md px-4 py-2 text-text-secondary">{b.rationale}</td>
+                  <td
+                    className={`px-4 py-2 text-right ${b.requestCount > 0 ? 'font-medium text-dark' : 'text-text-secondary'}`}
+                    title="Distinct businesses whose free snapshot needed questions written on the spot for this industry"
+                  >
+                    {b.requestCount || '-'}
+                  </td>
                   <td className="px-4 py-2">
                     <span className={`whitespace-nowrap rounded px-2 py-0.5 text-xs ${status.className}`}>{status.label}</span>
                   </td>

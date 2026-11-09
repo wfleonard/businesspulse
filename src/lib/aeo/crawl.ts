@@ -212,7 +212,7 @@ async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (item: T) 
 export async function crawlSite(
   domain: string,
   otherDomains: readonly string[] = [],
-  options: { fetch?: Fetcher; fetchOptions?: FetchOptions } = {}
+  options: { fetch?: Fetcher; fetchOptions?: FetchOptions; maxPages?: number } = {}
 ): Promise<CrawlResult> {
   const get: Fetcher = options.fetch ?? fetchPage
   const base = options.fetchOptions ?? {}
@@ -281,9 +281,10 @@ export async function crawlSite(
     if (allowed.length >= MAX_CANDIDATES) break
   }
 
-  const chosen = choosePages(allowed).filter((url) => url !== home.url)
+  const maxPages = Math.min(options.maxPages ?? MAX_PAGES, MAX_PAGES)
+  const chosen = choosePages(allowed, maxPages).filter((url) => url !== home.url)
   const pages: CrawledPage[] = [{ url: home.url, title: title(home.html), text: extractText(home.html, PAGE_CHARS) }]
-  const fetched = await mapLimit(chosen.slice(0, MAX_PAGES - 1), FETCH_CONCURRENCY, async (url) => {
+  const fetched = await mapLimit(chosen.slice(0, maxPages - 1), FETCH_CONCURRENCY, async (url) => {
     try {
       const page = await get(url, base)
       return { url: page.url, title: title(page.html), text: extractText(page.html, PAGE_CHARS) }

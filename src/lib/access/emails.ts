@@ -229,3 +229,17 @@ export function pulseLaunchEmail(args: { domain: string }): EmailContent {
     text: [lead, '', ...points.map((p) => `- ${p}`), '', `See how Pulse works: ${url}`, '', after].join('\n'),
   }
 }
+
+/** For the admin: enough snapshots asked about an industry with no panel to be worth building one. */
+export function adminPanelDemandEmail(args: { industry: string; count: number; slug: string }): EmailContent {
+  const url = appUrl(`/dashboard/panels/backlog/${args.slug}`)
+  const lead = `${args.count} businesses have run a free snapshot for "${args.industry}", which has no industry panel yet. Their questions were written on the spot from each website.`
+  const after = 'Draft a panel from the backlog page, review it, and publish it, and future snapshots in this industry use it.'
+  return {
+    subject: `[BusinessPulse] Panel worth building: ${args.industry}`,
+    html: page(`<p style="margin:0 0 16px">${escapeHtml(lead)}</p>
+<p style="margin:0 0 16px"><a href="${escapeHtml(url)}" style="color:#2563eb">Open it on the backlog</a></p>
+<p style="margin:0;color:#64748b">${escapeHtml(after)}</p>`),
+    text: [lead, '', `Open it on the backlog: ${url}`, '', after].join('\n'),
+  }
+}

@@ -164,6 +164,16 @@ function Report({
           <p className="mt-3 border-t border-border pt-3 text-xs text-text-secondary">
             We don&apos;t have a prepared question set for your field yet, so these questions were written from your
             website. Treat this score as a rough guide rather than a benchmark.
+            {offersMonitor(report.requestSource) && (
+              <>
+                {' '}
+                Want questions checked against your business?{' '}
+                <a href={`/monitor/interest?r=${encodeURIComponent(report.publicId)}`} className="text-primary hover:underline">
+                  A Pulse report
+                </a>{' '}
+                reads your whole site, you confirm what you sell, and we review every question before it runs.
+              </>
+            )}
           </p>
         )}
       </Card>

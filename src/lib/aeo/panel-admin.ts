@@ -207,7 +207,8 @@ export async function listBacklog(): Promise<BacklogRow[]> {
     .select({ entry: aeoPanelBacklog, panelId: aeoPanel.id })
     .from(aeoPanelBacklog)
     .leftJoin(aeoPanel, eq(aeoPanel.slug, aeoPanelBacklog.slug))
-    .orderBy(asc(aeoPanelBacklog.rank))
+    // Industries real snapshots asked for come first, most asked first; then the seeded ranking.
+    .orderBy(desc(aeoPanelBacklog.requestCount), asc(aeoPanelBacklog.rank))
   return rows.map(({ entry, panelId }) => ({ ...entry, live: panelId !== null }))
 }
 

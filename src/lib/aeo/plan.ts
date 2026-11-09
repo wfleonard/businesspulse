@@ -5,7 +5,9 @@ import { generatePanel, PanelGenerationError, type ModelCall } from './generate'
 import { COMMON_DIRECTORY_DOMAINS, COMMON_REFERENCE_DOMAINS } from './panels/common'
 import { fillSlots, sampleQuestions, type PanelQuestion } from './questions'
 import { LeaseLostError } from './queue'
-import { extractText, fetchHomepage, type FetchedPage } from './site'
+import { crawlSite } from './crawl'
+import { knownIndustries, recordPanelDemand } from './panel-demand'
+import { extractText, type FetchedPage } from './site'
 import { stateInfo } from './states'
 
 /** A run that can't succeed however often it is retried. It fails immediately. */
@@ -138,8 +140,13 @@ async function generateForRun(
 ): Promise<AeoGeneratedPanel> {
   let siteText: string | null = null
   try {
-    const page = await (options.fetchSite ?? fetchHomepage)(run.domain)
-    siteText = extractText(page.html) || null
+    if (options.fetchSite) {
+      // Tests: one page.
+      siteText = extractText((await options.fetchSite(run.domain)).html) || null
+    } else {
+      // Up to a dozen pages that say what the business does, not just the homepage.
+      siteText = siteTextFromPages((await crawlSite(run.domain, run.otherDomains ?? [], { maxPages: SNAPSHOT_PAGES })).pages)
+    }
   } catch (err) {
     // An unreadable site still gets a report, built from the form alone.
     console.warn(
@@ -164,6 +171,7 @@ async function generateForRun(
         stateName: stateInfo(request.state)?.name ?? request.state,
         stateCode: stateInfo(request.state)?.code,
         siteText,
+        knownIndustries: options.modelCall ? [] : await knownIndustries().catch(() => []),
       },
       { model: options.panelModel, call: options.modelCall }
     )
@@ -181,7 +189,39 @@ async function generateForRun(
   `)
   if (stored.rows.length === 0) throw new LeaseLostError(run.id)
 
+  // Count this business toward a panel for its industry. Best effort: it never holds up the report.
+  if (panel.industry && !options.modelCall) {
+    try {
+      const demand = await recordPanelDemand(panel.industry, run.domain)
+      if (demand.recorded) {
+        console.log(JSON.stringify({ at: new Date().toISOString(), event: 'panel_demand', run: run.id, ...demand }))
+      }
+    } catch (err) {
+      console.warn(JSON.stringify({ at: new Date().toISOString(), event: 'panel_demand_error', run: run.id, error: err instanceof Error ? err.message : String(err) }))
+    }
+  }
+
   return panel
+}
+
+/** Pages a free snapshot reads to write its questions when no industry panel fits. */
+const SNAPSHOT_PAGES = 12
+/** About 7,500 words: enough to see what a business sells without a large prompt. */
+const SNAPSHOT_SITE_CHARS = 30_000
+
+/** The crawled pages as one quoted text, homepage first, each under its address. */
+export function siteTextFromPages(pages: { url: string; title: string; text: string }[]): string | null {
+  let out = ''
+  for (const page of pages) {
+    if (!page.text) continue
+    const block = `Page: ${new URL(page.url).pathname}${page.title ? ` (${page.title})` : ''}\n${page.text}\n\n`
+    if (out.length + block.length > SNAPSHOT_SITE_CHARS) {
+      if (!out) out = block.slice(0, SNAPSHOT_SITE_CHARS)
+      break
+    }
+    out += block
+  }
+  return out.trim() || null
 }
 
 /** A Pulse run's plan: the business's industry questions, filled from its profile. */
