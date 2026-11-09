@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { AutoRefresh } from '@/components/aeo/AutoRefresh'
 import { ConfirmSubmit } from '@/components/aeo/ConfirmSubmit'
+import { Card } from '@/components/ui/Card'
 import { PulseReportView } from '@/components/pulse/PulseReportView'
 import { db } from '@/lib/db'
 import { aeoRun } from '@/lib/db/schema'
@@ -20,13 +22,33 @@ export default async function AdminPulseReportPage({ params, searchParams }: Pro
   const { publicId } = await params
   const notice = (await searchParams).notice
   const [run] = await db
-    .select({ id: aeoRun.id })
+    .select({ id: aeoRun.id, status: aeoRun.status, error: aeoRun.error })
     .from(aeoRun)
     .where(and(eq(aeoRun.publicId, publicId), eq(aeoRun.tier, 'pulse')))
     .limit(1)
   if (!run) notFound()
   const report = await loadPulseReport(run.id)
-  if (!report) notFound()
+  if (!report) {
+    // Not finished yet (or failed): say so instead of a 404.
+    return (
+      <div className="mx-auto max-w-3xl">
+        {(run.status === 'queued' || run.status === 'running') && <AutoRefresh seconds={20} />}
+        <Link href="/dashboard/pulse" className="text-sm font-medium text-primary hover:underline">
+          Back to Pulse
+        </Link>
+        <Card className="mt-6">
+          <h1 className="text-xl font-bold text-dark">
+            {run.status === 'failed' ? 'This run failed' : 'This report is still running'}
+          </h1>
+          <p className="mt-2 text-sm text-text-secondary">
+            {run.status === 'failed'
+              ? (run.error ?? 'No error was recorded.') + ' The client was not sent a report.'
+              : 'Pulse runs usually take 30 to 60 minutes. This page updates on its own, and the report and fix list appear here when it finishes.'}
+          </p>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto max-w-3xl">
