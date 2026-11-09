@@ -15,7 +15,7 @@ const faq = [
   },
   {
     q: 'What do BusinessPulse and Saxon AEO charge?',
-    a: 'A BusinessPulse snapshot is free. Saxon AEO retainers are $1,500 a month on a six-month term. A small number of founding clients pay $1,000 a month plus $500 onboarding. The full audit is included when you book a call.',
+    a: 'A BusinessPulse snapshot is free. A BusinessPulse Pulse report is $100 per report, with no subscription: your own buyer questions on ChatGPT, Claude, Perplexity, and Gemini, with what to fix. Saxon will make the fixes in a report for $500, one time. Saxon AEO retainers are $1,500 a month on a six-month term, and a small number of founding clients pay $1,000 a month plus $500 onboarding. The full audit is included when you book a call.',
   },
   {
     q: 'How long before AEO pays off?',
@@ -28,15 +28,16 @@ export const aeoCost: ResourceArticle = {
   type: 'guide',
   title: 'How much does AEO cost? Prices for tools, audits, and agencies',
   summary:
-    'Answer engine optimization costs from nothing to about $500 a month for self-serve tracking tools, and $1,500 to $5,000 a month for most small-business agency retainers. BusinessPulse snapshots are free; Saxon AEO retainers are $1,500 a month.',
+    'Answer engine optimization costs from nothing to about $500 a month for self-serve tracking tools, and $1,500 to $5,000 a month for most small-business agency retainers. BusinessPulse snapshots are free, a full Pulse report is $100, and Saxon AEO retainers are $1,500 a month.',
   description:
     'AEO costs nothing to about $500 a month for self-serve tracking tools, and $1,500 to $5,000 a month for most small-business agency retainers.',
   industries: ['ai-visibility'],
   published: '2026-10-01',
+  updated: '2026-11-09',
   body: `
 ## How much does answer engine optimization cost?
 
-Prices as of October 2026. Agency and audit ranges are the ones most commonly quoted to small businesses, not a survey.
+Prices as of November 2026. Agency and audit ranges are the ones most commonly quoted to small businesses, not a survey.
 
 | Option | Typical price | What you get |
 |---|---|---|
@@ -106,6 +107,8 @@ BusinessPulse is the measurement tool. Saxon AEO is the service that does the wo
 | | Price | What's included |
 |---|---|---|
 | BusinessPulse snapshot | Free | 20 buyer questions for your industry, asked of Perplexity, with the sites cited instead |
+| [BusinessPulse Pulse report](/pulse) | $100 per report, no subscription | Your own buyer questions, written from your website, on ChatGPT, Claude, Perplexity, and Gemini, with the sites cited instead and a list of what to fix. Up to one report every 30 days |
+| Fix the issues in a Pulse report | $500, one time | Saxon makes the changes in your report on your website, after confirming the scope with you |
 | Saxon AEO full audit | Included when you book a call | More than 100 buyer questions across ChatGPT, Claude, Perplexity, and Gemini, and a plan to get your site cited |
 | Saxon AEO Core | $1,500 a month, six-month term | Researched pages, technical fixes, and a monthly re-measurement against your baseline |
 | Founding clients | $1,000 a month, six-month term, plus $500 onboarding | Core, for a small number of clients who agree to a testimonial and to sharing their results |
@@ -113,6 +116,8 @@ BusinessPulse is the measurement tool. Saxon AEO is the service that does the wo
 Before you commit, we fix the technical foundation for free: structured data, robots and sitemap, and the homepage changes that make your site easier to read and cite. It is the first measurable change against your baseline.
 
 The pages we write are yours. If you leave, they stay on your site and keep working.
+
+New Jersey sales tax is added to Pulse reports and fixes for New Jersey buyers.
 
 ## How long before AEO pays off?
 

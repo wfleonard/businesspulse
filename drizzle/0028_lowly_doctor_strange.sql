@@ -1,0 +1,1 @@
+ALTER TABLE "aeo_monitor_interest" ADD COLUMN "notified_at" timestamp;

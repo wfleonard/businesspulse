@@ -952,6 +952,8 @@ export const aeoMonitorInterest = pgTable(
       .references(() => aeoRun.id, { onDelete: 'cascade' }),
     kind: aeoMonitorInterestKindEnum('kind').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
+    /** Waitlist rows: when the one launch email went out (Pulse replaced Monitor). */
+    notifiedAt: timestamp('notified_at'),
   },
   (t) => [
     index('aeo_monitor_interest_run_idx').on(t.runId),

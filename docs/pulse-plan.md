@@ -1,6 +1,6 @@
 # BusinessPulse Pulse — $100 report runs in a client account
 
-**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · P5 (business brief), P6 (business panels), and P7 (report and What to fix) built November 7 · P8 (Stripe) and P9 ($500 fix requests) built November 9 · for Bill Leonard
+**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · P5 (business brief), P6 (business panels), and P7 (report and What to fix) built November 7 · P8 (Stripe), P9 ($500 fix requests), and P10 (launch) built November 9; launch switches are Bill's · for Bill Leonard
 **Replaces:** the $49 Monitor plan (`monitor-tier-plan.md`). **Builds on:** customer
 accounts (`customer-accounts-plan.md`); roles (A1) are live.
 
@@ -214,6 +214,15 @@ The full audit runs on Bill's Mac today. It moves into the BusinessPulse worker.
   comparison page, the tools article, and `llms.txt`: the free snapshot, the $100 Pulse
   run, the $500 fix, and Core at $1,500/mo with the audit free on a call.
 - Mark `monitor-tier-plan.md` as replaced.
+- **As built (P10):** the snapshot report's offer now describes Pulse and leads to the
+  public `/pulse` page (clicks still counted, so the funnel continues); `/monitor` redirects
+  there and its waitlist form is gone. The public header has Pulse and Sign in; the sign-in
+  page sends signed-in visitors on. The cost guide, `llms.txt`, and the privacy page carry
+  the prices. The Pulse dashboard emails the Monitor waitlist once, on Bill's press, with a
+  preview (migration 0028 records who was emailed).
+- **Launch switches (Bill):** `BP_ALLOW_SIGNUP=true`; live Stripe secret key and a live
+  webhook endpoint with its signing secret; the live New Jersey registration in Stripe Tax
+  (check the other sites with the accountant first); then Email the waitlist.
 
 ## 5. Milestones
 

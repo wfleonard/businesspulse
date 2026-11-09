@@ -24,6 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     { url: appUrl('/privacy'), lastModified: new Date('2026-10-19'), changeFrequency: 'yearly', priority: 0.3 },
     { url: appUrl('/terms'), lastModified: new Date('2026-11-09'), changeFrequency: 'yearly', priority: 0.3 },
+    { url: appUrl('/pulse'), lastModified: new Date('2026-11-09'), changeFrequency: 'monthly', priority: 0.8 },
   ]
 
   // The sitemap must still work if the database doesn't.

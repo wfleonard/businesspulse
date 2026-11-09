@@ -16,8 +16,15 @@ export function PublicHeader() {
           />
         </Link>
         <nav className="flex items-center gap-4 text-sm">
-          <Link href="/resources" className="text-text-secondary hover:text-dark">
+          <Link href="/resources" className="hidden text-text-secondary hover:text-dark sm:inline">
             Resources
+          </Link>
+          <Link href="/pulse" className="text-text-secondary hover:text-dark">
+            Pulse
+          </Link>
+          {/* Static on purpose: no session lookup, so public pages stay cacheable. Signed-in visitors go on to their account. */}
+          <Link href="/login" className="text-text-secondary hover:text-dark">
+            Sign in
           </Link>
           <Link href="/" className="rounded-md bg-primary px-3 py-1.5 font-medium text-white hover:bg-primary/90">
             Free snapshot

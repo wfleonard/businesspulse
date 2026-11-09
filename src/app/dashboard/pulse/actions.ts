@@ -12,6 +12,7 @@ import { DRAFT_CATEGORIES } from '@/lib/aeo/panel-draft'
 import { startPulseRun } from '@/lib/aeo/pulse'
 import { queuePulseReport } from '@/lib/aeo/pulse-report-jobs'
 import { declineFix, finishFix, quoteFix, startFix } from '@/lib/aeo/fix-requests'
+import { emailWaitlist } from '@/lib/aeo/monitor'
 import { requireAdmin } from '@/lib/session'
 
 function done(notice: string, isError = false): never {
@@ -211,4 +212,17 @@ export async function finishFixAction(formData: FormData): Promise<void> {
   if (!result.ok) backToFix(parsed.data.fixId, result.error, true)
   await recordAudit({ userId: user.id, action: 'fix.done', target: parsed.data.fixId })
   backToFix(parsed.data.fixId, 'Marked done. The client is emailed.')
+}
+
+/** Send the one launch email to the Monitor waitlist. Never repeats an address. Admins only. */
+export async function emailMonitorWaitlist(): Promise<void> {
+  const { user } = await requireAdmin()
+  const result = await emailWaitlist()
+  await recordAudit({ userId: user.id, action: 'pulse.waitlist_emailed', target: `${result.sent} sent, ${result.failed} failed` })
+  revalidatePath('/dashboard/pulse')
+  redirect(
+    `/dashboard/pulse?${new URLSearchParams({
+      [result.failed ? 'error' : 'notice']: `Waitlist email: ${result.sent} sent${result.failed ? `, ${result.failed} failed (press again to retry those)` : ''}.`,
+    })}`
+  )
 }

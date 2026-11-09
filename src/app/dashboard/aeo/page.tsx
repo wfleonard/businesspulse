@@ -120,8 +120,9 @@ function Funnel({ funnel }: { funnel: FunnelStats }) {
     { label: 'Report ready', value: funnel.ready },
     { label: 'Report viewed', value: funnel.viewed },
     { label: 'Clicked Book a call', value: funnel.clickedBook },
-    { label: 'Clicked Monitor ($49)', value: funnel.clickedMonitor },
-    { label: 'Joined Monitor waitlist', value: funnel.joinedMonitor },
+    // Before November 9, 2026 these clicks were on the $49 Monitor offer; since then, on Pulse.
+    { label: 'Clicked the paid offer', value: funnel.clickedMonitor },
+    { label: 'Joined Monitor waitlist (closed)', value: funnel.joinedMonitor },
     { label: 'Contacted', value: funnel.contacted },
     { label: 'Won', value: funnel.won },
   ]

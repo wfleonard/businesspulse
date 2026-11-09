@@ -8,9 +8,10 @@ export const dynamic = 'force-dynamic'
 const CLICKS_PER_IP_PER_HOUR = 30
 
 /**
- * "Track this monthly" from a report: record the click, then show the Monitor
- * page. The redirect always happens; recording is best effort and rate
- * limited so reloads can't inflate the count.
+ * The Pulse offer on a snapshot report (it replaced Monitor, November 2026):
+ * record the click, then show the Pulse page. The redirect always happens;
+ * recording is best effort and rate limited so reloads can't inflate the
+ * count. The path keeps its old name so links in sent reports still work.
  */
 export async function GET(req: Request) {
   const publicId = new URL(req.url).searchParams.get('r')
@@ -24,6 +25,5 @@ export async function GET(req: Request) {
     }
   }
 
-  const target = publicId ? `/monitor?r=${encodeURIComponent(publicId)}` : '/monitor'
-  return NextResponse.redirect(appUrl(target), 303)
+  return NextResponse.redirect(appUrl('/pulse'), 303)
 }

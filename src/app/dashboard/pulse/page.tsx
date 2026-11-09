@@ -9,7 +9,9 @@ import { listOrders, revenueSince, stripeConfigured } from '@/lib/aeo/payments'
 import { listPulseBusinesses, listPulseRuns, type PulseBusiness, type PulseRunRow } from '@/lib/aeo/pulse'
 import { spentTodayUsd } from '@/lib/aeo/queue'
 import { requireAdmin } from '@/lib/session'
-import { startFreePulseRun } from './actions'
+import { emailMonitorWaitlist, startFreePulseRun } from './actions'
+import { pulseLaunchEmail } from '@/lib/access/emails'
+import { waitlistRecipients } from '@/lib/aeo/monitor'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Pulse | BusinessPulse' }
@@ -78,13 +80,14 @@ export default async function PulsePage({ searchParams }: Props) {
   const error = typeof params.error === 'string' ? params.error : null
   const config = workerConfig()
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-  const [businesses, runs, spent, orders, month, fixes] = await Promise.all([
+  const [businesses, runs, spent, orders, month, fixes, waitlist] = await Promise.all([
     listPulseBusinesses(),
     listPulseRuns(),
     spentTodayUsd('pulse'),
     listOrders(),
     revenueSince(monthStart),
     listFixRequests(),
+    waitlistRecipients(),
   ])
   const openFixes = fixes.filter((f) => OPEN_FIX_STATUSES.includes(f.request.status))
   const active = runs.some((r) => r.status === 'queued' || r.status === 'running')
@@ -242,6 +245,38 @@ export default async function PulsePage({ searchParams }: Props) {
         <p className="mt-2 text-xs text-text-secondary">
           Spend over $40 on one run shows in red. Report opens the client&apos;s view of the report.
         </p>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold text-dark">Monitor waitlist</h2>
+        <Card className="mt-3">
+          <p className="text-sm text-text-secondary">
+            {waitlist.pending.length} waiting for the one email saying Pulse is open · {waitlist.notified} already emailed
+            {waitlist.erased > 0 && ' · ' + waitlist.erased + ' can’t be reached (contact details erased after four months)'}
+          </p>
+          {waitlist.pending.length > 0 && (
+            <>
+              <p className="mt-2 text-xs text-text-secondary">
+                To: {waitlist.pending.slice(0, 8).map((r) => r.email).join(', ')}
+                {waitlist.pending.length > 8 && ' and ' + (waitlist.pending.length - 8) + ' more'}
+              </p>
+              <details className="mt-3 text-sm">
+                <summary className="cursor-pointer text-primary">Preview the email</summary>
+                <div className="mt-2 rounded-md border border-border bg-gray-50 p-3 text-xs whitespace-pre-wrap text-dark">
+                  {'Subject: ' + pulseLaunchEmail({ domain: waitlist.pending[0].domain }).subject + '\n\n' + pulseLaunchEmail({ domain: waitlist.pending[0].domain }).text}
+                </div>
+              </details>
+              <form action={emailMonitorWaitlist} className="mt-3">
+                <ConfirmSubmit
+                  message={'Email ' + waitlist.pending.length + ' people that Pulse is open? Each address gets it once; it is never repeated.'}
+                  className="bg-primary text-white hover:bg-primary/90"
+                >
+                  Email the waitlist
+                </ConfirmSubmit>
+              </form>
+            </>
+          )}
+        </Card>
       </section>
 
       <section>

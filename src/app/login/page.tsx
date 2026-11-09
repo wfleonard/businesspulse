@@ -3,14 +3,25 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { AuthShell } from '@/components/auth/AuthShell'
 import { LoginForm } from '@/components/auth/LoginForm'
+import { redirect } from 'next/navigation'
+import { safeNext } from '@/lib/access/safe-next'
 import { signupOpen } from '@/lib/access/signup'
+import { getSession } from '@/lib/session'
 
 // Reads BP_ALLOW_SIGNUP at request time.
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = { title: 'Sign in | BusinessPulse' }
 
-export default function LoginPage() {
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
+
+export default async function LoginPage({ searchParams }: Props) {
+  // The header's "Sign in" link is static, so a signed-in visitor goes straight on.
+  const session = await getSession()
+  if (session) {
+    const next = (await searchParams).next
+    redirect(typeof next === 'string' ? safeNext(next) : '/account')
+  }
   return (
     <AuthShell
       title="Sign in"

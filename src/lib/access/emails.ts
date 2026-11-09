@@ -205,3 +205,27 @@ export function fixDeclinedEmail(args: { name: string; businessName: string; not
     after: 'Reply to this email if you have questions.',
   })
 }
+
+/**
+ * The one email the Monitor waitlist asked for: Monitor didn't open, Pulse
+ * did. Sent once per address from the dashboard.
+ */
+export function pulseLaunchEmail(args: { domain: string }): EmailContent {
+  const url = appUrl('/pulse')
+  const lead = `You asked us to tell you when BusinessPulse Monitor opened for ${args.domain}. We built something better instead, and it's open now: Pulse.`
+  const points = [
+    'Your own buyer questions, written from your website and checked by us, not a generic list for your industry.',
+    'Asked of ChatGPT, Claude, Perplexity, and Gemini, with every answer and who they cite instead of you.',
+    'A list of what to fix on your site, each item tied to the questions it affects.',
+    `${dollars(10_000)} per report, plus sales tax for New Jersey buyers. No subscription: run one whenever you like, up to once every 30 days.`,
+  ]
+  const after = "This is the one email you asked for. We won't write to you about Monitor again."
+  return {
+    subject: 'BusinessPulse Pulse is open',
+    html: page(`<p style="margin:0 0 16px">${escapeHtml(lead)}</p>
+<ul style="margin:0 0 16px;padding-left:20px">${points.map((p) => `<li style="margin:0 0 6px">${escapeHtml(p)}</li>`).join('')}</ul>
+<p style="margin:0 0 16px"><a href="${escapeHtml(url)}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:bold">See how Pulse works</a></p>
+<p style="margin:0;color:#64748b">${escapeHtml(after)}</p>`),
+    text: [lead, '', ...points.map((p) => `- ${p}`), '', `See how Pulse works: ${url}`, '', after].join('\n'),
+  }
+}

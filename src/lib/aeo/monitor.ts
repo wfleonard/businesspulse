@@ -1,19 +1,16 @@
 import { sql } from 'drizzle-orm'
+import { pulseLaunchEmail } from '@/lib/access/emails'
 import { db } from '@/lib/db'
+import { sendEmail } from '@/lib/email/provider'
 import { PUBLIC_ID } from './booking'
 
 /**
- * BusinessPulse Monitor demand test (docs/monitor-tier-plan.md, M0).
- *
- * Snapshot reports offer Monitor at its planned price. The offer leads to a
- * page that says plainly it isn't open yet and takes a one-click waitlist
- * sign-up, using the email the report already went to. Clicks and sign-ups
- * are counted per report, so the dashboard shows whether anyone wants it
- * before any payments work is built. Nothing is charged.
+ * The paid offer on snapshot reports. It started as the BusinessPulse Monitor
+ * demand test ($49 a month, docs/monitor-tier-plan.md); Pulse replaced
+ * Monitor before it opened (docs/pulse-plan.md), so the offer now leads to
+ * the Pulse page. Clicks are still counted per report as "click" rows, and the
+ * Monitor waitlist gets one email saying Pulse is open.
  */
-
-export const MONITOR_PRICE_USD = 49
-export const MONITOR_QUESTIONS = 50
 
 /** The offer shows on reports unless AEO_MONITOR_OFFER is "false". */
 export function monitorOfferEnabled(env: Record<string, string | undefined> = process.env): boolean {
@@ -21,7 +18,7 @@ export function monitorOfferEnabled(env: Record<string, string | undefined> = pr
 }
 
 /**
- * Monitor is a BusinessPulse product, so only public-form reports offer it.
+ * Pulse is a BusinessPulse product, so only public-form reports offer it.
  * Outbound prospect snapshots are Saxon AEO outreach and never do.
  */
 export function offersMonitor(requestSource: 'form' | 'outbound' | null, env?: Record<string, string | undefined>): boolean {
@@ -39,55 +36,75 @@ export async function recordMonitorClick(publicId: string | null): Promise<boole
   return result.rows.length > 0
 }
 
-export type MonitorPageState =
-  | { kind: 'none' }
-  | { kind: 'erased'; domain: string }
-  | { kind: 'open'; domain: string }
-  | { kind: 'joined'; domain: string }
+/* ------------------------- The waitlist email ------------------------- */
 
-/*
- * The public-form request a report belongs to and can still reach: either the
- * request that started the run, or the one a 30-day re-check was run for.
- * Its email is what a waitlist sign-up will use.
+export type WaitlistRecipient = { interestId: string; email: string; domain: string }
+
+/**
+ * People on the Monitor waitlist who haven't had the launch email: the
+ * address their snapshot went to, unless retention has erased it. One per
+ * email address.
  */
-const REACHABLE_REQUEST = sql`
-  select q.id, q.anonymized_at
-  from aeo_request q
-  where q.source = 'form'
-    and (q.run_id = r.id or exists (select 1 from aeo_recheck c where c.run_id = r.id and c.request_id = q.id))
-  order by q.created_at
-  limit 1
-`
-
-/** What the Monitor page should show for a report link. */
-export async function monitorPageState(publicId: string | null): Promise<MonitorPageState> {
-  if (!publicId || !PUBLIC_ID.test(publicId)) return { kind: 'none' }
-  const result = await db.execute(sql`
-    select r.domain,
-           req.id as request_id,
-           req.anonymized_at,
-           exists (select 1 from aeo_monitor_interest i where i.run_id = r.id and i.kind = 'waitlist') as joined
-    from aeo_run r
-    left join lateral (${REACHABLE_REQUEST}) req on true
-    where r.public_id = ${publicId}
+export async function waitlistRecipients(): Promise<{ pending: WaitlistRecipient[]; notified: number; erased: number }> {
+  const result = await db.execute<{ interest_id: string; email: string; domain: string; notified_at: Date | null; anonymized_at: Date | null }>(sql`
+    select i.id as interest_id, i.notified_at, r.domain, req.email, req.anonymized_at
+    from aeo_monitor_interest i
+    join aeo_run r on r.id = i.run_id
+    left join lateral (
+      select q.email, q.anonymized_at from aeo_request q
+      where q.source = 'form'
+        and (q.run_id = r.id or exists (select 1 from aeo_recheck c where c.run_id = r.id and c.request_id = q.id))
+      order by q.created_at
+      limit 1
+    ) req on true
+    where i.kind = 'waitlist'
+    order by i.created_at
   `)
-  const row = result.rows[0] as Record<string, unknown> | undefined
-  if (!row || !row.request_id) return { kind: 'none' }
-  const domain = String(row.domain)
-  if (row.joined) return { kind: 'joined', domain }
-  if (row.anonymized_at) return { kind: 'erased', domain }
-  return { kind: 'open', domain }
+  const pending: WaitlistRecipient[] = []
+  const seen = new Set<string>()
+  let notified = 0
+  let erased = 0
+  for (const row of result.rows) {
+    if (row.notified_at) {
+      notified++
+      continue
+    }
+    if (!row.email || row.anonymized_at) {
+      erased++
+      continue
+    }
+    const email = row.email.trim().toLowerCase()
+    if (seen.has(email)) continue
+    seen.add(email)
+    pending.push({ interestId: row.interest_id, email, domain: row.domain })
+  }
+  return { pending, notified, erased }
 }
 
-/** Put a report's business on the waitlist. True if it is on the list afterwards. */
-export async function joinMonitorWaitlist(publicId: string): Promise<boolean> {
-  const state = await monitorPageState(publicId)
-  if (state.kind === 'joined') return true
-  if (state.kind !== 'open') return false
-  await db.execute(sql`
-    insert into aeo_monitor_interest (run_id, kind)
-    select id, 'waitlist' from aeo_run where public_id = ${publicId}
-    on conflict do nothing
-  `)
-  return true
+/**
+ * Send the one launch email to everyone still waiting. Each row is marked
+ * when its email goes out, so pressing the button again never repeats one.
+ */
+export async function emailWaitlist(send: typeof sendEmail = sendEmail): Promise<{ sent: number; failed: number }> {
+  const { pending } = await waitlistRecipients()
+  let sent = 0
+  let failed = 0
+  for (const recipient of pending) {
+    const result = await send({ to: recipient.email, ...pulseLaunchEmail({ domain: recipient.domain }) }).catch(() => ({ sent: false }))
+    if (!result.sent) {
+      failed++
+      continue
+    }
+    sent++
+    // Every waitlist row for this address, so a business that joined twice gets one email.
+    await db.execute(sql`
+      update aeo_monitor_interest i set notified_at = now()
+      from aeo_run r, aeo_request q
+      where i.kind = 'waitlist' and i.notified_at is null and r.id = i.run_id
+        and q.source = 'form' and lower(q.email) = ${recipient.email}
+        and (q.run_id = r.id or exists (select 1 from aeo_recheck c where c.run_id = r.id and c.request_id = q.id))
+    `)
+    await db.execute(sql`update aeo_monitor_interest set notified_at = now() where id = ${recipient.interestId}::uuid and notified_at is null`)
+  }
+  return { sent, failed }
 }
