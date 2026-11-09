@@ -11,6 +11,7 @@ import { cleanDomains, MAX_QUESTION_LENGTH } from '@/lib/aeo/panel-content'
 import { DRAFT_CATEGORIES } from '@/lib/aeo/panel-draft'
 import { startPulseRun } from '@/lib/aeo/pulse'
 import { queuePulseReport } from '@/lib/aeo/pulse-report-jobs'
+import { declineFix, finishFix, quoteFix, startFix } from '@/lib/aeo/fix-requests'
 import { requireAdmin } from '@/lib/session'
 
 function done(notice: string, isError = false): never {
@@ -146,4 +147,68 @@ export async function rewriteFixes(formData: FormData): Promise<void> {
   const path = `/dashboard/pulse/report/${parsed.data.publicId}`
   revalidatePath(path)
   redirect(`${path}?${new URLSearchParams({ notice: 'Queued. The new fix list is written after any run in progress.' })}`)
+}
+
+/* ---------------------------- Fix requests --------------------------- */
+
+const fixId = z.object({ fixId: z.uuid() })
+
+function backToFix(id: string, message: string, isError = false): never {
+  const path = `/dashboard/pulse/fix/${id}`
+  revalidatePath(path)
+  revalidatePath('/dashboard/pulse')
+  redirect(`${path}?${new URLSearchParams({ [isError ? 'error' : 'notice']: message })}`)
+}
+
+const quoteSchema = fixId.extend({
+  scope: z.string().trim().min(10, 'Describe what’s included').max(4000),
+  amount: z.coerce.number().min(1, 'Enter an amount').max(100_000),
+})
+
+/** Confirm a fix's scope and amount; the client is emailed to pay. Admins only. */
+export async function quoteFixAction(formData: FormData): Promise<void> {
+  const { user } = await requireAdmin()
+  const parsed = quoteSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) {
+    const id = String(formData.get('fixId') ?? '')
+    if (!z.uuid().safeParse(id).success) throw new Error('Invalid request')
+    backToFix(id, parsed.error.issues[0]?.message ?? 'Check the scope and amount.', true)
+  }
+  const { fixId: id, scope, amount } = parsed.data
+  const result = await quoteFix(id, scope, Math.round(amount * 100))
+  if (!result.ok) backToFix(id, result.error, true)
+  await recordAudit({ userId: user.id, action: 'fix.quoted', target: id })
+  backToFix(id, 'Sent. The client is emailed to review the scope and pay from their account.')
+}
+
+const noteSchema = fixId.extend({ note: z.string().trim().max(4000).default('') })
+
+export async function declineFixAction(formData: FormData): Promise<void> {
+  const { user } = await requireAdmin()
+  const parsed = noteSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) throw new Error('Invalid request')
+  const result = await declineFix(parsed.data.fixId, parsed.data.note)
+  if (!result.ok) backToFix(parsed.data.fixId, result.error, true)
+  await recordAudit({ userId: user.id, action: 'fix.declined', target: parsed.data.fixId })
+  backToFix(parsed.data.fixId, 'Declined. The client is emailed.')
+}
+
+export async function startFixAction(formData: FormData): Promise<void> {
+  const { user } = await requireAdmin()
+  const parsed = fixId.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) throw new Error('Invalid request')
+  const result = await startFix(parsed.data.fixId)
+  if (!result.ok) backToFix(parsed.data.fixId, result.error, true)
+  await recordAudit({ userId: user.id, action: 'fix.started', target: parsed.data.fixId })
+  backToFix(parsed.data.fixId, 'Marked in progress. The client sees it in their account.')
+}
+
+export async function finishFixAction(formData: FormData): Promise<void> {
+  const { user } = await requireAdmin()
+  const parsed = noteSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) throw new Error('Invalid request')
+  const result = await finishFix(parsed.data.fixId, parsed.data.note)
+  if (!result.ok) backToFix(parsed.data.fixId, result.error, true)
+  await recordAudit({ userId: user.id, action: 'fix.done', target: parsed.data.fixId })
+  backToFix(parsed.data.fixId, 'Marked done. The client is emailed.')
 }

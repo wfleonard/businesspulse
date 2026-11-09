@@ -6,7 +6,9 @@ import { Card } from '@/components/ui/Card'
 import { AutoRefresh } from '@/components/aeo/AutoRefresh'
 import { getBrief } from '@/lib/account/brief'
 import { getBusiness, linkSnapshots, listReports, type AccountReport } from '@/lib/account/business'
+import { FixCard } from '@/components/account/FixCard'
 import { PulseCard } from '@/components/account/PulseCard'
+import { currentFixRequest } from '@/lib/aeo/fix-requests'
 import { approvedBusinessPanel } from '@/lib/aeo/business-panel-jobs'
 import { loadPulseFacts, pulsePriceCents, pulseState, stripeConfigured } from '@/lib/aeo/payments'
 import { activePanels } from '@/lib/aeo/requests'
@@ -47,6 +49,7 @@ export default async function AccountPage({ searchParams }: Props) {
   ])
   const reading = brief?.status === 'queued' || brief?.status === 'reading'
   const pulse = owned ? pulseState(await loadPulseFacts(owned.id)) : null
+  const fix = owned ? await currentFixRequest(user.id) : null
   // Just back from Stripe: the webhook may still be on its way, so keep checking.
   const justPaid = params.paid === '1' && pulse?.kind !== 'running'
   const industry = owned
@@ -83,6 +86,14 @@ export default async function AccountPage({ searchParams }: Props) {
               ? 'Payment received. Your report is running, and we’ll email you when it’s ready.'
               : 'Payment received. We’re starting your report.'}
           </p>
+        )}
+        {params.fixpaid === '1' && (
+          <p className="mt-6 rounded-md bg-success/10 px-3 py-2 text-sm text-success">
+            Payment received, thank you. We&apos;ll start on your website shortly and keep you posted by email.
+          </p>
+        )}
+        {params.fixwithdrawn === '1' && (
+          <p className="mt-6 rounded-md bg-gray-100 px-3 py-2 text-sm text-text-secondary">Your fix request is withdrawn.</p>
         )}
         {params.canceled === '1' && (
           <p className="mt-6 rounded-md bg-gray-100 px-3 py-2 text-sm text-text-secondary">
@@ -188,6 +199,8 @@ export default async function AccountPage({ searchParams }: Props) {
             </Link>
           </Card>
         )}
+
+        {owned && fix && <FixCard request={fix} paymentsReady={stripeConfigured()} />}
 
         {owned && pulse && <PulseCard state={pulse} priceCents={pulsePriceCents()} paymentsReady={stripeConfigured()} />}
 

@@ -232,6 +232,11 @@ export async function handleStripeEvent(
     case 'checkout.session.async_payment_succeeded': {
       const session = event.data.object as Stripe.Checkout.Session
       if (session.payment_status !== 'paid') return { handled: false, note: 'not paid yet' }
+      if (session.metadata?.kind === 'fix') {
+        // Loaded here, not at the top: fix-requests imports this module.
+        const { fixPaid } = await import('./fix-requests')
+        return fixPaid(session)
+      }
       return fulfill(session, stripe)
     }
     case 'checkout.session.expired': {
@@ -254,6 +259,8 @@ export async function handleStripeEvent(
           updatedAt: new Date(),
         })
         .where(and(eq(pulseOrder.paymentIntentId, intent), inArray(pulseOrder.status, ['paid', 'pending'])))
+      const { fixRefunded } = await import('./fix-requests')
+      await fixRefunded(intent)
       return { handled: true, note: 'refunded' }
     }
     default:

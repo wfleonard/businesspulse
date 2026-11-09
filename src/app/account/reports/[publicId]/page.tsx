@@ -4,7 +4,9 @@ import { notFound } from 'next/navigation'
 import { AutoRefresh } from '@/components/aeo/AutoRefresh'
 import { PublicHeader } from '@/components/site/PublicHeader'
 import { PulseReportView } from '@/components/pulse/PulseReportView'
+import { FixOffer } from '@/components/account/FixOffer'
 import { Card } from '@/components/ui/Card'
+import { currentFixRequest, fixPriceCents } from '@/lib/aeo/fix-requests'
 import { findOwnedPulseRun } from '@/lib/account/business'
 import { loadPulseReport } from '@/lib/aeo/pulse-report-jobs'
 import { requireSession } from '@/lib/session'
@@ -13,10 +15,13 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = { title: 'Your AI search report | BusinessPulse', robots: { index: false } }
 
-type Props = { params: Promise<{ publicId: string }> }
+type Props = {
+  params: Promise<{ publicId: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
 /** A client's own Pulse report. Private: only the business's signed-in owner gets past the lookup. */
-export default async function AccountReportPage({ params }: Props) {
+export default async function AccountReportPage({ params, searchParams }: Props) {
   const { user } = await requireSession()
   const { publicId } = await params
   const runId = await findOwnedPulseRun(user.id, publicId)
@@ -44,6 +49,8 @@ export default async function AccountReportPage({ params }: Props) {
     )
   }
   const writing = report.reportStatus === 'queued' || report.reportStatus === 'writing'
+  const query = await searchParams
+  const fix = await currentFixRequest(user.id)
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -54,7 +61,25 @@ export default async function AccountReportPage({ params }: Props) {
           Your account
         </Link>
         <div className="mt-4">
-          <PulseReportView report={report} />
+          {typeof query.error === 'string' && (
+            <p className="mb-6 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{query.error}</p>
+          )}
+          {query.fix === 'requested' && (
+            <p className="mb-6 rounded-md bg-success/10 px-3 py-2 text-sm text-success">
+              Request sent. We&apos;ll confirm the scope by email, usually within 1 to 2 business days.
+            </p>
+          )}
+          <PulseReportView
+            report={report}
+            afterFixes={
+              <FixOffer
+                publicId={publicId}
+                priceCents={fixPriceCents()}
+                issues={report.fixes.length}
+                current={fix ? { status: fix.status, forThisReport: fix.reportPublicId === publicId } : null}
+              />
+            }
+          />
         </div>
       </main>
     </div>

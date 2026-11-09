@@ -130,3 +130,78 @@ export function pulseReportReadyEmail(args: { name: string; businessName: string
     text: [greeting, '', lead, '', `Read your report: ${url}`, '', `${after} Sign in with this email address to open it.`].join('\n'),
   }
 }
+
+const dollars = (cents: number) => `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`
+
+/** A plain client email with one button to their account. */
+function accountEmail(args: { name: string; subject: string; lead: string; detail?: string; action: string; after: string }): EmailContent {
+  const url = appUrl('/account')
+  const greeting = `Hi ${args.name},`
+  const detail = args.detail ? `<p style="margin:0 0 16px;white-space:pre-wrap">${escapeHtml(args.detail)}</p>` : ''
+  return {
+    subject: args.subject,
+    html: page(`<p style="margin:0 0 12px">${escapeHtml(greeting)}</p>
+<p style="margin:0 0 16px">${escapeHtml(args.lead)}</p>
+${detail}<p style="margin:0 0 16px"><a href="${escapeHtml(url)}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:bold">${escapeHtml(args.action)}</a></p>
+<p style="margin:0;color:#64748b">${escapeHtml(args.after)}</p>`),
+    text: [greeting, '', args.lead, ...(args.detail ? ['', args.detail] : []), '', `${args.action}: ${url}`, '', args.after].join('\n'),
+  }
+}
+
+/** For the admin: a client asked for the fix. */
+export function adminFixRequestedEmail(args: { businessName: string; email: string; issues: number; id: string }): EmailContent {
+  const url = appUrl(`/dashboard/pulse/fix/${args.id}`)
+  const lead = `${args.businessName} (${args.email}) asked you to fix the ${args.issues} issues in their Pulse report.`
+  return {
+    subject: `[BusinessPulse] Fix requested: ${args.businessName}`,
+    html: page(`<p style="margin:0 0 16px">${escapeHtml(lead)}</p>
+<p style="margin:0"><a href="${escapeHtml(url)}" style="color:#2563eb">Confirm the scope and send the payment request</a></p>`),
+    text: [lead, '', `Confirm the scope and send the payment request: ${url}`].join('\n'),
+  }
+}
+
+/** For the admin: a client paid for the fix. */
+export function adminFixPaidEmail(args: { businessName: string; totalCents: number; id: string }): EmailContent {
+  const url = appUrl(`/dashboard/pulse/fix/${args.id}`)
+  const lead = `${args.businessName} paid ${dollars(args.totalCents)} (with tax) for their fix. Time to start the work.`
+  return {
+    subject: `[BusinessPulse] Fix paid: ${args.businessName}`,
+    html: page(`<p style="margin:0 0 16px">${escapeHtml(lead)}</p>
+<p style="margin:0"><a href="${escapeHtml(url)}" style="color:#2563eb">Open the request</a></p>`),
+    text: [lead, '', `Open the request: ${url}`].join('\n'),
+  }
+}
+
+/** The scope is confirmed: the client can pay from their account. */
+export function fixQuotedEmail(args: { name: string; businessName: string; amountCents: number; scope: string }): EmailContent {
+  return accountEmail({
+    name: args.name,
+    subject: `Your fix for ${args.businessName} is ready to start`,
+    lead: `We've confirmed what we'll fix on ${args.businessName}'s website: ${dollars(args.amountCents)}, one time, plus sales tax for New Jersey buyers.`,
+    detail: args.scope || undefined,
+    action: 'Review and pay',
+    after: 'We start as soon as payment comes through, and your account shows the progress.',
+  })
+}
+
+export function fixDoneEmail(args: { name: string; businessName: string; note: string }): EmailContent {
+  return accountEmail({
+    name: args.name,
+    subject: `The fixes for ${args.businessName} are done`,
+    lead: `We've finished the fixes on ${args.businessName}'s website.`,
+    detail: args.note || undefined,
+    action: 'Open your account',
+    after: 'AI assistants take a while to notice changes. Your next Pulse report shows what changed since the fix.',
+  })
+}
+
+export function fixDeclinedEmail(args: { name: string; businessName: string; note: string }): EmailContent {
+  return accountEmail({
+    name: args.name,
+    subject: `About your fix request for ${args.businessName}`,
+    lead: `We can't take on the fix request for ${args.businessName} as it stands. You haven't been charged.`,
+    detail: args.note || undefined,
+    action: 'Open your account',
+    after: 'Reply to this email if you have questions.',
+  })
+}

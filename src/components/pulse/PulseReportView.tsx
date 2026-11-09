@@ -54,7 +54,14 @@ function Section({ title, intro, children, id }: { title: string; intro?: string
  * The client's Pulse report (docs/pulse-plan.md §4.4): the headline, what to
  * fix, the site checks, and every question with every assistant's answer.
  */
-export function PulseReportView({ report }: { report: LoadedPulseReport }) {
+export function PulseReportView({
+  report,
+  afterFixes,
+}: {
+  report: LoadedPulseReport
+  /** Shown under the fix list: the client's $500 fix offer. */
+  afterFixes?: React.ReactNode
+}) {
   const { summary, trend, fixes, checks, business, run } = report
   const questionIndex = new Map(summary.questions.map((q, i) => [q.query, i]))
   const checkLabel = new Map(checks.map((c) => [c.id, c.label]))
@@ -178,6 +185,7 @@ export function PulseReportView({ report }: { report: LoadedPulseReport }) {
             </p>
           </Card>
         )}
+        {report.reportStatus === 'ready' && fixes.length > 0 && afterFixes}
       </Section>
 
       {checks.length > 0 && (

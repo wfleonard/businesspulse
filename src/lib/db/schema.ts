@@ -823,6 +823,57 @@ export const pulseOrder = pgTable(
   (t) => [index('pulse_order_business_idx').on(t.businessId, t.createdAt), index('pulse_order_payment_intent_idx').on(t.paymentIntentId)]
 )
 
+export const fixRequestStatusEnum = pgEnum('fix_request_status', [
+  'requested',
+  'quoted',
+  'paid',
+  'in_progress',
+  'done',
+  'declined',
+  'withdrawn',
+  'refunded',
+])
+
+/**
+ * A client's request to have Saxon fix the issues in one Pulse report
+ * (docs/pulse-plan.md §4.6): requested from the report, scoped and priced by
+ * the admin, paid through Stripe Checkout, then worked and closed. The issue
+ * list is copied at request time, so a rewritten fix list can't change what
+ * was agreed. Kept if the business is deleted: it's a financial record.
+ */
+export const fixRequest = pgTable(
+  'fix_request',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id').references(() => business.id, { onDelete: 'set null' }),
+    runId: uuid('run_id').references(() => aeoRun.id, { onDelete: 'set null' }),
+    status: fixRequestStatusEnum('status').notNull().default('requested'),
+    /** The fix list as the client saw it when they asked. */
+    issues: jsonb('issues').$type<import('@/lib/aeo/fixes').FixItem[]>().notNull().default([]),
+    /** From the client: site platform, who has access, anything else. */
+    clientNote: text('client_note').notNull().default(''),
+    /** From the admin: the agreed scope, shown to the client before they pay. */
+    scope: text('scope').notNull().default(''),
+    amountCents: integer('amount_cents').notNull().default(50_000),
+    checkoutSessionId: text('checkout_session_id'),
+    paymentIntentId: text('payment_intent_id'),
+    amountTax: integer('amount_tax').notNull().default(0),
+    amountTotal: integer('amount_total').notNull().default(0),
+    /** Why it was declined, or a closing note. Shown to the client. */
+    adminNote: text('admin_note').notNull().default(''),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    quotedAt: timestamp('quoted_at'),
+    paidAt: timestamp('paid_at'),
+    startedAt: timestamp('started_at'),
+    doneAt: timestamp('done_at'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('fix_request_business_idx').on(t.businessId, t.createdAt),
+    index('fix_request_payment_intent_idx').on(t.paymentIntentId),
+  ]
+)
+
 /** One row per question × engine, as written by `panel.php job`. */
 export const aeoResult = pgTable(
   'aeo_result',
@@ -1029,6 +1080,7 @@ export const schema = {
   businessPanel,
   pulseReport,
   pulseOrder,
+  fixRequest,
   aeoPanel,
   aeoPanelVersion,
   aeoPanelBacklog,

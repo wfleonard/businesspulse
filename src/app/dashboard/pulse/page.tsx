@@ -4,6 +4,7 @@ import { ConfirmSubmit } from '@/components/aeo/ConfirmSubmit'
 import { Card } from '@/components/ui/Card'
 import { estimateRunCostUsd } from '@/lib/aeo/business-panel'
 import { PULSE_ENGINES, workerConfig } from '@/lib/aeo/config'
+import { listFixRequests, OPEN_FIX_STATUSES } from '@/lib/aeo/fix-requests'
 import { listOrders, revenueSince, stripeConfigured } from '@/lib/aeo/payments'
 import { listPulseBusinesses, listPulseRuns, type PulseBusiness, type PulseRunRow } from '@/lib/aeo/pulse'
 import { spentTodayUsd } from '@/lib/aeo/queue'
@@ -77,13 +78,15 @@ export default async function PulsePage({ searchParams }: Props) {
   const error = typeof params.error === 'string' ? params.error : null
   const config = workerConfig()
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-  const [businesses, runs, spent, orders, month] = await Promise.all([
+  const [businesses, runs, spent, orders, month, fixes] = await Promise.all([
     listPulseBusinesses(),
     listPulseRuns(),
     spentTodayUsd('pulse'),
     listOrders(),
     revenueSince(monthStart),
+    listFixRequests(),
   ])
+  const openFixes = fixes.filter((f) => OPEN_FIX_STATUSES.includes(f.request.status))
   const active = runs.some((r) => r.status === 'queued' || r.status === 'running')
 
   return (
@@ -239,6 +242,56 @@ export default async function PulsePage({ searchParams }: Props) {
         <p className="mt-2 text-xs text-text-secondary">
           Spend over $40 on one run shows in red. Report opens the client&apos;s view of the report.
         </p>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold text-dark">Fix requests</h2>
+        <p className="mt-1 text-sm text-text-secondary">
+          {openFixes.length
+            ? openFixes.length + ' open. A new request waits for you to confirm the scope and send it to the client.'
+            : 'None open.'}
+        </p>
+        <Card className="mt-3 overflow-x-auto p-0">
+          {fixes.length === 0 ? (
+            <p className="p-4 text-sm text-text-secondary">No fix requests yet.</p>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-border bg-gray-50 text-xs text-text-secondary">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Requested</th>
+                  <th className="px-4 py-2 font-medium">Business</th>
+                  <th className="px-4 py-2 font-medium">Issues</th>
+                  <th className="px-4 py-2 font-medium">Amount</th>
+                  <th className="px-4 py-2 font-medium">Status</th>
+                  <th className="px-4 py-2" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {fixes.map(({ request, businessName, domain }) => (
+                  <tr key={request.id}>
+                    <td className="px-4 py-3 text-text-secondary">{formatDate(request.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <p className="text-dark">{businessName ?? '(deleted)'}</p>
+                      <p className="text-xs text-text-secondary">{domain}</p>
+                    </td>
+                    <td className="px-4 py-3 text-text-secondary">{request.issues.length}</td>
+                    <td className="px-4 py-3 text-text-secondary">{money(request.amountTotal || request.amountCents)}</td>
+                    <td className="px-4 py-3">
+                      <span className={OPEN_FIX_STATUSES.includes(request.status) ? 'font-medium text-amber-800' : 'text-text-secondary'}>
+                        {request.status.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link href={'/dashboard/pulse/fix/' + request.id} className="text-sm font-medium text-primary hover:underline">
+                        Open
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Card>
       </section>
 
       <section>

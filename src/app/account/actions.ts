@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { confirmBrief } from '@/lib/account/brief'
 import { saveBusiness } from '@/lib/account/business'
 import { businessProfileSchema, confirmBriefSchema } from '@/lib/account/schema'
+import { z } from 'zod'
+import { createFixCheckout, requestFix, withdrawFix } from '@/lib/aeo/fix-requests'
 import { createPulseCheckout } from '@/lib/aeo/payments'
 import { fieldErrors } from '@/lib/aeo/request-schema'
 import { requireSession } from '@/lib/session'
@@ -71,4 +73,41 @@ export async function buyPulseRun(): Promise<void> {
   const result = await createPulseCheckout({ userId: user.id, email: user.email })
   if (!result.ok) redirect('/account?' + new URLSearchParams({ error: result.error }).toString())
   redirect(result.url)
+}
+
+const fixRequestSchema = z.object({
+  publicId: z.string().min(10).max(64),
+  note: z.string().max(2000).default(''),
+})
+
+/**
+ * Ask for the $500 fix from a report. The report's public id comes from the
+ * page, but requestFix only finds it inside the session user's own business.
+ */
+export async function requestFixAction(formData: FormData): Promise<void> {
+  const { user } = await requireSession()
+  const parsed = fixRequestSchema.safeParse({ publicId: formData.get('publicId'), note: formData.get('note') ?? '' })
+  if (!parsed.success) redirect('/account?' + new URLSearchParams({ error: 'That request couldn’t be sent.' }).toString())
+  const result = await requestFix(user.id, parsed.data.publicId, parsed.data.note)
+  const back = '/account/reports/' + encodeURIComponent(parsed.data.publicId)
+  if (!result.ok) redirect(back + '?' + new URLSearchParams({ error: result.error }).toString())
+  revalidatePath('/account')
+  redirect(back + '?fix=requested#fix')
+}
+
+/** Pay for the session user's quoted fix through Stripe Checkout. */
+export async function payFixAction(): Promise<void> {
+  const { user } = await requireSession()
+  const result = await createFixCheckout(user.id, user.email)
+  if (!result.ok) redirect('/account?' + new URLSearchParams({ error: result.error }).toString())
+  redirect(result.url)
+}
+
+/** Withdraw the session user's unpaid fix request. */
+export async function withdrawFixAction(): Promise<void> {
+  const { user } = await requireSession()
+  const result = await withdrawFix(user.id)
+  if (!result.ok) redirect('/account?' + new URLSearchParams({ error: result.error }).toString())
+  revalidatePath('/account')
+  redirect('/account?fixwithdrawn=1')
 }

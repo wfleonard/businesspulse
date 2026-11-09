@@ -1,6 +1,6 @@
 # BusinessPulse Pulse — $100 report runs in a client account
 
-**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · P5 (business brief), P6 (business panels), and P7 (report and What to fix) built November 7 · P8 (Stripe) built November 9 · for Bill Leonard
+**Status:** plan approved November 6, 2026 · P2 (sign-up), P3 (business profile and silo), and P4 (Pulse runs on the server) built November 6 · business panels added November 7 (`business-panel-plan.md`) · P5 (business brief), P6 (business panels), and P7 (report and What to fix) built November 7 · P8 (Stripe) and P9 ($500 fix requests) built November 9 · for Bill Leonard
 **Replaces:** the $49 Monitor plan (`monitor-tier-plan.md`). **Builds on:** customer
 accounts (`customer-accounts-plan.md`); roles (A1) are live.
 
@@ -189,6 +189,13 @@ The full audit runs on Bill's Mac today. It moves into the BusinessPulse worker.
   payment link (created through Stripe), and the webhook marks it paid. Bill moves it to
   in progress and done; the client sees the status in their account.
 - The next Pulse run shows what changed after the fix.
+- **As built (P9):** `fix_request` (migration 0027). "Request the fix" sits under What to
+  fix in the client's report, with an optional note; one open request per business. Bill
+  confirms the scope and amount on `/dashboard/pulse/fix/[id]` (default $500,
+  `FIX_PRICE_CENTS`); the client is emailed and pays from their account through Stripe
+  Checkout with NJ tax (no Stripe catalog product or payment link is created). The webhook
+  marks it paid and emails Bill; Bill marks it in progress and done, with a note the client
+  sees. Clients can withdraw before paying; Bill can decline with a note.
 
 ### 4.7 Admin
 
