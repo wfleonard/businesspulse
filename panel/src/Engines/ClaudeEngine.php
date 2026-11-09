@@ -17,10 +17,16 @@ final class ClaudeEngine implements Engine
 {
     // Per-million-token rates. Verify against current pricing before invoicing.
     private const RATES = [
-        'claude-sonnet-5'  => ['in' => 3.00,  'out' => 15.00],
-        'claude-opus-5'    => ['in' => 5.00,  'out' => 25.00],
-        'claude-haiku-4-5' => ['in' => 1.00,  'out' =>  5.00],
+        'claude-sonnet-5'   => ['in' => 2.00,  'out' => 10.00],
+        'claude-sonnet-5-5' => ['in' => 2.00,  'out' => 10.00],
+        'claude-opus-5'     => ['in' => 5.00,  'out' => 25.00],
+        'claude-opus-5-5'   => ['in' => 4.00,  'out' => 20.00],
+        'claude-haiku-4-5'  => ['in' => 1.00,  'out' =>  5.00],
     ];
+
+    /** Prompt caching: writes bill at 1.25x input, reads at 0.1x (5-minute cache). */
+    private const CACHE_WRITE = 1.25;
+    private const CACHE_READ  = 0.10;
 
     /**
      * Anthropic bills the web_search tool per call on top of tokens.
@@ -37,7 +43,16 @@ final class ClaudeEngine implements Engine
         private int $maxSearches = 5,
         private string $effort = 'medium',
         ?string $apiKey = null,
+        /**
+         * Prompt caching, on by default. The web search tool then caches its
+         * results, so the model's continuation after a search reads them at a
+         * tenth of the price. Measured November 9, 2026 on 10 Primos Maternos
+         * questions: $0.69 without, $0.53 with (22% less), same searches.
+         * PANEL_CLAUDE_CACHE=0 turns it off when not passed.
+         */
+        private ?bool $cache = null,
     ) {
+        $this->cache ??= getenv('PANEL_CLAUDE_CACHE') !== '0';
         $key = $apiKey ?? getenv('ANTHROPIC_API_KEY') ?: '';
         if ($key === '') {
             fwrite(STDERR, "ANTHROPIC_API_KEY is not set.\n\n"
@@ -74,6 +89,9 @@ final class ClaudeEngine implements Engine
                 'content' => $query,
             ]],
         ];
+        if ($this->cache) {
+            $payload['cache_control'] = ['type' => 'ephemeral'];
+        }
 
         $ch = curl_init($this->baseUrl . '/v1/messages');
         curl_setopt_array($ch, [
@@ -97,6 +115,7 @@ final class ClaudeEngine implements Engine
         $out = [
             'answer' => '', 'sources' => [],
             'input_tokens' => 0, 'output_tokens' => 0, 'searches' => 0,
+            'cache_write_tokens' => 0, 'cache_read_tokens' => 0,
             'error' => null,
         ];
 
@@ -112,8 +131,11 @@ final class ClaudeEngine implements Engine
             return $out;
         }
 
-        $out['input_tokens']  = (int) ($json['usage']['input_tokens'] ?? 0);
-        $out['output_tokens'] = (int) ($json['usage']['output_tokens'] ?? 0);
+        // input_tokens counts only uncached input; cached writes and reads are billed apart.
+        $out['input_tokens']       = (int) ($json['usage']['input_tokens'] ?? 0);
+        $out['output_tokens']      = (int) ($json['usage']['output_tokens'] ?? 0);
+        $out['cache_write_tokens'] = (int) ($json['usage']['cache_creation_input_tokens'] ?? 0);
+        $out['cache_read_tokens']  = (int) ($json['usage']['cache_read_input_tokens'] ?? 0);
 
         // A safety decline is a legitimate outcome, not a crash. Record and move on.
         if (($json['stop_reason'] ?? '') === 'refusal') {
@@ -178,6 +200,8 @@ final class ClaudeEngine implements Engine
     {
         $rate = self::RATES[$this->modelId] ?? self::RATES['claude-sonnet-5'];
         $tokenCost = ($parsed['input_tokens'] / 1_000_000) * $rate['in']
+                   + (($parsed['cache_write_tokens'] ?? 0) / 1_000_000) * $rate['in'] * self::CACHE_WRITE
+                   + (($parsed['cache_read_tokens'] ?? 0) / 1_000_000) * $rate['in'] * self::CACHE_READ
                    + ($parsed['output_tokens'] / 1_000_000) * $rate['out'];
         return $tokenCost + ($parsed['searches'] * self::ASSUMED_SEARCH_COST);
     }
