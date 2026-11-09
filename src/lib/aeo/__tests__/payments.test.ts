@@ -8,7 +8,7 @@ jest.mock('@/lib/aeo/payments', () => {
   return { ...actual, handleStripeEvent: (...args: unknown[]) => handleMock(...args) }
 })
 
-import { PULSE_MIN_DAYS, pulsePriceCents, pulseState, stripeConfigured } from '../payments'
+import { PULSE_MIN_DAYS, pulsePriceCents, pulseState, pulseTaxCode, stripeConfigured } from '../payments'
 import { POST } from '@/app/api/stripe/webhook/route'
 
 describe('pulseState', () => {
@@ -44,6 +44,16 @@ describe('settings', () => {
     expect(pulsePriceCents({ PULSE_PRICE_CENTS: 'free' })).toBe(10_000)
     expect(stripeConfigured({ STRIPE_SECRET_KEY: 'sk_test_x' })).toBe(false)
     expect(stripeConfigured({ STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_WEBHOOK_SECRET: 'whsec_x' })).toBe(true)
+  })
+
+  it('uses a valid tax code and ignores a malformed one, so a typo cannot block checkout', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(pulseTaxCode({ STRIPE_PULSE_TAX_CODE: ' txcd_10000000 ' })).toBe('txcd_10000000')
+    expect(pulseTaxCode({})).toBeUndefined()
+    expect(pulseTaxCode({ STRIPE_PULSE_TAX_CODE: '10000' })).toBeUndefined()
+    expect(pulseTaxCode({ STRIPE_PULSE_TAX_CODE: 'txcd_1000' })).toBeUndefined()
+    expect(warn).toHaveBeenCalledTimes(2)
+    warn.mockRestore()
   })
 })
 
