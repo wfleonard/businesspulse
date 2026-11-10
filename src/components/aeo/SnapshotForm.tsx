@@ -66,6 +66,37 @@ function Field({
 
 export function SnapshotForm({ panels, states, turnstileSiteKey }: Props) {
   const [fields, setFields] = useState(EMPTY)
+  const [prefilled, setPrefilled] = useState(false)
+
+  // Signed in: fill the form from the account's business. Only empty fields are
+  // filled, so anything already typed stays, and every field can be changed.
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/account/prefill', { credentials: 'same-origin', cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : {}))
+      .then((data: Partial<Record<keyof typeof EMPTY, string>>) => {
+        if (cancelled || !data || !Object.keys(data).length) return
+        const vertical =
+          data.vertical && (data.vertical === 'other' || panels.some((p) => p.slug === data.vertical)) ? data.vertical : ''
+        setFields((current) => ({
+          ...current,
+          businessName: current.businessName || data.businessName || '',
+          website: current.website || data.website || '',
+          service: current.service || data.service || '',
+          city: current.city || data.city || '',
+          state: current.state || data.state || '',
+          vertical: current.vertical || vertical,
+          email: current.email || data.email || '',
+        }))
+        setPrefilled(Boolean(data.businessName))
+      })
+      .catch(() => {
+        // Signed out or offline: the form simply starts empty.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [panels])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -162,6 +193,11 @@ export function SnapshotForm({ panels, states, turnstileSiteKey }: Props) {
         />
       )}
       <h2 className="text-lg font-bold text-dark">Get your free snapshot</h2>
+      {prefilled && (
+        <p className="mt-2 rounded-md bg-primary/5 px-3 py-2 text-xs text-text-secondary">
+          Filled in from your account. Change anything to check a different business.
+        </p>
+      )}
       <form onSubmit={handleSubmit} className="mt-4 space-y-4" noValidate>
         <Field id="businessName" label="Business name" error={errors.businessName}>
           <input
