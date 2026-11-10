@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { IndustryPicker } from './IndustryPicker'
 
 type Turnstile = {
   render: (element: HTMLElement, options: Record<string, unknown>) => string
@@ -265,22 +266,14 @@ export function SnapshotForm({ panels, states, turnstileSiteKey }: Props) {
           </Field>
         </div>
         <Field id="vertical" label="Industry" error={errors.vertical}>
-          <select
+          <IndustryPicker
             id="vertical"
-            required
+            options={panels}
             value={fields.vertical}
-            onChange={(e) => update('vertical', e.target.value)}
-            className={inputClass}
-            {...errorProps('vertical')}
-          >
-            <option value="">Choose your industry</option>
-            {panels.map((p) => (
-              <option key={p.slug} value={p.slug}>
-                {p.name}
-              </option>
-            ))}
-            <option value="other">Something else</option>
-          </select>
+            onChange={(value) => update('vertical', value)}
+            invalid={Boolean(errors.vertical)}
+            describedBy={errors.vertical ? 'vertical-error' : undefined}
+          />
         </Field>
         <Field id="email" label="Email for your report" error={errors.email}>
           <input

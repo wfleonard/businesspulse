@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import { saveBusinessProfile, type BusinessFormValues } from '@/app/account/actions'
+import { IndustryPicker } from '@/components/aeo/IndustryPicker'
 import { Field, inputClass } from '@/components/auth/AuthShell'
 import { Button } from '@/components/ui/Button'
 import { CUSTOM_INDUSTRY } from '@/lib/account/schema'
@@ -50,24 +51,15 @@ export function BusinessForm({ initial, panels, states, isNew }: Props) {
         When AI search cites one of these, it counts as your business, not a competitor.
       </p>
       <Field id="industry" label="Industry" error={errors.industry}>
-        <select
+        <IndustryPicker
           id="industry"
           name="industry"
-          required
+          options={panels}
           value={industry}
-          onChange={(e) => setIndustry(e.target.value)}
-          className={inputClass}
-        >
-          <option value="" disabled>
-            Choose your industry
-          </option>
-          {panels.map((p) => (
-            <option key={p.slug} value={p.slug}>
-              {p.name}
-            </option>
-          ))}
-          <option value={CUSTOM_INDUSTRY}>Something else</option>
-        </select>
+          onChange={setIndustry}
+          invalid={Boolean(errors.industry)}
+          otherLabel="Not listed: tell us what you do"
+        />
       </Field>
       {industry === CUSTOM_INDUSTRY && (
         <>
