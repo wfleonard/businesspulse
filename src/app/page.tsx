@@ -81,11 +81,17 @@ export default async function Home() {
         </div>
       </div>
       <footer className="mt-auto flex flex-wrap gap-x-4 gap-y-3 pt-16 text-xs text-text-secondary">
+        <Link href="/pulse" className="hover:text-dark">
+          Pulse: the full report
+        </Link>
         <Link href="/resources" className="hover:text-dark">
           Resources
         </Link>
         <Link href="/privacy" className="hover:text-dark">
           Privacy
+        </Link>
+        <Link href="/terms" className="hover:text-dark">
+          Terms
         </Link>
         <Link href="/login" className="hover:text-dark">
           Sign in
