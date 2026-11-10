@@ -292,6 +292,29 @@ export default async function RunDetailPage({ params, searchParams }: Props) {
                         Rivals cited: <span className="text-dark">{citedRivals.map((r) => r.host).join(', ')}</span>
                       </p>
                     )}
+                    {!result.error && result.answer && (
+                      <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-secondary">
+                        <span>Answer card:</span>
+                        {(
+                          [
+                            ['square', 'outreach', 'Square'],
+                            ['wide', 'outreach', 'Wide'],
+                            ['square', 'public', 'Square, names blurred'],
+                            ['wide', 'public', 'Wide, names blurred'],
+                          ] as const
+                        ).map(([size, mode, label]) => (
+                          <a
+                            key={size + mode}
+                            href={`/dashboard/aeo/${run.id}/card?result=${result.id}&size=${size}&mode=${mode}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {label}
+                          </a>
+                        ))}
+                      </p>
+                    )}
                     {result.sources.length > 0 && (
                       <ol className="list-decimal space-y-1 pl-5 text-xs">
                         {result.sources.map((source, index) => {
