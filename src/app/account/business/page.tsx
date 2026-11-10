@@ -37,7 +37,7 @@ export default async function BusinessPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <PublicHeader />
+      <PublicHeader signedIn />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 sm:py-14">
         <h1 className="text-3xl font-bold tracking-tight text-dark">
           {owned ? 'Your business' : 'Set up your business'}

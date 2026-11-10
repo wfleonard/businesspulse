@@ -31,7 +31,7 @@ export default async function AccountReportPage({ params, searchParams }: Props)
     // The run is theirs but hasn't finished: show where it stands, not a 404.
     return (
       <div className="flex min-h-screen flex-col">
-        <PublicHeader />
+        <PublicHeader signedIn />
         <AutoRefresh seconds={30} />
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:py-14">
           <Link href="/account" className="text-sm text-primary hover:underline">
@@ -54,7 +54,7 @@ export default async function AccountReportPage({ params, searchParams }: Props)
 
   return (
     <div className="flex min-h-screen flex-col">
-      <PublicHeader />
+      <PublicHeader signedIn />
       {writing && <AutoRefresh seconds={20} />}
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:py-14">
         <Link href="/account" className="text-sm text-primary hover:underline">

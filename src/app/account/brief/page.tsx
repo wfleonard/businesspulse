@@ -24,7 +24,7 @@ export default async function BriefPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <PublicHeader />
+      <PublicHeader signedIn />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 sm:py-14">
         <Link href="/account" className="text-sm text-primary hover:underline">
           Your account

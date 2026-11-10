@@ -1,8 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-/** Header for public content pages (the Resource Hub). */
-export function PublicHeader() {
+/**
+ * Header for public pages and the client's account. Public pages don't look up
+ * the session (it would stop them being cached), so they show "Sign in", which
+ * sends a signed-in visitor on to their account. Account pages know the
+ * visitor is signed in and pass `signedIn`.
+ */
+export function PublicHeader({ signedIn = false }: { signedIn?: boolean }) {
   return (
     <header className="border-b border-border bg-white">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
@@ -22,10 +27,15 @@ export function PublicHeader() {
           <Link href="/pulse" className="text-text-secondary hover:text-dark">
             Pulse
           </Link>
-          {/* Static on purpose: no session lookup, so public pages stay cacheable. Signed-in visitors go on to their account. */}
-          <Link href="/login" className="text-text-secondary hover:text-dark">
-            Sign in
-          </Link>
+          {signedIn ? (
+            <Link href="/account" className="text-text-secondary hover:text-dark">
+              Your account
+            </Link>
+          ) : (
+            <Link href="/login" className="text-text-secondary hover:text-dark">
+              Sign in
+            </Link>
+          )}
           <Link href="/" className="rounded-md bg-primary px-3 py-1.5 font-medium text-white hover:bg-primary/90">
             Free snapshot
           </Link>
